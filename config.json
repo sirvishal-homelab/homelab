@@ -1,0 +1,22 @@
+﻿{
+  "Email": {
+    "From": "reporting@yourdomain.com",
+    "To": "admin@yourdomain.com",
+    "SMTPServer": "smtp.yourdomain.com",
+    "Port": 587,
+    "UseSSL": true
+  },
+  "Export": {
+    "EnableCsv": true,
+    "EnableHtml": true,
+    "OutputDirectory": "Reports"
+  },
+  "Apps": {
+    "EnableExport": true,
+    "CompareAcrossServers": true
+  },
+  "Template": {
+    "Path": "report-template.html",
+    "Placeholders": ["{{ReportTable}}"]
+  }
+}
