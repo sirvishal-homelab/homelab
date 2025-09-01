@@ -11,12 +11,22 @@
     [switch]$ExportHtml
 )
 
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$logPath = "SystemInventory_$timestamp.log"
 $report = @{}
 $appMatrix = @{}
-$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+
+function Write-Log {
+    param ([string]$Message)
+    $TimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Add-Content -Path $logPath -Value "$TimeStamp - $Message"
+}
+
+Write-Log "🔍 Starting system inventory for $($ComputerName.Count) machines"
 
 foreach ($computer in $ComputerName) {
     Write-Host "Processing $computer..."
+    Write-Log "Processing $computer"
     $row = [PSCustomObject]@{ Hostname = $computer }
 
     # HOTFIX
@@ -24,13 +34,16 @@ foreach ($computer in $ComputerName) {
         try {
             $hotfixes = Get-HotFix -ComputerName $computer -ErrorAction Stop
             $row.HotfixCount = $hotfixes.Count
+            Write-Log "$computer: Hotfix count = $($hotfixes.Count)"
 
             if ($HotfixDetail) {
-                $hotfixes | Select HotFixID, InstalledOn, Description |
-                    Export-Csv "HotfixDetails_$computer.csv" -NoTypeInformation
+                $file = "HotfixDetails_$computer.csv"
+                $hotfixes | Select HotFixID, InstalledOn, Description | Export-Csv $file -NoTypeInformation
+                Write-Log "$computer: Hotfix details exported to $file"
             }
         } catch {
             Write-Warning "Hotfix query failed for $computer: $_"
+            Write-Log "$computer: Hotfix query failed - $_"
             $row.HotfixCount = "Error"
         }
     }
@@ -43,8 +56,10 @@ foreach ($computer in $ComputerName) {
             $row.BuildNumber = $os.BuildNumber
             $row.InstallDate = $os.InstallDate
             $row.LastBoot = $os.LastBootUpTime
+            Write-Log "$computer: OS info collected"
         } catch {
             Write-Warning "OS query failed for $computer: $_"
+            Write-Log "$computer: OS query failed - $_"
             $row.OSVersion = "Error"
         }
     }
@@ -56,8 +71,10 @@ foreach ($computer in $ComputerName) {
             $row.BIOSVersion = ($bios.BIOSVersion -join ", ")
             $row.BIOSManufacturer = $bios.Manufacturer
             $row.BIOSReleaseDate = $bios.ReleaseDate
+            Write-Log "$computer: BIOS info collected"
         } catch {
             Write-Warning "BIOS query failed for $computer: $_"
+            Write-Log "$computer: BIOS query failed - $_"
             $row.BIOSVersion = "Error"
         }
     }
@@ -72,8 +89,10 @@ foreach ($computer in $ComputerName) {
 
             $cpu = Get-CimInstance Win32_Processor -ComputerName $computer -ErrorAction Stop
             $row.CPU = $cpu.Name
+            Write-Log "$computer: Hardware info collected"
         } catch {
             Write-Warning "Hardware query failed for $computer: $_"
+            Write-Log "$computer: Hardware query failed - $_"
             $row.Manufacturer = "Error"
         }
     }
@@ -93,9 +112,12 @@ foreach ($computer in $ComputerName) {
             }
 
             $row.AppCount = $apps.Count
+            Write-Log "$computer: App count = $($apps.Count)"
 
             if ($Apps) {
-                $apps | Export-Csv "InstalledApps_$computer.csv" -NoTypeInformation
+                $file = "InstalledApps_$computer.csv"
+                $apps | Export-Csv $file -NoTypeInformation
+                Write-Log "$computer: App list exported to $file"
             }
 
             if ($CompareApps) {
@@ -105,10 +127,12 @@ foreach ($computer in $ComputerName) {
                     $version = $app.DisplayVersion
                     $appMatrix[$computer][$name] = $version
                 }
+                Write-Log "$computer: App matrix data collected"
             }
 
         } catch {
             Write-Warning "App query failed for $computer: $_"
+            Write-Log "$computer: App query failed - $_"
             $row.AppCount = "Error"
         }
     }
@@ -121,8 +145,10 @@ $report.Values | Format-Table -AutoSize
 
 # Export system report
 if ($ExportCsv) {
-    $report.Values | Export-Csv "SystemReport_$timestamp.csv" -NoTypeInformation
-    Write-Host "System report exported to SystemReport_$timestamp.csv"
+    $file = "SystemReport_$timestamp.csv"
+    $report.Values | Export-Csv $file -NoTypeInformation
+    Write-Log "System report exported to $file"
+    Write-Host "System report exported to $file"
 }
 
 # Compare apps across servers
@@ -141,8 +167,10 @@ if ($CompareApps) {
     $comparison | Format-Table -AutoSize
 
     if ($ExportCsv) {
-        $comparison | Export-Csv "AppComparison_$timestamp.csv" -NoTypeInformation
-        Write-Host "App comparison exported to AppComparison_$timestamp.csv"
+        $file = "AppComparison_$timestamp.csv"
+        $comparison | Export-Csv $file -NoTypeInformation
+        Write-Log "App comparison exported to $file"
+        Write-Host "App comparison exported to $file"
     }
 }
 
@@ -172,6 +200,10 @@ if ($ExportHtml) {
 
     $htmlTable = $report.Values | ConvertTo-Html -Fragment -PreContent "<h3>System Summary</h3>"
     $finalHtml = $template -replace "{{ReportTable}}", $htmlTable
-    $finalHtml | Out-File "SystemReport_$timestamp.html" -Encoding UTF8
-    Write-Host "HTML report saved to SystemReport_$timestamp.html"
+    $file = "SystemReport_$timestamp.html"
+    $finalHtml | Out-File $file -Encoding UTF8
+    Write-Log "HTML report saved to $file"
+    Write-Host "HTML report saved to $file"
 }
+
+Write-Log "🏁 Inventory script completed"
