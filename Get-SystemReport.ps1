@@ -1,4 +1,4 @@
-﻿param (
+param (
     [string[]]$ComputerName,
     [switch]$Hotfix,
     [switch]$HotfixDetail,
@@ -22,6 +22,32 @@ function Write-Log {
     Add-Content -Path $logPath -Value "$TimeStamp - $Message"
 }
 
+# Load config.json
+$configPath = ".\config.json"
+if (Test-Path $configPath) {
+    try {
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        Write-Log "✅ Loaded config.json"
+    } catch {
+        Write-Warning "Failed to parse config.json: $_"
+        Write-Log "❌ Failed to parse config.json"
+    }
+} else {
+    Write-Warning "config.json not found"
+    Write-Log "⚠️ config.json not found"
+}
+
+# Apply config overrides
+$outputDir = $config.Export.OutputDirectory ?? "."
+$templatePath = $config.Template.Path ?? ".\report-template.html"
+$enableCsv = $config.Export.EnableCsv
+$enableHtml = $config.Export.EnableHtml
+$compareApps = $CompareApps -or ($config.Apps.CompareAcrossServers -eq $true)
+
+Write-Log "Using output directory: $outputDir"
+Write-Log "Using template path: $templatePath"
+Write-Log "CompareApps enabled: $compareApps"
+
 Write-Log "🔍 Starting system inventory for $($ComputerName.Count) machines"
 
 foreach ($computer in $ComputerName) {
@@ -37,7 +63,7 @@ foreach ($computer in $ComputerName) {
             Write-Log "$computer: Hotfix count = $($hotfixes.Count)"
 
             if ($HotfixDetail) {
-                $file = "HotfixDetails_$computer.csv"
+                $file = Join-Path $outputDir "HotfixDetails_$computer.csv"
                 $hotfixes | Select HotFixID, InstalledOn, Description | Export-Csv $file -NoTypeInformation
                 Write-Log "$computer: Hotfix details exported to $file"
             }
@@ -98,7 +124,7 @@ foreach ($computer in $ComputerName) {
     }
 
     # APPS INFO
-    if ($Apps -or $CompareApps) {
+    if ($Apps -or $compareApps) {
         try {
             $paths = @(
                 "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
@@ -114,13 +140,13 @@ foreach ($computer in $ComputerName) {
             $row.AppCount = $apps.Count
             Write-Log "$computer: App count = $($apps.Count)"
 
-            if ($Apps) {
-                $file = "InstalledApps_$computer.csv"
+            if ($Apps -or ($config.Apps.EnableExport -eq $true)) {
+                $file = Join-Path $outputDir "InstalledApps_$computer.csv"
                 $apps | Export-Csv $file -NoTypeInformation
                 Write-Log "$computer: App list exported to $file"
             }
 
-            if ($CompareApps) {
+            if ($compareApps) {
                 $appMatrix[$computer] = @{}
                 foreach ($app in $apps) {
                     $name = $app.DisplayName.Trim()
@@ -144,15 +170,15 @@ foreach ($computer in $ComputerName) {
 $report.Values | Format-Table -AutoSize
 
 # Export system report
-if ($ExportCsv) {
-    $file = "SystemReport_$timestamp.csv"
+if ($ExportCsv -or $enableCsv) {
+    $file = Join-Path $outputDir "SystemReport_$timestamp.csv"
     $report.Values | Export-Csv $file -NoTypeInformation
     Write-Log "System report exported to $file"
     Write-Host "System report exported to $file"
 }
 
 # Compare apps across servers
-if ($CompareApps) {
+if ($compareApps) {
     $allApps = $appMatrix.Values | ForEach-Object { $_.Keys } | Select-Object -Unique
     $comparison = @()
 
@@ -166,8 +192,8 @@ if ($CompareApps) {
 
     $comparison | Format-Table -AutoSize
 
-    if ($ExportCsv) {
-        $file = "AppComparison_$timestamp.csv"
+    if ($ExportCsv -or $enableCsv) {
+        $file = Join-Path $outputDir "AppComparison_$timestamp.csv"
         $comparison | Export-Csv $file -NoTypeInformation
         Write-Log "App comparison exported to $file"
         Write-Host "App comparison exported to $file"
@@ -175,8 +201,7 @@ if ($CompareApps) {
 }
 
 # Export HTML report
-if ($ExportHtml) {
-    $templatePath = ".\report-template.html"
+if ($ExportHtml -or $enableHtml) {
     $template = if (Test-Path $templatePath) {
         Get-Content $templatePath -Raw
     } else {
@@ -200,10 +225,5 @@ if ($ExportHtml) {
 
     $htmlTable = $report.Values | ConvertTo-Html -Fragment -PreContent "<h3>System Summary</h3>"
     $finalHtml = $template -replace "{{ReportTable}}", $htmlTable
-    $file = "SystemReport_$timestamp.html"
+    $file = Join-Path $outputDir "SystemReport_$timestamp.html"
     $finalHtml | Out-File $file -Encoding UTF8
-    Write-Log "HTML report saved to $file"
-    Write-Host "HTML report saved to $file"
-}
-
-Write-Log "🏁 Inventory script completed"
