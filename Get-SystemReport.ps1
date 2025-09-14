@@ -81,7 +81,7 @@ foreach ($computer in $ComputerName) {
                 Write-Log ($computer + ": Hotfix details exported to " + $file)
             }
         } catch {
-            Write-Warning "Hotfix query failed for $computer: $_"
+            Write-Warning "Hotfix query failed for ${computer}: $_"
             Write-Log ($computer + ": Hotfix query failed - " + $_)
             $row.HotfixCount = "Error"
         }
@@ -97,7 +97,7 @@ foreach ($computer in $ComputerName) {
             $row.LastBoot = $os.LastBootUpTime
             Write-Log ($computer + ": OS info collected")
         } catch {
-            Write-Warning "OS query failed for $computer: $_"
+            Write-Warning "OS query failed for ${computer}: $_"
             Write-Log ($computer + ": OS query failed - " + $_)
             $row.OSVersion = "Error"
         }
@@ -112,7 +112,7 @@ foreach ($computer in $ComputerName) {
             $row.BIOSReleaseDate = $bios.ReleaseDate
             Write-Log ($computer + ": BIOS info collected")
         } catch {
-            Write-Warning "BIOS query failed for $computer: $_"
+            Write-Warning "BIOS query failed for ${computer}: $_"
             Write-Log ($computer + ": BIOS query failed - " + $_)
             $row.BIOSVersion = "Error"
         }
@@ -130,7 +130,7 @@ foreach ($computer in $ComputerName) {
             $row.CPU = $cpu.Name
             Write-Log ($computer + ": Hardware info collected")
         } catch {
-            Write-Warning "Hardware query failed for $computer: $_"
+            Write-Warning "Hardware query failed for ${computer}: $_"
             Write-Log ($computer + ": Hardware query failed - " + $_)
             $row.Manufacturer = "Error"
         }
@@ -169,7 +169,7 @@ foreach ($computer in $ComputerName) {
             }
 
         } catch {
-            Write-Warning "App query failed for $computer: $_"
+            Write-Warning "App query failed for ${computer}: $_"
             Write-Log ($computer + ": App query failed - " + $_)
             $row.AppCount = "Error"
         }
@@ -197,7 +197,11 @@ if ($compareApps) {
     foreach ($app in $allApps) {
         $row = [ordered]@{ AppName = $app }
         foreach ($server in $ComputerName) {
-            $row[$server] = $appMatrix[$server][$app] ?? "Not Installed"
+            if ($appMatrix[$server].ContainsKey($app)) {
+                $row[$server] = $appMatrix[$server][$app]
+            } else {
+                 $row[$server] = "Not Installed"
+            }
         }
         $comparison += [PSCustomObject]$row
     }
