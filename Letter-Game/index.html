@@ -75,8 +75,12 @@
   </div>
 
   <!-- Sound effects -->
-  <audio id="correct-sound" src="https://www.soundjay.com/button/sounds/button-3.mp3"></audio>
-  <audio id="wrong-sound" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
+  <audio id="correct-sound" preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7e0b6c6c3b.mp3?filename=correct-answer-2-93630.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="wrong-sound" preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3a3b7f6c3b.mp3?filename=womp-womp-93629.mp3" type="audio/mpeg">
+  </audio>
 
   <script>
     let currentLetter = '';
@@ -125,9 +129,7 @@
       }, 1000);
 
       resetTimer = setTimeout(() => {
-        score = 0;
-        scoreDisplay.textContent = 'Score: 0';
-        messageDisplay.textContent = '⏱ Time’s up! Score reset.';
+        resetScore('⏱ Time’s up! Score reset.');
         showNewLetter();
       }, countdownDuration);
     }
@@ -138,6 +140,12 @@
       scoreDisplay.textContent = 'Score: 0';
       countdownDuration = parseInt(timerSelect.value);
       showNewLetter();
+    }
+
+    function resetScore(message) {
+      score = 0;
+      scoreDisplay.textContent = 'Score: 0';
+      messageDisplay.textContent = message;
     }
 
     function toggleVolume() {
@@ -163,8 +171,9 @@
         if (soundOn) correctSound.play();
         showNewLetter();
       } else {
-        messageDisplay.textContent = `Wrong! You pressed "${pressedKey}"`;
         if (soundOn) wrongSound.play();
+        resetScore(`Wrong! You pressed "${pressedKey}"`);
+        showNewLetter();
       }
     });
   </script>
