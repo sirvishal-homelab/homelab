@@ -45,6 +45,12 @@
       font-weight: bold;
       color: #d00;
     }
+
+    #countdown {
+      font-size: 24px;
+      margin-top: 10px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -62,9 +68,15 @@
       </select>
     </div>
     <button id="start-btn">Start Game</button>
+    <button id="volume-btn">🔊 Sound On</button>
     <p id="score">Score: 0</p>
+    <p id="countdown">Time left: 0s</p>
     <p id="message"></p>
   </div>
+
+  <!-- Sound effects -->
+  <audio id="correct-sound" src="https://www.soundjay.com/button/sounds/button-3.mp3"></audio>
+  <audio id="wrong-sound" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
 
   <script>
     let currentLetter = '';
@@ -72,12 +84,19 @@
     let gameActive = false;
     let resetTimer;
     let countdownDuration = 5000;
+    let countdownInterval;
+    let timeLeft = 0;
+    let soundOn = true;
 
     const letterBox = document.getElementById('letter-box');
     const scoreDisplay = document.getElementById('score');
     const messageDisplay = document.getElementById('message');
     const startBtn = document.getElementById('start-btn');
     const timerSelect = document.getElementById('timer-select');
+    const countdownDisplay = document.getElementById('countdown');
+    const volumeBtn = document.getElementById('volume-btn');
+    const correctSound = document.getElementById('correct-sound');
+    const wrongSound = document.getElementById('wrong-sound');
 
     function getRandomLetter() {
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -88,11 +107,23 @@
       currentLetter = getRandomLetter();
       letterBox.textContent = currentLetter;
       messageDisplay.textContent = '';
-      resetCountdown();
+      startCountdown();
     }
 
-    function resetCountdown() {
+    function startCountdown() {
       clearTimeout(resetTimer);
+      clearInterval(countdownInterval);
+      timeLeft = countdownDuration / 1000;
+      countdownDisplay.textContent = `Time left: ${timeLeft}s`;
+
+      countdownInterval = setInterval(() => {
+        timeLeft--;
+        countdownDisplay.textContent = `Time left: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
       resetTimer = setTimeout(() => {
         score = 0;
         scoreDisplay.textContent = 'Score: 0';
@@ -109,11 +140,17 @@
       showNewLetter();
     }
 
+    function toggleVolume() {
+      soundOn = !soundOn;
+      volumeBtn.textContent = soundOn ? '🔊 Sound On' : '🔇 Sound Off';
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       startBtn.addEventListener('click', startGame);
       timerSelect.addEventListener('change', () => {
         countdownDuration = parseInt(timerSelect.value);
       });
+      volumeBtn.addEventListener('click', toggleVolume);
     });
 
     document.addEventListener('keydown', (e) => {
@@ -123,9 +160,11 @@
       if (pressedKey === currentLetter) {
         score++;
         scoreDisplay.textContent = `Score: ${score}`;
+        if (soundOn) correctSound.play();
         showNewLetter();
       } else {
         messageDisplay.textContent = `Wrong! You pressed "${pressedKey}"`;
+        if (soundOn) wrongSound.play();
       }
     });
   </script>
