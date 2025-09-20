@@ -34,9 +34,10 @@
       background-color: #e0e0e0;
     }
 
-    button {
+    button, select {
       padding: 10px 20px;
       font-size: 16px;
+      margin: 10px;
       cursor: pointer;
     }
 
@@ -51,6 +52,15 @@
     <h1>Letter Game</h1>
     <p>Press the correct key when the letter appears!</p>
     <div id="letter-box">?</div>
+    <div>
+      <label for="timer-select">Reset timer:</label>
+      <select id="timer-select">
+        <option value="1000">1s</option>
+        <option value="5000" selected>5s</option>
+        <option value="10000">10s</option>
+        <option value="15000">15s</option>
+      </select>
+    </div>
     <button id="start-btn">Start Game</button>
     <p id="score">Score: 0</p>
     <p id="message"></p>
@@ -60,11 +70,14 @@
     let currentLetter = '';
     let score = 0;
     let gameActive = false;
+    let resetTimer;
+    let countdownDuration = 5000;
 
     const letterBox = document.getElementById('letter-box');
     const scoreDisplay = document.getElementById('score');
     const messageDisplay = document.getElementById('message');
     const startBtn = document.getElementById('start-btn');
+    const timerSelect = document.getElementById('timer-select');
 
     function getRandomLetter() {
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -75,17 +88,32 @@
       currentLetter = getRandomLetter();
       letterBox.textContent = currentLetter;
       messageDisplay.textContent = '';
+      resetCountdown();
+    }
+
+    function resetCountdown() {
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => {
+        score = 0;
+        scoreDisplay.textContent = 'Score: 0';
+        messageDisplay.textContent = '⏱ Time’s up! Score reset.';
+        showNewLetter();
+      }, countdownDuration);
     }
 
     function startGame() {
       score = 0;
       gameActive = true;
       scoreDisplay.textContent = 'Score: 0';
+      countdownDuration = parseInt(timerSelect.value);
       showNewLetter();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       startBtn.addEventListener('click', startGame);
+      timerSelect.addEventListener('change', () => {
+        countdownDuration = parseInt(timerSelect.value);
+      });
     });
 
     document.addEventListener('keydown', (e) => {
