@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Letter Flash</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      text-align: center;
+      padding: 20px;
+    }
+    #letter {
+      font-size: 10em;
+      margin: 40px 0;
+      animation: bounce 0.5s;
+    }
+    @keyframes bounce {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    #scoreboard {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+    #controls {
+      margin-bottom: 20px;
+    }
+    select, button {
+      font-size: 1em;
+      padding: 5px 10px;
+      margin: 5px;
+      background-color: #00ffcc;
+      color: #121212;
+      border: none;
+      border-radius: 5px;
+    }
+    #timer-display {
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Letter Flash</h1>
+
+  <div id="letter">A</div>
+
+  <div id="scoreboard">
+    Score: <span id="score">0</span> |
+    Streak: <span id="streak">0</span>
+  </div>
+
+  <div id="controls">
+    <label for="timer-select">⏱ Timer:</label>
+    <select id="timer-select">
+      <option value="1">1s</option>
+      <option value="5">5s</option>
+      <option value="10">10s</option>
+      <option value="15" selected>15s</option>
+    </select>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="timer-display">
+    Time left: <span id="time">15</span>s
+  </div>
+
+  <script>
+    let score = 0;
+    let streak = 0;
+    let currentLetter = '';
+    let timerInterval;
+    let timeLeft;
+
+    function getRandomLetter() {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      return letters[Math.floor(Math.random() * letters.length)];
+    }
+
+    function showLetter() {
+      currentLetter = getRandomLetter();
+      document.getElementById('letter').textContent = currentLetter;
+      document.getElementById('letter').style.animation = 'bounce 0.5s';
+      startTimer(); // Start timer with each new letter
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      const selectedTime = parseInt(document.getElementById("timer-select").value);
+      timeLeft = selectedTime;
+      document.getElementById("time").textContent = timeLeft;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time").textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          resetScore("⏰ Time's up! Score reset.");
+          showLetter(); // Show next letter even after timeout
+        }
+      }, 1000);
+    }
+
+    function resetScore(message) {
+      score = 0;
+      streak = 0;
+      document.getElementById("score").textContent = score;
+      document.getElementById("streak").textContent = streak;
+      alert(message);
+    }
+
+    function startGame() {
+      score = 0;
+      streak = 0;
+      document.getElementById("score").textContent = score;
+      document.getElementById("streak").textContent = streak;
+      showLetter();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toUpperCase() === currentLetter) {
+        score++;
+        streak++;
+        document.getElementById("score").textContent = score;
+        document.getElementById("streak").textContent = streak;
+        showLetter(); // triggers new timer
+      } else {
+        clearInterval(timerInterval);
+        resetScore("❌ Wrong key! Score reset.");
+        showLetter(); // continue 
