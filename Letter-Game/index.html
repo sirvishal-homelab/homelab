@@ -84,6 +84,10 @@
       showNewLetter();
     }
 
+    document.addEventListener('DOMContentLoaded', () => {
+      startBtn.addEventListener('click', startGame);
+    });
+
     document.addEventListener('keydown', (e) => {
       if (!gameActive) return;
 
@@ -96,8 +100,6 @@
         messageDisplay.textContent = `Wrong! You pressed "${pressedKey}"`;
       }
     });
-
-    startBtn.addEventListener('click', startGame);
   </script>
 </body>
 </html>
