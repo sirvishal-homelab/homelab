@@ -30,6 +30,7 @@ inside each day), and pushes that image to Terminus so the device can show it.
 │   ├── 09-references.md       Every source used, and what still needs reading
 │   ├── 10-roadmap.md          Suggested design-first sequence
 │   ├── 11-prototype-code-tour.md  Map of the prototype code with key excerpts
+│   ├── 12-delivery-pipeline.md  Code to server: Claude Code, CI, GHCR, pull deploy (proposed)
 │   ├── decisions/             Architecture Decision Records (ADR-0001 ...)
 │   └── assets/                Rendered sample screens and v1 UI screenshots
 ├── app/                       FUTURE: the calendar application (proposed structure only)
