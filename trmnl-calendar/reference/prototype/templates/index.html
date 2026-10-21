@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calendar for TRMNL</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="top">
+    <h1>Calendar for TRMNL</h1>
+    <p class="sub">Events you add here are drawn onto the screen image your device fetches.</p>
+  </header>
+
+  <main>
+    <div class="col-main">
+      <section aria-labelledby="preview-h">
+        <div class="section-head">
+          <h2 id="preview-h">What the screen shows</h2>
+          <div class="tabs" role="radiogroup" aria-label="Screen layout">
+            {% for v in views %}
+            <label class="tab"><input type="radio" name="view" value="{{ v }}" {% if loop.first %}checked{% endif %}><span>{{ v|capitalize }}</span></label>
+            {% endfor %}
+          </div>
+        </div>
+        <figure class="device">
+          <img id="preview" src="{{ url_for('calendar_png') }}?view=split" width="800" height="480" alt="Preview of the calendar image sent to the TRMNL screen">
+        </figure>
+        <div class="urlrow">
+          <label for="imgurl">Image address for Terminus</label>
+          <div class="urlfield">
+            <input id="imgurl" type="text" readonly value="">
+            <button type="button" id="copy" class="secondary">Copy address</button>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="events-h" class="events-section">
+        <div class="section-head">
+          <h2 id="events-h">Your events</h2>
+          <label class="check"><input type="checkbox" id="showPast"> Show past events</label>
+        </div>
+        <div id="events" data-time-format="{{ time_format }}" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <aside class="col-side">
+      <h2 id="form-title">Add an event</h2>
+      <form id="form" novalidate>
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" maxlength="120" required autocomplete="off">
+          <p class="err" data-for="title"></p>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="date">Date</label>
+            <input id="date" name="date" type="date" required>
+            <p class="err" data-for="date"></p>
+          </div>
+          <div class="field">
+            <label for="end_date">Ends on <span class="opt">(optional)</span></label>
+            <input id="end_date" name="end_date" type="date">
+            <p class="err" data-for="end_date"></p>
+          </div>
+        </div>
+
+        <label class="check"><input type="checkbox" id="all_day" name="all_day"> All day</label>
+
+        <div class="row2" id="times">
+          <div class="field">
+            <label for="start_time">Starts</label>
+            <input id="start_time" name="start_time" type="time">
+            <p class="err" data-for="start_time"></p>
+          </div>
+          <div class="field">
+            <label for="end_time">Ends</label>
+            <input id="end_time" name="end_time" type="time">
+            <p class="err" data-for="end_time"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="location">Location <span class="opt">(optional)</span></label>
+          <input id="location" name="location" type="text" maxlength="120" autocomplete="off">
+          <p class="err" data-for="location"></p>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="repeat">Repeats</label>
+            <select id="repeat" name="repeat">
+              <option value="none">Never</option>
+              <option value="daily">Every day</option>
+              <option value="weekly">Every week</option>
+              <option value="monthly">Every month</option>
+              <option value="yearly">Every year</option>
+            </select>
+          </div>
+          <div class="field" id="untilField" hidden>
+            <label for="repeat_until">Until <span class="opt">(optional)</span></label>
+            <input id="repeat_until" name="repeat_until" type="date">
+            <p class="err" data-for="repeat_until"></p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="save">Save event</button>
+          <button type="button" id="cancel" class="secondary" hidden>Cancel edit</button>
+        </div>
+        <p id="status" role="status"></p>
+      </form>
+    </aside>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

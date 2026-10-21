@@ -1,0 +1,12 @@
+services:
+  calendar:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      TZ: America/New_York      # your IANA timezone, e.g. Europe/London
+      TIME_FORMAT: "12"         # "12" or "24"
+      WEEK_START: sun           # "sun" or "mon"
+    volumes:
+      - ./data:/data
