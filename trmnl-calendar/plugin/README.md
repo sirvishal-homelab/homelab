@@ -1,36 +1,10 @@
-# plugin/ - Terminus extension variant (FUTURE, optional)
+# plugin/ - Terminus extension variant (NOT PLANNED)
 
-Empty on purpose. This directory exists only if the project chooses **option B** in
-`docs/05-terminus-integration.md`: let Terminus poll the app's JSON on a schedule and draw
-the screen with a Liquid template, instead of the app pushing a finished image.
+Decision (2026-10-25, ADR-0003 accepted): the app pushes a rendered image to Terminus's Screens API. A native
+Terminus extension (option B in `docs/05-terminus-integration.md`) is not needed and **this directory stays
+empty**; no code will be added here.
 
-Whether this is built at all depends on OQ-12 and on the Terminus spike (phase 1).
-
-## What it would contain (proposal)
-
-```
-plugin/
-├── README.md
-├── extension/                     Terminus extension definition
-│   │                              (exact file format: see Terminus doc/extensions.adoc;
-│   │                               NOT yet reviewed in detail, so no format is assumed here)
-│   ├── templates/                 one Liquid template per layout (week, twoweek, month, agenda)
-│   └── schedule                   polling interval and unit
-├── docs/
-│   ├── install.md                 how to add it to a Terminus instance
-│   └── data-contract.md           shape of /api/upcoming that the templates rely on
-└── tests/
-    └── render-check/              fixtures + a way to preview templates against sample JSON
-```
-
-## Interaction with the app
-
-- The app exposes `/api/upcoming` (exists in the prototype) and would also need to expose
-  **sections** and **settings** in that payload so templates can honour them.
-- Layout logic would exist twice (Pillow in the app, Liquid here) unless the Pillow path is
-  retired. That duplication is the main cost of this option.
-
-## Decision gate
-
-Do not scaffold anything here until the user answers OQ-12 and `docs/05` unknowns T-7 is
-resolved (can an extension poll a private LAN URL?).
+The only related experiment is **E-1** in ADR-0003: a Terminus *poll extension* that fetches the app's
+`/calendar.png` as an image source. It needs no files in this repository (it is configured in the Terminus
+UI) and is trialled after the push slice. If E-1 changes the decision, a new ADR says what, if anything,
+belongs here.

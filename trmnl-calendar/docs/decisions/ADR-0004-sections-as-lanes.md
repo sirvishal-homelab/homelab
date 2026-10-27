@@ -19,3 +19,7 @@ no per-section styling yet.
 ## Alternatives considered
 Tags/categories with colours (no colour on 1-bit); free-form per-cell text boxes (harder to
 structure and render).
+
+## Addendum 2026-10-25
+Sections are called "categories" in the user interface. A section may be placed as a `lane` (default)
+or as a `banner` strip at the top of the day (for holidays and similar whole-day items). See `03`.

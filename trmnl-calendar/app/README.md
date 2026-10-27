@@ -1,63 +1,65 @@
-# app/ - the calendar application (FUTURE)
+# app/ - the calendar application (FUTURE, structure settled 2026-10-27)
 
-Empty on purpose. Production code starts here only after `docs/` is agreed
-(see `docs/10-roadmap.md`). Everything below is a **proposal** to review, including the
-language: Python is what the prototype used, not a decision (OQ-11).
-
-## Proposed structure
+Empty on purpose until the design in `docs/` is signed off. This is the **agreed structure**, not code.
+Stack: ADR-0009 (Python 3.12, FastAPI, SQLite, Pillow, HTMX). Paths are relative to `app/`.
 
 ```
 app/
 ├── README.md
-├── pyproject.toml                 dependencies, tooling (format, lint, test)
-├── Dockerfile                     single process, bundled font, non-root user
-├── docker-compose.yml             app + volume; optional Terminus example
-├── .env.example                   every environment variable, documented
-├── fonts/                         bundled font files and their licences
-├── migrations/                    numbered, forward-only SQL (0001_init.sql, ...)
+├── pyproject.toml                  dependencies, ruff and pytest settings
+├── uv.lock                         committed lock file
+├── Dockerfile                      multi-stage, non-root, bundled fonts, HEALTHCHECK
+├── .dockerignore  .env.example     every environment variable, documented
+├── deploy/
+│   ├── compose.yml                 the calendar's compose project for the server (volume /data)
+│   └── README.md                   pull, update, roll back, restore (manual; stage 1 of ADR-0008)
 ├── src/trmnl_calendar/
-│   ├── config.py                  env parsing; secrets and infrastructure only
-│   ├── domain/
-│   │   ├── events.py              Event model, validation
-│   │   ├── recurrence.py          expansion, exceptions (if approved)
-│   │   ├── sections.py            Section model, lane rules
-│   │   └── settings.py            declarative settings schema (key, type, default, choices)
+│   ├── main.py                     app factory, startup checks (fonts, single worker, migrations)
+│   ├── config.py                   environment: infrastructure and secrets only
+│   ├── domain/                     pure; imports nothing from the other packages
+│   │   ├── models.py               Event, Category, Person, View, Occurrence (typed)
+│   │   ├── validation.py           the rules in docs/03
+│   │   ├── recurrence.py           occurrences(events, exceptions, window)
+│   │   ├── filtering.py            weekday, category and person filters, ordering
+│   │   └── settings.py             declarative option schemas (drive validation and forms)
 │   ├── storage/
-│   │   ├── db.py                  connection, migration runner
-│   │   └── repositories.py        events, sections, settings access
-│   ├── render/
-│   │   ├── canvas.py              fonts, scale, 1-bit output
-│   │   ├── lanes.py               weights, visibility, hide-empty
-│   │   ├── registry.py            layout registration by name
-│   │   └── layouts/               week.py, twoweek.py, month.py, agenda.py, split.py
+│   │   ├── db.py                   connection, pragmas (WAL, foreign keys, busy timeout)
+│   │   ├── migrate.py              runner and pre-migration backup
+│   │   ├── migrations/             0001_baseline.sql, 0002_...  (forward-only)
+│   │   ├── repositories/           events categories people views push_state idempotency
+│   │   └── backup.py               nightly copy, retention, restore helper
+│   ├── render/                     pure; no database, no clock
+│   │   ├── fonts/                  bundled DejaVu Sans Condensed + LICENSE + checksums
+│   │   ├── profile.py  scene.py  text.py  raster.py  quantise.py  png.py  fit.py
+│   │   ├── layouts/                registry.py week_lanes.py twoweek_list.py (more later)
+│   │   └── templates.py            Week - lanes, Two weeks - list, Blank
 │   ├── publish/
-│   │   ├── base.py                Publisher interface
-│   │   ├── terminus.py            Screens API client
-│   │   └── worker.py              debounce + schedule, status
+│   │   ├── base.py                 Publisher interface
+│   │   ├── terminus.py             the only file that knows Terminus's API
+│   │   ├── push.py                 render, hash, send, record
+│   │   ├── scheduler.py            one loop: debounce, 15-minute check, startup
+│   │   └── cache.py                render cache: hash to PNG, small LRU
 │   └── web/
-│       ├── app.py                 app factory
-│       ├── routes_events.py
-│       ├── routes_sections.py
-│       ├── routes_settings.py
-│       ├── routes_push.py
-│       ├── routes_image.py
-│       ├── templates/
-│       └── static/
-└── tests/
-    ├── fixtures/                  fixed events, sections, settings
-    ├── snapshots/                 expected PNGs for a fixed "now"
-    ├── test_recurrence.py
-    ├── test_validation.py
-    ├── test_render_snapshots.py
-    ├── test_api.py
-    └── test_terminus_client.py    against a fake Terminus
+│       ├── api/                    routers: events categories people calendar views display system
+│       ├── pages.py  errors.py  deps.py   (who-am-I cookie, idempotency, If-Match)
+│       ├── templates/              Jinja pages (mobile first)
+│       └── static/                 css, small script (drafts, preview), vendored htmx
+└── tests/                          see docs/18-test-strategy.md
+    ├── unit/  snapshots/  integration/  contract/fake_terminus/  e2e/  fixtures/
 ```
 
-## Rules this structure is trying to enforce
+## Rules this structure enforces
 
-1. `domain/` imports nothing from `web/`, `render/` or `publish/`.
-2. `render/` takes plain data in and returns an image; it does not touch the database.
-3. `publish/terminus.py` is the only file that knows Terminus's API.
-4. Adding a layout means adding a file in `render/layouts/` and registering it.
-5. Settings are declared once (`domain/settings.py`) and drive validation, API and UI.
-6. Environment variables never hold user-editable layout choices; the database does.
+1. `domain/` and `render/` import nothing from `web/`, `storage/` or `publish/`. A test checks it.
+2. `render/` takes plain data and a fixed `now`; it never reads the clock or the database.
+3. `publish/terminus.py` is the only code that knows Terminus's API.
+4. A new layout is one file in `render/layouts/` plus registration; a new template is one entry in
+   `templates.py`. Neither needs a migration, an API change or a UI change.
+5. Options are declared once (`domain/settings.py`, each layout's schema) and drive validation, API, forms.
+6. Environment variables hold infrastructure and secrets only; everything the user edits is in the database.
+
+## Outside this folder
+
+- `homelab/infra/terminus/`: the Terminus compose file, a secrets-free `.env.example` and a README
+  (`docs/13-infrastructure.md`, P-9).
+- `homelab/.github/workflows/`: CI, filtered to `trmnl-calendar/**` (`docs/12-delivery-pipeline.md`).

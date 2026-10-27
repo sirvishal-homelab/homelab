@@ -10,7 +10,7 @@ Status column refers to the prototype in `reference/prototype/`:
 |----|-------------|-----------|
 | FR-1 | Add, edit and delete events through a web UI. | Done (v1 UI) |
 | FR-2 | Event fields: title, date, optional end date (multi-day), all-day or start/end time, location, repeat rule, section. | Done except section in UI |
-| FR-3 | Repeat rules: none, daily, weekly, monthly, yearly, optional end date. | Done |
+| FR-3 | Repeat rules: none, daily, weekly (chosen weekdays), monthly, yearly; every N units; optional end date; skip a single occurrence. | Partly done (daily to yearly and end date; interval, weekdays and skips are new) |
 | FR-4 | Events are stored in a database and survive restarts and upgrades. | Done (SQLite) |
 | FR-5 | Render the calendar as a black-and-white PNG sized for the device. | Done |
 | FR-6 | Selectable layouts: week, two-week, month (and agenda variants). | Partial (renderer yes, no UI) |
