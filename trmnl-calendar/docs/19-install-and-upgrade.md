@@ -52,13 +52,16 @@ curl -s http://localhost:8080/healthz   # expect JSON with "ok"
 docker compose logs --tail=50 calendar  # migrations applied, fonts found, one worker
 ```
 
-Then:
+What to expect after slice 0: the **only** URL is `/healthz`. The base URL (`/`) returns
+`{"detail":"Not Found"}` because there are no pages yet; that is correct. The web page for adding
+events arrives in slice 1, the picture in slice 1, the push to Terminus in slice 4. Success now means:
 
-1. Open `http://<server>:8080/` on your phone. Add one test event.
-2. Pictures and push arrive in slices 1 and 4; until then `/healthz` is the check.
-3. In Terminus, make sure the playlist for the device contains only the calendar screen, and
-   that **Display Compatibility** stays on for the model (it removes 2-bit ghosting).
-4. Wait for the device's next refresh (it polls every 900 s) or trigger one.
+- `docker compose ps` shows `healthy`;
+- `http://<server-ip>:8080/healthz` from another device on the LAN returns `"status":"ok"`;
+- a file exists in the volume's `backups/` folder
+  (`docker compose exec calendar ls /data/backups`).
+
+Leave Terminus and the device as they are for now; nothing in them changes until slice 4.
 
 ## Upgrade
 
