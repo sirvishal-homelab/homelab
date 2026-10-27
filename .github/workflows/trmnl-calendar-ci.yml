@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # TODO: pin actions to commit SHAs (docs/12); Dependabot (github-actions) keeps them current.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -39,7 +39,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build image
         run: docker build -t trmnl-calendar:ci .
       - name: Run and check /healthz
