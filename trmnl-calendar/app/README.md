@@ -1,6 +1,7 @@
-# app/ - the calendar application (FUTURE, structure settled 2026-10-27)
+# app/ - the calendar application (structure settled 2026-10-27)
 
-Empty on purpose until the design in `docs/` is signed off. This is the **agreed structure**, not code.
+Design signed off 2026-10-27. **Slice 0 (foundations) is built**: `/healthz`, migrations, backups, font check,
+Dockerfile, compose, CI. Everything else below is the agreed structure for later slices.
 Stack: ADR-0009 (Python 3.12, FastAPI, SQLite, Pillow, HTMX). Paths are relative to `app/`.
 
 ```
@@ -63,3 +64,13 @@ app/
 - `homelab/infra/terminus/`: the Terminus compose file, a secrets-free `.env.example` and a README
   (`docs/13-infrastructure.md`, P-9).
 - `homelab/.github/workflows/`: CI, filtered to `trmnl-calendar/**` (`docs/12-delivery-pipeline.md`).
+
+## Develop
+
+```bash
+cd trmnl-calendar/app
+uv sync
+uv run ruff check . && uv run ruff format --check .
+uv run pytest
+DATA_DIR=./data uv run uvicorn --factory trmnl_calendar.main:app_factory --port 8080
+```

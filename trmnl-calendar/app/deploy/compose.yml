@@ -1,0 +1,18 @@
+# The calendar's compose project on the server (ADR-0008 stage 1: build from the clone).
+# Run from this folder:  docker compose build && docker compose up -d
+name: calendar
+services:
+  calendar:
+    build:
+      context: ..
+    image: trmnl-calendar:local
+    container_name: calendar
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    volumes:
+      - calendar-data:/data
+    # The image's HEALTHCHECK calls /healthz; `docker compose ps` shows "healthy".
+volumes:
+  calendar-data:

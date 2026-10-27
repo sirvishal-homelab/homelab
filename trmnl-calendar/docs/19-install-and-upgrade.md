@@ -1,7 +1,7 @@
 # 19 - Install and upgrade runbook (server, Docker)
 
-Status: **DRAFT, 2026-10-27.** The application does not exist yet (slice 0 is next), so these
-steps describe the agreed path (ADR-0008 stage 1: build on the server from a clone, manual
+Status: **DRAFT, 2026-10-27.** Slice 0 code exists (`/healthz`, migrations, backups) but has not
+yet been built or run on the server, so these steps describe the agreed path (ADR-0008 stage 1: build on the server from a clone, manual
 pull and update). Slice 0 must run every command here on the real server and correct this
 file. It will later be copied to `app/deploy/README.md`.
 
@@ -55,7 +55,7 @@ docker compose logs --tail=50 calendar  # migrations applied, fonts found, one w
 Then:
 
 1. Open `http://<server>:8080/` on your phone. Add one test event.
-2. Open `http://<server>:8080/render/current.png` and check the picture.
+2. Pictures and push arrive in slices 1 and 4; until then `/healthz` is the check.
 3. In Terminus, make sure the playlist for the device contains only the calendar screen, and
    that **Display Compatibility** stays on for the model (it removes 2-bit ghosting).
 4. Wait for the device's next refresh (it polls every 900 s) or trigger one.
@@ -70,7 +70,7 @@ git -C /root/homelab rev-parse --short HEAD
 docker compose images
 
 # 2. Back up the database (the app also does this before a migration)
-docker compose exec calendar python -m trmnl_calendar.storage.backup --now
+docker compose exec calendar python -m trmnl_calendar.storage.backup --now   # writes /data/backups/calendar-*-manual.db
 #    Or, without the app: docker run --rm -v calendar-data:/data -v "$PWD":/out alpine \
 #        sh -c 'cp /data/calendar.db /out/calendar-$(date +%F-%H%M).db'
 
@@ -135,5 +135,5 @@ the model up by name, so it survives a changed id.
 
 ## Not verified yet
 
-Every command above for the calendar app (the app is unwritten), `sparse-checkout` on the
+Every command above for the calendar app (the image has not been built yet), the `/render/current.png` URL (slice 1), `sparse-checkout` on the
 server's git version, the backup command name, and the rollback path. Slice 0 owns these.

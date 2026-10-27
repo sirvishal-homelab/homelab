@@ -1,0 +1,50 @@
+name: trmnl-calendar CI
+on:
+  pull_request:
+    paths: ["trmnl-calendar/app/**", ".github/workflows/trmnl-calendar-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["trmnl-calendar/app/**", ".github/workflows/trmnl-calendar-ci.yml"]
+permissions:
+  contents: read
+defaults:
+  run:
+    working-directory: trmnl-calendar/app
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: pin actions to commit SHAs (docs/12); Dependabot (github-actions) keeps them current.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install uv
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uv-lock-generated-by-ci
+          path: trmnl-calendar/app/uv.lock
+          if-no-files-found: ignore
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t trmnl-calendar:ci .
+      - name: Run and check /healthz
+        run: |
+          docker run -d --name cal -p 8080:8080 trmnl-calendar:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8080/healthz && ok=1 && break
+            sleep 2
+          done
+          docker logs cal
+          test "${ok:-0}" = 1
+          docker exec cal python -m trmnl_calendar.storage.backup --now
+          docker exec cal ls /data/backups
+          docker inspect --format '{{.Config.User}}' cal | grep -qx app
