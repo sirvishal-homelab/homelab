@@ -1,7 +1,7 @@
 # 19 - Install and upgrade runbook (server, Docker)
 
-Status: **DRAFT, 2026-10-27.** Slice 0 code exists (`/healthz`, migrations, backups) but has not
-yet been built or run on the server, so these steps describe the agreed path (ADR-0008 stage 1: build on the server from a clone, manual
+Status: **DRAFT, 2026-10-27.** Slice 0 code exists (`/healthz`, migrations, backups); CI builds the image and
+checks `/healthz` and the backup command, but it has not yet been run on the server, so these steps describe the agreed path (ADR-0008 stage 1: build on the server from a clone, manual
 pull and update). Slice 0 must run every command here on the real server and correct this
 file. It will later be copied to `app/deploy/README.md`.
 
@@ -135,5 +135,5 @@ the model up by name, so it survives a changed id.
 
 ## Not verified yet
 
-Every command above for the calendar app (the image has not been built yet), the `/render/current.png` URL (slice 1), `sparse-checkout` on the
+Every command above for the calendar app (CI built and ran the image; the server has not), the `/render/current.png` URL (slice 1), `sparse-checkout` on the
 server's git version, the backup command name, and the rollback path. Slice 0 owns these.

@@ -49,8 +49,11 @@ jobs:
             curl -fsS http://127.0.0.1:8080/healthz && ok=1 && break
             sleep 2
           done
-          docker logs cal 2>&1 | tail -30 | tr '\n' '~' | sed 's/^/::error title=container log::/'
-          test "${ok:-0}" = 1
+          docker logs cal
+          if [ "${ok:-0}" != 1 ]; then
+            echo "::error title=container log::$(docker logs cal 2>&1 | tail -30 | tr '\n' '~')"
+            exit 1
+          fi
           docker exec cal python -m trmnl_calendar.storage.backup --now
           docker exec cal ls /data/backups
           docker inspect --format '{{.Config.User}}' cal | grep -qx app
