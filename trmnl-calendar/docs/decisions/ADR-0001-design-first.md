@@ -1,5 +1,5 @@
 # ADR-0001: Design first; the prototype is reference only
-Status: Proposed
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-20
 
 ## Context

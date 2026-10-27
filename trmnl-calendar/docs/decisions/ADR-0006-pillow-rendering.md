@@ -1,5 +1,5 @@
 # ADR-0006: Render server-side with Pillow to a grayscale PNG in two phases
-Status: **Proposed (revised 2026-10-27)**
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-20
 
 ## Context

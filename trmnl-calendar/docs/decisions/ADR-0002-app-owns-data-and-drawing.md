@@ -1,5 +1,5 @@
 # ADR-0002: Separate calendar app that owns data and drawing; Terminus is delivery
-Status: Proposed
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-20
 
 ## Context

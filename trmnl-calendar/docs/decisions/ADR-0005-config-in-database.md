@@ -1,5 +1,5 @@
 # ADR-0005: Configuration lives in the database; environment holds secrets and seeds defaults
-Status: Proposed
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-20
 
 ## Context
