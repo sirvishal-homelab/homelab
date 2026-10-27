@@ -1,5 +1,5 @@
 # ADR-0009: Python 3.12 with FastAPI, server-rendered pages and no build step
-Status: **Proposed** (language confirmed by the owner, A-2; framework and tooling are my recommendation)
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-27
 
 ## Context

@@ -1,5 +1,5 @@
 # ADR-0007: SQLite, one application process, publisher state in the database
-Status: **Proposed (revised 2026-10-25)**
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-20
 
 ## Context

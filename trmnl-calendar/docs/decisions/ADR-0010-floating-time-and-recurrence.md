@@ -1,5 +1,5 @@
 # ADR-0010: Floating local time, clamped monthly recurrence, skip exceptions
-Status: **Proposed** (needs owner confirmation of the clamp rule)
+Status: **Accepted 2026-10-27 by the owner** (design sign-off)
 Date: 2026-10-25
 
 ## Context
