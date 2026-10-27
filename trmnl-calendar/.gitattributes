@@ -1,0 +1,5 @@
+# Keep line endings LF so shell scripts and Dockerfiles work on Linux
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.svg text eol=lf

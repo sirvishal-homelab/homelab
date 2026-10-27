@@ -24,16 +24,22 @@ inside each day), and pushes that image to Terminus so the device can show it.
 │   ├── 03-data-model.md       ER diagram, tables, settings, migrations
 │   ├── 04-rendering-design.md Layout engine, section lanes, wireframes, sample images
 │   ├── 05-terminus-integration.md  What is known/unknown about Terminus, options compared
-│   ├── 06-app-api.md          HTTP API (existing and planned)
+│   ├── 06-app-api.md          HTTP API (proposed v1)
 │   ├── 07-ui-design.md        Editor UI information architecture and wireframe
 │   ├── 08-open-questions-and-risks.md
 │   ├── 09-references.md       Every source used, and what still needs reading
-│   ├── 10-roadmap.md          Suggested design-first sequence
+│   ├── 10-roadmap.md          Phases and vertical slices
 │   ├── 11-prototype-code-tour.md  Map of the prototype code with key excerpts
 │   ├── 12-delivery-pipeline.md  Code to server: Claude Code, CI, GHCR, pull deploy (proposed)
+│   ├── 13-infrastructure.md   Host, containers, backups, rebuild runbook (draft)
+│   ├── 14-terminus-spike-log.md  Evidence resolving T-1..T-9 (raw log in docs/spikes/)
+│   ├── 15-owner-requirements-views-and-manage.md  Views, people, mobile-first manage (captured)
+│   ├── 16-layout-options.md   1-week and 2-week layout mock-ups and recommendation
+│   ├── 17-view-editor-and-recurrence.md  View editor, templates, recurring and multi-day events
+│   ├── 18-test-strategy.md    Test layers, fixtures, fake Terminus, CI gates
 │   ├── decisions/             Architecture Decision Records (ADR-0001 ...)
 │   └── assets/                Rendered sample screens and v1 UI screenshots
-├── app/                       FUTURE: the calendar application (proposed structure only)
+├── app/                       FUTURE: the calendar application (structure settled; no code yet)
 ├── plugin/                    FUTURE: Terminus extension variant (proposed structure only)
 └── reference/
     └── prototype/             Code written during the first session. Reference, not a base.

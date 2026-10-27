@@ -1,22 +1,45 @@
-# 10 - Suggested roadmap (design first)
+# 10 - Roadmap (design first, then vertical slices)
 
-No production code until phases 0 and 1 are agreed.
+Status 2026-10-27: phases 0 to 3 are written and await the owner's sign-off (phase 2). **No production code
+until sign-off.** Slice 0 can start the moment that happens.
 
 ```mermaid
 flowchart LR
-  P0["Phase 0<br/>Align with user<br/>answer OQ-1,2,3,11,12"] --> P1
-  P1["Phase 1<br/>Verify Terminus<br/>spike T-1 .. T-9"] --> P2
-  P2["Phase 2<br/>Finalise design<br/>ADRs, API spec, module interfaces"] --> P3
-  P3["Phase 3<br/>Test strategy<br/>snapshot images, contract tests"] --> P4
-  P4["Phase 4<br/>Build in vertical slices"]
+  P0["Phase 0 Align<br/>done"] --> P1["Phase 1 Verify Terminus<br/>done (docs/14)"]
+  P1 --> P2["Phase 2 Design<br/>written, awaiting sign-off"]
+  P2 --> P3["Phase 3 Test strategy<br/>written (docs/18)"]
+  P3 --> P4["Phase 4 Build in slices"]
 ```
 
-| Phase | Output | Done when |
-|-------|--------|-----------|
-| 0 Align | Answers to blocking questions recorded in `08`. | User confirms device, Terminus setup, stack, option A vs B. |
-| 1 Verify | A short spike log (curl transcripts or a throwaway script) updating `05` rows to High confidence. | T-1 to T-6 resolved with evidence. |
-| 2 Design | ADRs accepted; `02`, `03`, `04`, `06` revised; folder structure confirmed in `app/README.md`. | User signs off. |
-| 3 Test strategy | Written plan: fixture dataset, fixed-`now` image snapshots, recurrence unit tests, a fake Terminus for contract tests. | Plan reviewed. |
-| 4 Build | Vertical slices, each demoable: (1) events + image, (2) sections + layouts, (3) settings, (4) push, (5) polish. | Per-slice acceptance in `01`. |
+| Phase | Output | State |
+|-------|--------|-------|
+| 0 Align | Blocking questions answered (`08`, `15`) | Done |
+| 1 Verify | Spike log; `05` updated; ADR-0003 accepted with review gate E-1 | Done |
+| 2 Design | `02`, `03`, `04`, `06`, `app/README.md`, ADRs 0003 to 0010 | Written; **needs sign-off** |
+| 3 Test strategy | `18` | Written |
+| 4 Build | Slices below | Not started |
 
-Suggested slice order rationale: slices 1-3 need no Terminus; slice 4 depends on phase 1.
+## Slices (each demoable; each ends with a trial on the real panel or phone)
+
+| Slice | Content | Demo (done when) | Needs Terminus |
+|-------|---------|------------------|----------------|
+| 0 Foundations | `app/` skeleton, Dockerfile with bundled fonts, `/healthz`, migration runner and baseline, CI (stage 1 of ADR-0008), `deploy/compose.yml`, backup job | Container builds in CI, runs on the server, `/healthz` is green, a backup file appears | No |
+| 1 Events and the first image | Event create, edit, delete with undo (soft delete), recurrence (daily to yearly, every N, weekdays, nth weekday, skips), trips; the 2-bit PNG encoder; the **Week - lanes** layout; `/render/<hash>.png`; a plain page to add events | Add a repeating event and a trip; the week image matches the approved mock-up | No |
+| 2 Categories and people | Category manager (lanes and banner), people with labels and owner, "who am I", filters | Create "Outings", mark an owner, see badges | No |
+| 3 Views and the editor | Views table, templates, **Two weeks - list**, live native-size preview, fit check, active view | Build a Work-days view and watch the preview; wife builds one | No |
+| 4 Push | Terminus client (login cache, models by name, create or PATCH, 404 recovery), scheduler (debounce, 15-minute check, push only on change), status panel, "Push now", fake-Terminus contract tests | Edit an event on a phone; the panel changes within one check-in | **Yes** |
+| 4b Experiment E-1 | Stable `/calendar.png`; trial a Terminus poll extension against push; measures M1 to M5 | Results in ADR-0003; owner picks push, pull or both | Yes |
+| 5 Polish and operate | Mobile-first manage UI pass, glance view, home-screen icon, drafts and conflict warnings, export, backup restore drill, Beszel alert, optional shared password | The wife's trial passes; restore drill passes | Yes |
+
+Ordering rationale: slices 0 to 3 need no Terminus and can be tested fully off the device; slice 4 depends on
+the verified spike. The UI is built a little in each slice; slice 5 hardens it. Later candidates: more layouts
+as templates (Day rows, Agenda, Two weeks - lanes, Overview, Month), ICS import, "this and following" edits,
+several displays.
+
+## Gate checklist before slice 0
+
+1. Owner signs off ADRs 0003 to 0010 (or names changes).
+2. Server disk enlarged (`13`, P-7); DHCP leases set (P-1).
+3. Branch protection and secret scanning on in `homelab` (`12`); decision on what in `13` and `spikes/` stays
+   public.
+4. Open items RD-3 and RD-4 (`04`) get a short on-device test inside slice 1.

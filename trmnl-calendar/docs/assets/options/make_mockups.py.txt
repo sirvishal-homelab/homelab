@@ -1,0 +1,303 @@
+import datetime as dt, os
+from PIL import Image, ImageDraw, ImageFont
+W, H = 800, 480
+LV = (0, 85, 170, 255)
+FD = "/usr/share/fonts/truetype/dejavu/"
+def F(sz, b=False): return ImageFont.truetype(FD + ("DejaVuSansCondensed-Bold.ttf" if b else "DejaVuSansCondensed.ttf"), sz)
+START = dt.date(2026, 10, 25)            # a Sunday; today
+CATS = ["Events", "Work", "Lunch", "Dinner"]
+# (title, day offset, time, category, people, owner, span_days)
+EV = [
+ ("Dentist",0,"9:30a","Events",["A"],"A",1), ("Soup & sandwich",0,None,"Lunch",[],None,1), ("Pasta night",0,None,"Dinner",[],None,1),
+ ("Mum's birthday",1,None,"Events",["A","B"],None,1), ("Team stand-up",1,"10a","Work",["A"],"A",1), ("Project review",1,"2p","Work",["A"],"A",1), ("Tacos",1,None,"Dinner",[],None,1),
+ ("Piano lesson",2,"4p","Events",["B"],"B",1), ("Lunch with Sam",2,"12:30p","Lunch",["A","B"],None,1),
+ ("Bin day",3,None,"Events",[],None,1), ("Call plumber",3,"11a","Events",["A"],"A",1), ("Team stand-up",3,"10a","Work",["A"],"A",1),
+ ("Conference",4,None,"Work",["A"],"A",3), ("Pizza",4,None,"Dinner",[],None,1),
+ ("Book club",5,"7p","Events",["A","B"],None,1), ("Trick or treat",6,"6p","Events",["B"],"B",1), ("Chili night",6,None,"Dinner",[],None,1),
+ ("Rent due",8,None,"Events",[],None,1), ("Team stand-up",8,"10a","Work",["A"],"A",1),
+ ("Car service",9,"8a","Events",["A"],"A",1), ("Parent-teacher",10,"3:30p","Events",["A","B"],None,1), ("Team stand-up",10,"10a","Work",["A"],"A",1),
+ ("Kids dentist",11,"4p","Events",["B"],"B",1), ("Date night",12,"7p","Dinner",["A","B"],None,1),
+ ("Skating lesson",13,"10a","Events",["B"],"B",1), ("Brunch",13,"11:30a","Lunch",["A","B"],None,1),
+]
+HOL = {6: "Halloween", 7: "Clocks back"}
+def tkey(t):
+    if not t: return -1
+    h, m = t[:-1].split(":") if ":" in t else (t[:-1], "0")
+    h = int(h) % 12 + (12 if t[-1] == "p" else 0); return h * 60 + int(m)
+def day_events(off, cat=None):
+    out = []
+    for e in EV:
+        t, o, tm, c, ppl, own, span = e
+        if o <= off < o + span and (cat is None or c == cat):
+            out.append(dict(title=t, time=tm if off == o else None, cat=c, people=ppl, owner=own, day=off - o + 1, span=span, start=o))
+    return sorted(out, key=lambda x: (tkey(x["time"]), x["title"]))
+
+TRIPS = [("Visit Mom",5,None,"Events",["A","B"],None,4), ("Cabin trip",9,None,"Events",["A","B"],None,4)]
+MON = {10: "Oct", 11: "Nov"}
+def rng(off, span):
+    a = START + dt.timedelta(days=off); b = START + dt.timedelta(days=off + span - 1)
+    return f"{a.strftime('%b')} {a.day}-{b.day}" if a.month == b.month else f"{a.strftime('%b')} {a.day}-{b.strftime('%b')} {b.day}"
+def segments(week):
+    segs = []
+    for t, o, tm, c, ppl, own, span in EV:
+        if span <= 1: continue
+        a, b = max(o, week * 7), min(o + span - 1, week * 7 + 6)
+        if a <= b: segs.append(dict(title=t, a=a - week * 7, b=b - week * 7, cl=o < week * 7, cr=o + span - 1 > week * 7 + 6, people=ppl, owner=own, first=(o >= week * 7), start=o, span=span))
+    segs.sort(key=lambda z: (z["a"], -(z["b"] - z["a"]))); ends = []
+    for z in segs:
+        for li, en in enumerate(ends):
+            if z["a"] > en: ends[li] = z["b"]; z["lvl"] = li; break
+        else: ends.append(z["b"]); z["lvl"] = len(ends) - 1
+    return segs, len(ends)
+class C:
+    def __init__(s):
+        s.im = Image.new("L", (W, H), 255); s.d = ImageDraw.Draw(s.im); s.d.fontmode = "1"
+    def text(s, xy, t, f, fill=0, anchor="la"): s.d.text(xy, t, font=f, fill=fill, anchor=anchor)
+    def tw(s, t, f): return s.d.textlength(t, font=f)
+    def ell(s, t, f, mw):
+        if s.tw(t, f) <= mw: return t
+        while t and s.tw(t + "…", f) > mw: t = t[:-1]
+        return t.rstrip() + "…"
+    def wrap(s, t, f, mw, ml):
+        words, lines, cur = t.split(), [], ""
+        for w in words:
+            x = (cur + " " + w).strip()
+            if s.tw(x, f) <= mw: cur = x
+            else:
+                if cur: lines.append(cur)
+                cur = w
+        if cur: lines.append(cur)
+        if len(lines) > ml:
+            rest = " ".join(lines[ml - 1:]); lines = lines[:ml - 1] + [s.ell(rest, f, mw)]
+        return [s.ell(l, f, mw) for l in lines]
+    def dotted_h(s, x1, x2, y, step=3):
+        for x in range(int(x1), int(x2), step * 2): s.d.line((x, y, x + step - 1, y), fill=0)
+    def dotted_v(s, x, y1, y2, step=3):
+        for y in range(int(y1), int(y2), step * 2): s.d.line((x, y, x, y + step - 1), fill=0)
+    def glyph(s, x, y, cat, z=8):       # x,y top-left; z size
+        d = s.d
+        if cat == "Events": d.rectangle((x, y, x + z - 2, y + z - 2), fill=0)
+        elif cat == "Work": d.polygon([(x + z / 2 - .5, y), (x + z - 1, y + z - 1), (x, y + z - 1)], fill=0)
+        elif cat == "Lunch": d.ellipse((x, y, x + z - 1, y + z - 1), fill=0)
+        else: d.polygon([(x + z / 2 - .5, y), (x + z - 1, y + z / 2 - .5), (x + z / 2 - .5, y + z - 1), (x, y + z / 2 - .5)], fill=0)
+    def badges(s, x, y, e, right=False):   # boxed initials; owner filled grey. returns width used
+        lst = ([e["owner"]] if e["owner"] else []) + [p for p in e["people"] if p != e["owner"]]
+        w = 12 * len(lst) + (len(lst) - 1) * 1 if lst else 0
+        if right: x = x - w
+        for i, p in enumerate(lst):
+            bx = x + i * 13
+            s.d.rectangle((bx, y, bx + 11, y + 11), outline=0, fill=170 if p == e["owner"] else 255)
+            s.text((bx + 6, y + 10), p, F(10, True), anchor="ms")
+        return w
+    def save(s, name):
+        q = s.im.point(lambda v: min(range(4), key=lambda i: abs(LV[i] - v))).convert("P")
+        pal = []
+        for v in LV: pal += [v, v, v]
+        q.putpalette(pal + [0] * (768 - len(pal))); q.save(name, bits=2, optimize=True)
+        s.im.save(name.replace(".png", "_preview.png"))
+def label(e): return (e["time"] + " " if e["time"] else "") + e["title"]
+def title(c, t, right=None):
+    c.text((14, 8), t, F(22, True))
+    if right: c.text((W - 14, 14), right, F(11), anchor="ra")
+def footer(c, left=None):
+    if left: c.text((14, H - 6), left, F(11), anchor="ls")
+    c.text((W - 14, H - 6), "Updated 9:00 AM", F(11), anchor="rs")
+def legend(c, x, y):
+    for n in CATS:
+        c.glyph(x, y + 1, n); c.text((x + 12, y + 9), n, F(11), anchor="ls"); x += 14 + c.tw(n, F(11)) + 14
+def dayname(off): return (START + dt.timedelta(days=off)).strftime("%a")
+def daynum(off): return (START + dt.timedelta(days=off)).day
+
+# ---------- W1: 1 week, lanes (days across, categories down)
+def w1():
+    c = C(); m = 12; gw = 58; cw = (W - 2 * m - gw) // 7
+    title(c, "Oct 25 – 31, 2026", "Lanes: categories down, days across")
+    y0 = 44; c.d.line((m, y0 + 22, W - m, y0 + 22), fill=0, width=2)
+    hol_y = y0 + 24; lane_top = hol_y + 17; lane_bot = H - 22; lh = (lane_bot - lane_top) // 4
+    for i in range(7):
+        x = m + gw + i * cw
+        if i == 0: c.d.rectangle((x + 2, y0, x + cw - 2, y0 + 21), fill=170)
+        c.text((x + cw / 2, y0 + 16), f"{dayname(i)} {daynum(i)}", F(13, True), anchor="ms")
+        if i in HOL: c.d.rectangle((x + 2, hol_y, x + cw - 2, hol_y + 14), fill=170); c.text((x + cw / 2, hol_y + 12), HOL[i], F(11, True), anchor="ms")
+        if i: c.dotted_v(x, hol_y, lane_bot)
+    for li, cat in enumerate(CATS):
+        ty = lane_top + li * lh
+        c.dotted_h(m, W - m, ty)
+        c.glyph(m, ty + 6, cat); c.text((m + 11, ty + 14), cat, F(11, True), anchor="ls")
+        spans_done = set()
+        for i in range(7):
+            x = m + gw + i * cw; y = ty + 3
+            evs = day_events(i, cat)
+            multi = [e for e in evs if e["span"] > 1 and e["day"] == 1]
+            for e in multi:
+                n = min(e["span"], 7 - i); bx = x + 3; bw = n * cw - 6
+                c.d.rectangle((bx, y, bx + bw, y + 16), fill=170, outline=0)
+                c.text((bx + 5, y + 13), e["title"] + (" ▸" if e["start"] + e["span"] > 7 else ""), F(12, True), anchor="ls")
+                if e["owner"] or e["people"]: c.badges(bx + bw - 4, y + 3, e, right=True)
+            others = [e for e in evs if e["span"] == 1]
+            yy = y + (19 if any(z["span"] > 1 for z in evs) else 0)
+            shown = 0
+            for e in others:
+                bw_ = (12 * len(([e["owner"]] if e["owner"] else []) + [p for p in e["people"] if p != e["owner"]]) + 2)
+                lines = c.wrap(label(e), F(12), cw - 8 - bw_, 2)
+                need = 14 * len(lines)
+                if yy + need > ty + lh - 12 and shown < len(others) - 0 and e is not others[-1] or yy + need > ty + lh - 2:
+                    c.text((x + cw - 5, ty + lh - 4), f"+{len(others) - shown}", F(11, True), anchor="rs"); break
+                for k, l in enumerate(lines): c.text((x + 4, yy + 11 + k * 14), l, F(12), anchor="ls")
+                c.badges(x + cw - 4, yy + 1, e, right=True); yy += need + 3; shown += 1
+    c.dotted_h(m, W - m, lane_bot); footer(c); return c
+
+# ---------- W2: 1 week, days down, categories across
+def w2():
+    c = C(); m = 12; dw = 76; cw = (W - 2 * m - dw) // 4
+    title(c, "Oct 25 – 31, 2026", "Day rows: days down, categories across")
+    hy = 44; c.d.line((m, hy + 22, W - m, hy + 22), fill=0, width=2)
+    for k, cat in enumerate(CATS):
+        x = m + dw + k * cw; c.glyph(x + 6, hy + 8, cat); c.text((x + 18, hy + 17), cat, F(13, True), anchor="ls"); 
+    top = hy + 24; bot = H - 22; rh = (bot - top) // 7
+    for i in range(7):
+        y = top + i * rh
+        if i: c.dotted_h(m, W - m, y)
+        if i == 0: c.d.rectangle((m + 1, y + 2, m + dw - 6, y + rh - 3), fill=170)
+        c.text((m + 6, y + 15), dayname(i), F(12, True), anchor="ls"); c.text((m + 6, y + 37), str(daynum(i)), F(20, True), anchor="ls")
+        if i in HOL: c.text((m + 6, y + rh - 5), HOL[i][:11], F(10, True), anchor="ls")
+        for k, cat in enumerate(CATS):
+            x = m + dw + k * cw
+            if k: c.dotted_v(x, y + 2, y + rh - 2)
+            evs = day_events(i, cat); yy = y + 3; maxl = 3; used = 0
+            for j, e in enumerate(evs):
+                if used >= maxl or (j == len(evs) - 1 and False): break
+                last = (used == maxl - 1 and j < len(evs) - 1)
+                if last: c.text((x + 6, yy + 11 + used * 16), f"+{len(evs) - j} more", F(11, True), anchor="ls"); used += 1; break
+                t = label(e) + (f" ({e['day']}/{e['span']})" if e["span"] > 1 else "")
+                bw_ = 12 * len(([e["owner"]] if e["owner"] else []) + [p for p in e["people"] if p != e["owner"]]) + 3
+                c.text((x + 6, yy + 11 + used * 16), c.ell(t, F(12), cw - 12 - bw_), F(12), anchor="ls")
+                c.badges(x + cw - 4, yy + used * 16, e, right=True); used += 1
+    c.dotted_h(m, W - m, bot); footer(c); return c
+
+# ---------- W3: 1 week agenda, glyph lines, two columns per day
+def w3():
+    c = C(); m = 12; dw = 76; colw = (W - 2 * m - dw) // 2
+    title(c, "Oct 25 – 31, 2026", "Agenda: one row per day, category shown by symbol")
+    hy = 44; c.d.line((m, hy + 4, W - m, hy + 4), fill=0, width=2)
+    top = hy + 6; bot = H - 22; rh = (bot - top) // 7
+    for i in range(7):
+        y = top + i * rh
+        if i: c.dotted_h(m, W - m, y)
+        if i == 0: c.d.rectangle((m + 1, y + 2, m + dw - 6, y + rh - 3), fill=170)
+        c.text((m + 6, y + 15), dayname(i), F(12, True), anchor="ls"); c.text((m + 6, y + 37), str(daynum(i)), F(20, True), anchor="ls")
+        if i in HOL: c.text((m + 6, y + rh - 5), HOL[i][:11], F(10, True), anchor="ls")
+        evs = sorted(day_events(i), key=lambda e: (tkey(e["time"]), CATS.index(e["cat"])))
+        for j, e in enumerate(evs[:6]):
+            col, row = divmod(j, 3); x = m + dw + col * colw; yy = y + 4 + row * 16
+            c.glyph(x + 4, yy + 3, e["cat"], 8)
+            bw_ = 12 * len(([e["owner"]] if e["owner"] else []) + [p for p in e["people"] if p != e["owner"]]) + 3
+            t = label(e) + (f" ({e['day']}/{e['span']})" if e["span"] > 1 else "")
+            c.text((x + 17, yy + 12), c.ell(t, F(12), colw - 24 - bw_), F(12), anchor="ls")
+            c.badges(x + colw - 8, yy + 1, e, right=True)
+        if len(evs) > 6: c.text((W - m - 4, y + rh - 4), f"+{len(evs) - 6} more", F(11, True), anchor="rs")
+    c.dotted_h(m, W - m, bot); legend(c, 14, H - 18); c.text((W - 14, H - 6), "Updated 9:00 AM", F(11), anchor="rs"); return c
+
+# ---------- two-week grids
+def twoweek(mode, trips=False):
+    c = C(); m = 12; cw = (W - 2 * m) // 7
+    sub = {"lanes": "Two weeks, lanes in each day (top to bottom: categories)", "flow": "Two weeks, events flow with category symbols" + (", trips as bars" if trips else "")}[mode]
+    title(c, "Oct 25 – Nov 7, 2026", sub)
+    hy = 44
+    for i in range(7): c.text((m + i * cw + cw / 2, hy + 12), dayname(i), F(12, True), anchor="ms")
+    c.d.line((m, hy + 17, W - m, hy + 17), fill=0, width=2)
+    top = hy + 19; bot = H - 22; rh = (bot - top) // 2
+    for wk in range(2):
+        y = top + wk * rh
+        if wk: c.d.line((m, y, W - m, y), fill=0)
+        segs, nl = segments(wk) if (mode == "flow") else ([], 0)
+        for i in range(7):
+            off = wk * 7 + i; x = m + i * cw
+            if i: c.dotted_v(x, y + 2, y + rh - 2)
+            numbox = (x + 3, y + 2, x + 25, y + 19)
+            if off == 0: c.d.rectangle(numbox, fill=170)
+            d = START + dt.timedelta(days=off)
+            c.text((x + 5, y + 16), (d.strftime("%b %-d") if d.day == 1 else str(d.day)), F(13, True), anchor="ls")
+            if off in HOL:
+                bx0 = x + (50 if d.day == 1 else 38); c.d.rectangle((bx0, y + 4, x + cw - 3, y + 17), fill=170); c.text((bx0 + 3, y + 15), HOL[off][:11], F(10, True), anchor="ls")
+            body_top = y + 21 + (nl * 16 + 2 if nl else 0); body_h = rh - 23 - (nl * 16 + 2 if nl else 0)
+            if mode == "lanes":
+                lh = body_h // 4
+                for li, cat in enumerate(CATS):
+                    ty = body_top + li * lh
+                    if li: c.dotted_h(x + 2, x + cw - 2, ty)
+                    evs = [e for e in day_events(off, cat) if e["span"] == 1]
+                    if not evs: continue
+                    e = evs[0]; c.glyph(x + 4, ty + 4, cat, 7); extra = len(evs) - 1
+                    lines = c.wrap(label(e), F(11), cw - 20, 2 if extra == 0 else 1)
+                    for k, l in enumerate(lines): c.text((x + 13, ty + 11 + k * 12), l, F(11), anchor="ls")
+                    if extra: c.text((x + cw - 4, ty + lh - 3), f"+{extra}", F(11, True), anchor="rs")
+            else:
+                evs = sorted([e for e in day_events(off) if e["span"] == 1], key=lambda e: (tkey(e["time"]), CATS.index(e["cat"])))
+                yy = body_top; maxlines = body_h // 13; used = 0
+                for j, e in enumerate(evs):
+                    lines = c.wrap(label(e), F(11), cw - 20, 2)
+                    if used + len(lines) > maxlines - (1 if j < len(evs) - 1 else 0):
+                        c.text((x + 5, yy + used * 13 + 10), f"+{len(evs) - j} more", F(11, True), anchor="ls"); break
+                    c.glyph(x + 4, yy + used * 13 + 3, e["cat"], 7)
+                    for k, l in enumerate(lines): c.text((x + 13, yy + used * 13 + 10 + k * 13), l, F(11), anchor="ls")
+                    used += len(lines)
+        for z in segs:
+            x1 = m + z["a"] * cw + 3; x2 = m + (z["b"] + 1) * cw - 3; yb = y + 21 + z["lvl"] * 16
+            c.d.rectangle((x1, yb, x2, yb + 14), fill=170, outline=0)
+            t = ("◂ " if z["cl"] else "") + z["title"] + ((" · " + rng(z["start"], z["span"])) if z["first"] else "") + (" ▸" if z["cr"] else "")
+            c.text((x1 + 4, yb + 12), c.ell(t, F(11, True), x2 - x1 - 8), F(11, True), anchor="ls")
+    c.d.line((m, bot, W - m, bot), fill=0)
+    if mode == "flow": legend(c, 14, H - 18); c.text((W - 14, H - 6), "Updated 9:00 AM", F(11), anchor="rs")
+    else: footer(c, "Lanes in each day, top to bottom: ■ Events  ▲ Work  ● Lunch  ◆ Dinner")
+    return c
+
+# ---------- T3: overview strip (14 days) + next days detail
+def t3():
+    c = C(); m = 12; cw = (W - 2 * m) // 7
+    title(c, "Oct 25 – Nov 7, 2026", "Overview + detail: 14-day strip, then the next days")
+    hy = 40
+    for i in range(7): c.text((m + i * cw + cw / 2, hy + 10), dayname(i), F(11, True), anchor="ms")
+    c.d.line((m, hy + 14, W - m, hy + 14), fill=0, width=2)
+    rh = 50; top = hy + 16
+    for wk in range(2):
+        y = top + wk * rh
+        if wk: c.dotted_h(m, W - m, y)
+        for i in range(7):
+            off = wk * 7 + i; x = m + i * cw
+            if i: c.dotted_v(x, y + 2, y + rh - 2)
+            if off == 0: c.d.rectangle((x + 3, y + 2, x + 24, y + 19), fill=170)
+            d = START + dt.timedelta(days=off)
+            c.text((x + 5, y + 16), (d.strftime("%b %-d") if d.day == 1 else str(d.day)), F(13, True), anchor="ls")
+            if off in HOL: bx0 = x + (50 if d.day == 1 else 38); c.d.rectangle((bx0, y + 4, x + cw - 3, y + 17), fill=170); c.text((bx0 + 3, y + 15), HOL[off][:11], F(10, True), anchor="ls")
+            evs = sorted(day_events(off), key=lambda e: CATS.index(e["cat"]))
+            gx = x + 5
+            for j, e in enumerate(evs[:9]):
+                c.glyph(gx + (j % 9) * 11, y + 27 + 0, e["cat"], 8)
+            if len(evs) > 9: c.text((x + cw - 4, y + 46), f"+{len(evs) - 9}", F(10, True), anchor="rs")
+    sep = top + 2 * rh + 2; c.d.line((m, sep, W - m, sep), fill=0, width=2)
+    c.text((m, sep + 18), "Coming up", F(13, True), anchor="ls"); legend(c, 130, sep + 5)
+    colw = (W - 2 * m - 16) // 2; gy0 = sep + 24
+    for g in range(6):
+        col, idx = divmod(g, 3); x = m + col * (colw + 16); gy = gy0 + idx * 86
+        c.text((x, gy + 13), f"{dayname(g)} {daynum(g)}", F(13, True), anchor="ls"); 
+        if g in HOL: c.text((x + 66, gy + 13), "· " + HOL[g], F(11, True), anchor="ls")
+        c.d.line((x, gy + 17, x + colw, gy + 17), fill=0)
+        evs = sorted(day_events(g), key=lambda e: (tkey(e["time"]), CATS.index(e["cat"])))
+        for j, e in enumerate(evs[:4]):
+            yy = gy + 20 + j * 16
+            c.glyph(x + 2, yy + 3, e["cat"], 8)
+            bw_ = 12 * len(([e["owner"]] if e["owner"] else []) + [p for p in e["people"] if p != e["owner"]]) + 3
+            t = label(e) + (f" ({e['day']}/{e['span']})" if e["span"] > 1 else "")
+            c.text((x + 15, yy + 12), c.ell(t, F(12), colw - 22 - bw_), F(12), anchor="ls")
+            c.badges(x + colw - 2, yy + 1, e, right=True)
+        if len(evs) > 4: c.text((x + colw, gy + 19 + 4 * 16 - 2), f"+{len(evs) - 4} more", F(10, True), anchor="rs")
+    c.text((W - 14, H - 6), "Updated 9:00 AM", F(11), anchor="rs"); return c
+
+os.makedirs("/tmp/mock/out", exist_ok=True)
+_base = list(EV); EV[:] = _base + TRIPS
+w1().save("/tmp/mock/out/1week-A-lanes-trips.png"); twoweek("flow", True).save("/tmp/mock/out/2week-B-flow-trips.png")
+EV[:] = _base
+OPT = {"1week-A-lanes": w1, "1week-B-day-rows": w2, "1week-C-agenda": w3, "2week-A-lanes": lambda: twoweek("lanes"), "2week-B-flow": lambda: twoweek("flow"), "2week-C-overview": t3}
+for k, fn in OPT.items(): fn().save(f"/tmp/mock/out/{k}.png")
+print("ok", list(OPT))

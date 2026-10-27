@@ -16,3 +16,7 @@ Bad: two places to look; the precedence rule must be documented; backup must inc
 
 ## Alternatives considered
 All settings in environment (not UI-editable); a config file (not transactional with data).
+
+## Addendum 2026-10-25: Terminus credentials
+The app's Terminus login (a dedicated Terminus user) is a secret and stays in the environment or
+a `chmod 600` secrets file, not in the database. See `docs/02-architecture.md` section 9.

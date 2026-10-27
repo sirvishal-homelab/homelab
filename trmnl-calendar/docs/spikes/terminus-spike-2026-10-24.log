@@ -1,0 +1,225 @@
+terminus-spike 20261024-214225  base=http://<server-ip>:2300
+
+======== S0  reachability (T-2) ========
+
+-> GET /up  auth=none
+<- 401 in 0.04s, content-type=None
+   ["{\"error\":\"Please log in to continue.\"}"]
+  >> [T-2] GET /up -> 401 at http://<server-ip>:2300
+
+======== S1  login and Authorization format (T-3) ========
+
+-> POST /login  auth=none
+   body: {"login": "<redacted>", "password": "<redacted>"}
+<- 200 in 0.24s, content-type=None
+   {"access_token": "<redacted>", "refresh_token": "<redacted>", "success": "You have been logged in."}
+
+-> GET /api/models (header format test) auth=bare
+<- 200 in 0.04s, content-type=None
+   {"data": [{"default_palette_id": 4, "id": 3, "name": "amazon_kindle_2024", "label": "Amazon Kindle 2024", "description": "Amazon Kindle 2024", "kind": "kindle", "mime_type": "image/png", "colors": 256, "bit_depth": 8, "rotation": 90, "offset_x": 75, "offset_y": 25, "scale_factor": 1.75, "css": {"classes": {"size": "screen--sm", "device": "screen--amazon_kindle_2024", "density": "screen--density-2x"}, "variables": [["--screen-w", "800px"], ["--screen-h", "480px"], ["--pixel-ratio", "1.75"], ["--dither-pixel-ratio", "2.0"], ["--device-ui-scale", "0.8"], ["--gap-scale", "1.0"]]}, "width": 1400, "height": 840, "created_at": "2026-10-22T09:24:27+00:00", "updated_at": "2026-10-25T00:00:00+00:00"}, {"default_palette_id": 4, "id": 7, "name": "amazon_kindle_7", "label": "Amazon Kindle 7", "description": "Amazon Kindle 7", "kind": "kindle", "mime_type": "image/png", "colors": 256, "bit_depth": 8, "rotation": 90, "offset_x": 0, "offset_y": 0, "scale_factor": 1.0, "css": {"classes": {"size": "screen--md", "device": "screen--amazon_kindle_7", "density": "screen--density-1x"}, "variables": [["--screen-w", "800px"], ["--screen-h", "600px"], ["--pixel-ratio", "1.0"], ["--dither-pixel-ratio", "1.0"], ["--device-ui-scale", "1.0"], ["--gap-scale", "1.0"]]}, "width": 800, "height": 600, "created_at": "2026-10-22T09:24:28+00:00", "updated_at": "2026-10-25T00:00:00+00:00"}, {"default_palette_id": 4, "id": 11, "name": "amazon_kindle_oasis_2", "label": "Amazon Kindle Oasis 2", "description": "Amazon
+  >> [T-3] login at POST /login works; Authorization format accepted: bare
+
+======== S2  models and device (T-4) ========
+   model id=3 label='Amazon Kindle 2024' name=amazon_kindle_2024 kind=kindle 1400x840 bit_depth=8 colors=256 mime=image/png scale=1.75 rotation=90
+   model id=7 label='Amazon Kindle 7' name=amazon_kindle_7 kind=kindle 800x600 bit_depth=8 colors=256 mime=image/png scale=1.0 rotation=90
+   model id=11 label='Amazon Kindle Oasis 2' name=amazon_kindle_oasis_2 kind=kindle 1680x1264 bit_depth=8 colors=256 mime=image/png scale=2.1 rotation=90
+   model id=4 label='Amazon Kindle PW 6th Gen' name=amazon_kindle_paperwhite_6th_gen kind=kindle 1024x768 bit_depth=8 colors=256 mime=image/png scale=1.28 rotation=90
+   model id=5 label='Amazon Kindle PW 7th Gen' name=amazon_kindle_paperwhite_7th_gen kind=kindle 1448x1072 bit_depth=8 colors=256 mime=image/png scale=1.6 rotation=90
+   model id=42 label='Amazon Kindle PW Signature 11th Gen' name=amazon_kindle_paperwhite_signature_11th_gen kind=kindle 1648x1236 bit_depth=4 colors=16 mime=image/png scale=2.06 rotation=90
+   model id=17 label='Amazon Kindle Scribe' name=amazon_kindle_scribe kind=kindle 2480x1860 bit_depth=8 colors=256 mime=image/png scale=2.5 rotation=90
+   model id=34 label='Amazon Kindle Voyage' name=amazon_kindle_voyage kind=kindle 1448x1072 bit_depth=8 colors=256 mime=image/png scale=1.4008 rotation=90
+   model id=38 label='Avalue EPD-42S 42" Display Board' name=avalue_epd_42s kind=byod 2880x2160 bit_depth=4 colors=16 mime=image/png scale=2.7692 rotation=0
+   model id=51 label='Custom Device' name=byod_custom kind=byod 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=37 label='ED133UT2 Active Matrix' name=ed133ut2 kind=byod 1600x1200 bit_depth=4 colors=16 mime=image/png scale=1.5385 rotation=0
+   model id=23 label='Generic 16:9 Display' name=generic_16_9 kind=byod 1920x1080 bit_depth=8 colors=256 mime=image/png scale=2.4 rotation=0
+   model id=6 label='Inkplate 10' name=inkplate_10 kind=byod 1200x825 bit_depth=2 colors=4 mime=image/png scale=1.5 rotation=0
+   model id=53 label='Inkplate 13 Spectra' name=inkplate_13_spectra kind=byod 1600x1200 bit_depth=1 colors=2 mime=image/png scale=2.0 rotation=0
+   model id=35 label='Inkplate 5.2' name=inkplate_5_2 kind=byod 1280x720 bit_depth=2 colors=4 mime=image/png scale=1.1996 rotation=0
+   model id=43 label='Inkplate 6 Plus' name=inkplate_6_plus kind=byod 1024x758 bit_depth=2 colors=4 mime=image/png scale=0.9846 rotation=0
+   model id=45 label='Inkplate 6COLOR' name=inkplate_6_color kind=byod 600x448 bit_depth=1 colors=2 mime=image/png scale=0.75 rotation=0
+   model id=15 label='Inky Impression 13.3' name=inky_impression_13_3 kind=byod 1600x1200 bit_depth=1 colors=2 mime=image/png scale=2.0 rotation=0
+   model id=9 label='Inky Impression 7.3' name=inky_impression_7_3 kind=byod 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=61 label='Joan 13' name=joan_13 kind=joan 1600x1200 bit_depth=4 colors=16 mime=image/png scale=1.5385 rotation=0
+   model id=44 label='Kobo Aura H2O Edition 2' name=kobo_aura_h2o_2 kind=byod 1430x1080 bit_depth=4 colors=16 mime=image/png scale=1.375 rotation=0
+   model id=14 label='Kobo Aura HD' name=kobo_aura_hd kind=byod 1440x1080 bit_depth=4 colors=16 mime=image/png scale=1.8 rotation=0
+   model id=13 label='Kobo Aura One' name=kobo_aura_one kind=byod 1872x1404 bit_depth=8 colors=256 mime=image/png scale=1.8 rotation=0
+   model id=60 label='Kobo Clara 2E' name=kobo_clara_2e kind=byod 1072x1448 bit_depth=4 colors=16 mime=image/png scale=1.34 rotation=90
+   model id=40 label='Kobo Forma' name=kobo_forma kind=byod 1920x1440 bit_depth=4 colors=16 mime=image/png scale=1.4004 rotation=0
+   model id=26 label='Kobo Glo' name=kobo_glo kind=byod 1024x768 bit_depth=4 colors=16 mime=image/png scale=1.2995 rotation=0
+   model id=10 label='Kobo Libra 2' name=kobo_libra_2 kind=byod 1680x1264 bit_depth=8 colors=256 mime=image/png scale=2.0 rotation=0
+   model id=55 label='Kobo Libra Color' name=kobo_libra_color kind=byod 1680x1264 bit_depth=12 colors=4096 mime=image/png scale=2.1 rotation=0
+   model id=32 label='Kobo Sage' name=kobo_sage kind=byod 1920x1440 bit_depth=4 colors=16 mime=image/png scale=1.4004 rotation=0
+   model id=39 label='Kobo Touch' name=kobo_touch kind=byod 800x600 bit_depth=4 colors=16 mime=image/png scale=1.0 rotation=0
+   model id=16 label='M5PaperS3' name=m5_paper_s3 kind=byod 960x540 bit_depth=4 colors=16 mime=image/png scale=1.0 rotation=0
+   model id=50 label='Meta Portal' name=meta_portal kind=byod 1280x800 bit_depth=24 colors=16777216 mime=image/webp scale=1.2308 rotation=0
+   model id=31 label='Nook Simple Touch' name=nook_simple_touch kind=kindle 800x600 bit_depth=8 colors=256 mime=image/png scale=1.0 rotation=90
+   model id=58 label='Onyx BOOX Go 10.3 (Gen II) Lumi' name=onyx_boox_go_10_3_lumi kind=byod 2480x1860 bit_depth=8 colors=256 mime=image/png scale=2.5 rotation=90
+   model id=25 label='Onyx BOOX Go 7' name=onyx_boox_go_7 kind=byod 1680x1264 bit_depth=4 colors=16 mime=image/png scale=1.8008 rotation=90
+   model id=29 label='Onyx BOOX Nova Air C' name=onxy_boox_nova_air_c kind=byod 1872x1404 bit_depth=12 colors=4096 mime=image/png scale=1.8 rotation=90
+   model id=24 label='Onyx BOOX Palma' name=palma kind=byod 1648x824 bit_depth=8 colors=256 mime=image/png scale=2.0 rotation=0
+   model id=48 label='Onyx BOOX Poke 5' name=onyx_boox_poke_5 kind=byod 1072x1448 bit_depth=4 colors=16 mime=image/png scale=1.34 rotation=90
+   model id=41 label='OpenPeak OpenFrame' name=openframe kind=byod 800x480 bit_depth=24 colors=16777216 mime=image/webp scale=1.0 rotation=0
+   model id=8 label='Playdate' name=playdate kind=byod 400x240 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=36 label='Raspberry Pi Touch 2' name=raspberry_pi_touch_2 kind=byod 1280x720 bit_depth=24 colors=16777216 mime=image/png scale=1.1996 rotation=0
+   model id=18 label='Seeed E1001 Monochrome' name=seeed_e1001 kind=byod 800x480 bit_depth=2 colors=4 mime=image/png scale=1.0 rotation=0
+   model id=19 label='Seeed E1002' name=seeed_e1002 kind=byod 800x480 bit_depth=4 colors=6 mime=image/png scale=1.0 rotation=0
+   model id=46 label='Seeed E1003 (4-bit)' name=seeed_e1003 kind=byod 1872x1404 bit_depth=4 colors=16 mime=image/png scale=1.8 rotation=0
+   model id=47 label='Seeed E1004' name=seeed_e1004 kind=byod 1600x1200 bit_depth=4 colors=16 mime=image/png scale=1.5385 rotation=90
+   model id=57 label='Seeed Sticky' name=seeed_sticky kind=byod 800x480 bit_depth=2 colors=4 mime=image/png scale=1.0 rotation=0
+   model id=54 label='TCL NxtPaper 14' name=tcl_nxtpaper_14 kind=byod 2400x1600 bit_depth=24 colors=16777216 mime=image/webp scale=2.3077 rotation=0
+   model id=2 label='TRMNL OG (1-bit)' name=og_png kind=trmnl 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=12 label='TRMNL OG (2-bit)' name=og_plus kind=trmnl 800x480 bit_depth=2 colors=4 mime=image/png scale=1.0 rotation=0
+   model id=33 label='TRMNL OG (B/W/R/Y)' name=og_bwry kind=trmnl 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=1 label='TRMNL X' name=v2 kind=trmnl 1872x1404 bit_depth=4 colors=16 mime=image/png scale=1.8 rotation=0
+   model id=22 label='Tidbyt' name=tidbyt kind=tidbyt 64x32 bit_depth=24 colors=16777216 mime=image/webp scale=1.0 rotation=0
+   model id=59 label='Vestaboard' name=vestaboard kind=vestaboard 22x6 bit_depth=24 colors=16777216 mime=image/png scale=1.0 rotation=0
+   model id=20 label='Waveshare 4.26" (2-bit)' name=waveshare_4_26 kind=byod 800x480 bit_depth=2 colors=4 mime=image/png scale=1.0 rotation=0
+   model id=52 label='Waveshare 5.83" (Steam Machine)' name=waveshare_5_8_bw kind=byod 648x480 bit_depth=2 colors=4 mime=image/png scale=0.81 rotation=0
+   model id=21 label='Waveshare 7.5" B/W' name=waveshare_7_5_bw kind=byod 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=27 label='Waveshare 7.5" B/W/R' name=waveshare_7_5_bwr kind=byod 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=28 label='Waveshare 7.5" B/W/R/Y' name=waveshare_7_5_bwry kind=byod 800x480 bit_depth=1 colors=2 mime=image/png scale=1.0 rotation=0
+   model id=56 label='Xteink X3' name=xteink_x3 kind=byod 792x528 bit_depth=2 colors=4 mime=image/png scale=0.99 rotation=0
+   model id=30 label='Xteink X4' name=xteink_x4 kind=byod 800x480 bit_depth=2 colors=4 mime=image/png scale=1.0 rotation=0
+   model id=49 label='reMarkable 2' name=remarkable_paper_2 kind=byod 1404x1872 bit_depth=4 colors=16 mime=image/png scale=1.8 rotation=0
+
+-> GET /api/devices  auth=bare
+<- 200 in 0.01s, content-type=None
+   {"data": [{"id": 7, "model_id": 12, "playlist_id": 7, "label": "TRMNL", "mac_address": "<redacted>", "api_key": "<redacted>", "firmware_profile": true, "firmware_update": false, "firmware_reset": false, "firmware_version": "1.8.6", "wifi_band": 2.4, "wifi_signal": -26, "battery_charge": 0.0, "battery_voltage": 4.2, "charging": false, "refresh_rate": 900, "image_cached": false, "image_timeout": 0, "wake_reason": "timer", "wake_duration": 4919, "display_compatibility": false, "display_profile": "default", "command": "screen_forward", "touch_bar": "tap", "sleep_start_at": null, "sleep_stop_at": null, "synced_at": "2026-10-25T00:40:39+00:00", "created_at": "2026-10-24T19:12:06+00:00", "updated_at": "2026-10-25T00:40:39+00:00", "width": 800, "height": 480}]}
+   device id=7 model_id=12 playlist_id=7 refresh=900 sleep=None-None fw=1.8.6 800x480
+  >> [T-4] device 7 uses model_id=12 (TRMNL OG (2-bit)), bit_depth=2, mime=image/png, 800x480, playlist_id=7
+
+======== S3  create screens from our own images (T-1, T-5, T-6) ========
+   temporary image server on http://<server-ip>:8099/  (serving spike-20261024-214225/src)
+
+-> POST /api/screens [A-unprocessed-8bit] auth=bare
+   body: {"screen": {"model_id": "12", "label": "Spike A", "name": "spike-a-20261024-214225", "uri": "http://<server-ip>:8099/spike-a.png", "file_name": "spike-a.png"}}
+<- 200 in 0.18s, content-type=None
+   {"data": {"id": 9, "model_id": 12, "label": "Spike A", "name": "spike-a-20261024-214225", "created_at": "2026-10-25T00:42:59+00:00", "updated_at": "2026-10-25T00:42:59+00:00", "filename": "spike-a-20261024-214225.png", "mime_type": "image/png", "bit_depth": 1, "width": 800, "height": 480, "size": 390, "uri": "/uploads/3a8f268526b203838149e267eebf2d4c.png"}}
+   [A-unprocessed-8bit] created screen id=9 mime=image/png bit_depth=1 800x480 size=390 uri=/uploads/3a8f268526b203838149e267eebf2d4c.png
+   [A-unprocessed-8bit] Terminus fetched our image +0.02s after the request started, BEFORE the response returned; UA='Ruby' from <docker-ip>
+   [A-unprocessed-8bit] downloaded /uploads/3a8f268526b203838149e267eebf2d4c.png (image/png, 390 bytes)
+   [A-unprocessed-8bit] stored: PNG 800x480 depth=1 colourtype=0 bytes=390 distinct grey levels=2 [0, 255]
+   [A-unprocessed-8bit] band 'grey bars':  50.6% of pixels match the source (+-8 of 255)
+   [A-unprocessed-8bit] band '1px lines': 100.0% of pixels match the source (+-8 of 255)
+   [A-unprocessed-8bit] band 'checker+letter': 100.0% of pixels match the source (+-8 of 255)
+   [A-unprocessed-8bit] grey-bar centre values stored: [0, 0, 255, 255] (source sent: [0, 85, 170, 255])
+
+-> POST /api/screens [B-preprocessed-1bit] auth=bare
+   body: {"screen": {"model_id": "12", "label": "Spike B", "name": "spike-b-20261024-214225", "uri": "http://<server-ip>:8099/spike-b.png", "file_name": "spike-b.png", "preprocessed": true}}
+<- 200 in 0.07s, content-type=None
+   {"data": {"id": 10, "model_id": 12, "label": "Spike B", "name": "spike-b-20261024-214225", "created_at": "2026-10-25T00:43:00+00:00", "updated_at": "2026-10-25T00:43:00+00:00", "filename": "spike-b-20261024-214225.png", "mime_type": "image/png", "bit_depth": 1, "width": 800, "height": 480, "size": 370, "uri": "/uploads/ea5a3e966509af0af5abcc12dfd22ca2.png"}}
+   [B-preprocessed-1bit] created screen id=10 mime=image/png bit_depth=1 800x480 size=370 uri=/uploads/ea5a3e966509af0af5abcc12dfd22ca2.png
+   [B-preprocessed-1bit] Terminus fetched our image +0.01s after the request started, BEFORE the response returned; UA='Ruby' from <docker-ip>
+   [B-preprocessed-1bit] downloaded /uploads/ea5a3e966509af0af5abcc12dfd22ca2.png (image/png, 370 bytes)
+   [B-preprocessed-1bit] stored: PNG 800x480 depth=1 colourtype=0 bytes=370 distinct grey levels=2 [0, 255]
+   [B-preprocessed-1bit] band 'grey bars': 100.0% of pixels match the source (+-8 of 255)
+   [B-preprocessed-1bit] band '1px lines': 100.0% of pixels match the source (+-8 of 255)
+   [B-preprocessed-1bit] band 'checker+letter': 100.0% of pixels match the source (+-8 of 255)
+   [B-preprocessed-1bit] grey-bar centre values stored: [0, 0, 255, 255] (source sent: [0, 0, 255, 255])
+
+-> POST /api/screens [C-preprocessed-2bit] auth=bare
+   body: {"screen": {"model_id": "12", "label": "Spike C", "name": "spike-c-20261024-214225", "uri": "http://<server-ip>:8099/spike-c.png", "file_name": "spike-c.png", "preprocessed": true}}
+<- 200 in 0.07s, content-type=None
+   {"data": {"id": 11, "model_id": 12, "label": "Spike C", "name": "spike-c-20261024-214225", "created_at": "2026-10-25T00:43:00+00:00", "updated_at": "2026-10-25T00:43:00+00:00", "filename": "spike-c-20261024-214225.png", "mime_type": "image/png", "bit_depth": 2, "width": 800, "height": 480, "size": 615, "uri": "/uploads/86493b910631fc649f3f61c95fc451ef.png"}}
+   [C-preprocessed-2bit] created screen id=11 mime=image/png bit_depth=2 800x480 size=615 uri=/uploads/86493b910631fc649f3f61c95fc451ef.png
+   [C-preprocessed-2bit] Terminus fetched our image +0.01s after the request started, BEFORE the response returned; UA='Ruby' from <docker-ip>
+   [C-preprocessed-2bit] downloaded /uploads/86493b910631fc649f3f61c95fc451ef.png (image/png, 615 bytes)
+   [C-preprocessed-2bit] stored: PNG 800x480 depth=2 colourtype=0 bytes=615 distinct grey levels=4 [0, 85, 170, 255]
+   [C-preprocessed-2bit] band 'grey bars': 100.0% of pixels match the source (+-8 of 255)
+   [C-preprocessed-2bit] band '1px lines': 100.0% of pixels match the source (+-8 of 255)
+   [C-preprocessed-2bit] band 'checker+letter': 100.0% of pixels match the source (+-8 of 255)
+   [C-preprocessed-2bit] grey-bar centre values stored: [0, 85, 170, 255] (source sent: [0, 85, 170, 255])
+  >> [T-6] LAN image URL fetched by Terminus: YES (see per-variant lines)
+  >> [T-1] POST /api/screens request/response shapes recorded above; created screen ids=[9, 10, 11]
+  >> [T-5] compare per-variant 'band' match % and stored depth above: unprocessed vs preprocessed 1-bit vs preprocessed model-depth
+
+======== S3b  HTML content with embedded image (fallback option) ========
+
+-> POST /api/screens [D-html] auth=bare
+   body: {"screen": {"model_id": "12", "label": "Spike D", "name": "spike-d-20261024-214225", "content": "<style>*{margin:0}</style><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAHgAgAAAAAy3E6IAAACIklEQVR42u3dwYkCQRCG0RavwgRjAEZhkl5MwQAMZsAAWhAvoiDNWO108eqw7PXxNfyHZbUUt7KbaoqbQUBAQED+BLm0Ls/m2Hqn1juDgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPwMUlMcCAgICAgIyBNyq/UQ+6P0uB6QNEVAQEBAQEAsu6cFAgICAgJi2T0tEBAQEBDLbtlBQEBAQEAsuyIgICAgICCW3dMCAQEBAQGx7J4WCAgICIhlt+yeFggICAiIZbfsICAgICAg
+<- 200 in 0.75s, content-type=None
+   {"data": {"id": 12, "model_id": 12, "label": "Spike D", "name": "spike-d-20261024-214225", "created_at": "2026-10-25T00:43:01+00:00", "updated_at": "2026-10-25T00:43:01+00:00", "filename": "spike-d-20261024-214225.png", "mime_type": "image/png", "bit_depth": 1, "width": 800, "height": 480, "size": 249, "uri": "/uploads/1a20f0049159d06066593a48b55eea82.png"}}
+   [D-html-embedded] stored: PNG 800x480 depth=1 colourtype=0 bytes=249 distinct grey levels=1 [255]
+   [D-html-embedded] band 'grey bars':  25.4% of pixels match the source (+-8 of 255)
+   [D-html-embedded] band '1px lines':  89.7% of pixels match the source (+-8 of 255)
+   [D-html-embedded] band 'checker+letter':  72.5% of pixels match the source (+-8 of 255)
+   [D-html-embedded] grey-bar centre values stored: [255, 255, 255, 255] (source sent: [0, 85, 170, 255])
+
+======== S4  PATCH an existing screen (T-8) ========
+
+-> GET /api/screens/12  auth=bare
+<- 200 in 0.01s, content-type=None
+   {"data": {"id": 12, "model_id": 12, "label": "Spike D", "name": "spike-d-20261024-214225", "created_at": "2026-10-25T00:43:01+00:00", "updated_at": "2026-10-25T00:43:01+00:00", "filename": "spike-d-20261024-214225.png", "mime_type": "image/png", "bit_depth": 1, "width": 800, "height": 480, "size": 249, "uri": "/uploads/1a20f0049159d06066593a48b55eea82.png"}}
+
+-> PATCH /api/screens/12  auth=bare
+   body: {"screen": {"preprocessed": true, "uri": "http://<server-ip>:8099/spike-e.png"}}
+<- 200 in 0.09s, content-type=None
+   {"data": {"id": 12, "model_id": 12, "label": "Spike D", "name": "spike-d-20261024-214225", "created_at": "2026-10-25T00:43:01+00:00", "updated_at": "2026-10-25T00:43:02+00:00", "filename": "spike-d-20261024-214225.png", "mime_type": "image/png", "bit_depth": 2, "width": 800, "height": 480, "size": 615, "uri": "/uploads/140a2f0a36c5c4a26b443cfc2c186a36.png"}}
+  >> [T-8] PATCH 200; stored uri changed: True (/uploads/1a20f0049159d06066593a48b55eea82.png -> /uploads/140a2f0a36c5c4a26b443cfc2c186a36.png); screen id unchanged: True
+   [E-after-patch] stored: PNG 800x480 depth=2 colourtype=0 bytes=615 distinct grey levels=4 [0, 85, 170, 255]
+   [E-after-patch] band 'grey bars': 100.0% of pixels match the source (+-8 of 255)
+   [E-after-patch] band '1px lines': 100.0% of pixels match the source (+-8 of 255)
+   [E-after-patch] band 'checker+letter': 100.0% of pixels match the source (+-8 of 255)
+   [E-after-patch] grey-bar centre values stored: [0, 85, 170, 255] (source sent: [0, 85, 170, 255])
+
+-> GET /api/playlists  auth=bare
+<- 200 in 0.02s, content-type=None
+   {"data": [{"id": 5, "name": "device_5", "label": "Device 5", "current_item_id": null, "mode": "automatic", "created_at": "2026-10-23T13:22:01+00:00", "updated_at": "2026-10-23T13:22:01+00:00", "items": []}, {"id": 6, "name": "device_6", "label": "Device 6", "current_item_id": null, "mode": "automatic", "created_at": "2026-10-24T17:58:46+00:00", "updated_at": "2026-10-24T18:07:09+00:00", "items": []}, {"id": 7, "name": "device_7", "label": "Device 7", "current_item_id": 7, "mode": "automatic", "created_at": "2026-10-24T19:12:07+00:00", "updated_at": "2026-10-25T00:40:39+00:00", "items": [{"id": 7, "screen_id": 8, "position": 1, "created_at": "2026-10-24T19:12:07+00:00", "updated_at": "2026-10-24T19:17:31+00:00"}]}]}
+   playlist id=5 label='Device 5' mode=automatic items=[]
+   playlist id=6 label='Device 6' mode=automatic items=[]
+   playlist id=7 label='Device 7' mode=automatic items=[8]
+
+======== S5  tokens and refresh (T-9) ========
+
+-> POST /login (second login, no failures) auth=none
+   body: {"login": "<redacted>", "password": "<redacted>"}
+<- 200 in 0.24s, content-type=None
+   {"access_token": "<redacted>", "refresh_token": "<redacted>", "success": "You have been logged in."}
+
+-> GET /api/models (first token after second login) auth=bare
+<- 200 in 0.01s, content-type=None
+   {"data": [{"default_palette_id": 4, "id": 3, "name": "amazon_kindle_2024", "label": "Amazon Kindle 2024", "description": "Amazon Kindle 2024", "kind": "kindle", "mime_type": "image/png", "colors": 256, "bit_depth": 8, "rotation": 90, "offset_x": 75, "offset_y": 25, "scale_factor": 1.75, "css": {"classes": {"size": "screen--sm", "device": "screen--amazon_kindle_2024", "density": "screen--density-2x"}, "variables": [["--screen-w", "800px"], ["--screen-h", "480px"], ["--pixel-ratio", "1.75"], ["--dither-pixel-ratio", "2.0"], ["--device-ui-scale", "0.8"], ["--gap-scale", "1.0"]]}, "width": 1400, "height": 840, "created_at": "2026-10-22T09:24:27+00:00", "updated_at": "2026-10-25T00:00:00+00:00"}, {"default_palette_id": 4, "id": 7, "name": "amazon_kindle_7", "label": "Amazon Kindle 7", "description": "Amazon Kindle 7", "kind": "kindle", "mime_type": "image/png", "colors": 256, "bit_depth": 8, "rotation": 90, "offset_x": 0, "offset_y": 0, "scale_factor": 1.0, "css": {"classes": {"size": "screen--md", "device": "screen--amazon_kindle_7", "density": "screen--density-1x"}, "variables": [["--screen-w", "800px"], ["--screen-h", "600px"], ["--pixel-ratio", "1.0"], ["--dither-pixel-ratio", "1.0"], ["--device-ui-scale", "1.0"], ["--gap-scale", "1.0"]]}, "width": 800, "height": 600, "created_at": "2026-10-22T09:24:28+00:00", "updated_at": "2026-10-25T00:00:00+00:00"}, {"default_palette_id": 4, "id": 11, "name": "amazon_kindle_oasis_2", "label": "Amazon Kindle Oasis 2", "description": "Amazon
+
+-> GET /api/models (second token) auth=bare
+<- 200 in 0.01s, content-type=None
+   {"data": [{"default_palette_id": 4, "id": 3, "name": "amazon_kindle_2024", "label": "Amazon Kindle 2024", "description": "Amazon Kindle 2024", "kind": "kindle", "mime_type": "image/png", "colors": 256, "bit_depth": 8, "rotation": 90, "offset_x": 75, "offset_y": 25, "scale_factor": 1.75, "css": {"classes": {"size": "screen--sm", "device": "screen--amazon_kindle_2024", "density": "screen--density-2x"}, "variables": [["--screen-w", "800px"], ["--screen-h", "480px"], ["--pixel-ratio", "1.75"], ["--dither-pixel-ratio", "2.0"], ["--device-ui-scale", "0.8"], ["--gap-scale", "1.0"]]}, "width": 1400, "height": 840, "created_at": "2026-10-22T09:24:27+00:00", "updated_at": "2026-10-25T00:00:00+00:00"}, {"default_palette_id": 4, "id": 7, "name": "amazon_kindle_7", "label": "Amazon Kindle 7", "description": "Amazon Kindle 7", "kind": "kindle", "mime_type": "image/png", "colors": 256, "bit_depth": 8, "rotation": 90, "offset_x": 0, "offset_y": 0, "scale_factor": 1.0, "css": {"classes": {"size": "screen--md", "device": "screen--amazon_kindle_7", "density": "screen--density-1x"}, "variables": [["--screen-w", "800px"], ["--screen-h", "600px"], ["--pixel-ratio", "1.0"], ["--dither-pixel-ratio", "1.0"], ["--device-ui-scale", "1.0"], ["--gap-scale", "1.0"]]}, "width": 800, "height": 600, "created_at": "2026-10-22T09:24:28+00:00", "updated_at": "2026-10-25T00:00:00+00:00"}, {"default_palette_id": 4, "id": 11, "name": "amazon_kindle_oasis_2", "label": "Amazon Kindle Oasis 2", "description": "Amazon
+
+-> POST /api/jwt (refresh) auth=bare
+   body: {"refresh_token": "<redacted>"}
+<- 200 in 0.01s, content-type=None
+   {"access_token": "<redacted>", "refresh_token": "<redacted>"}
+  >> [T-9] first token still valid after 2nd login: True; refresh endpoint /api/jwt -> 200; refresh returns new tokens: True
+
+======== S6  cleanup ========
+
+-> DELETE /api/screens/9  auth=bare
+   body: {}
+<- 200 in 0.01s, content-type=None
+   {"data": {"id": 9, "model_id": 12, "label": "Spike A", "name": "spike-a-20261024-214225", "created_at": "2026-10-25T00:42:59+00:00", "updated_at": "2026-10-25T00:42:59+00:00", "filename": "spike-a-20261024-214225.png", "mime_type": "image/png", "bit_depth": 1, "width": 800, "height": 480, "size": 390, "uri": "/uploads/3a8f268526b203838149e267eebf2d4c.png"}}
+
+-> DELETE /api/screens/10  auth=bare
+   body: {}
+<- 200 in 0.01s, content-type=None
+   {"data": {"id": 10, "model_id": 12, "label": "Spike B", "name": "spike-b-20261024-214225", "created_at": "2026-10-25T00:43:00+00:00", "updated_at": "2026-10-25T00:43:00+00:00", "filename": "spike-b-20261024-214225.png", "mime_type": "image/png", "bit_depth": 1, "width": 800, "height": 480, "size": 370, "uri": "/uploads/ea5a3e966509af0af5abcc12dfd22ca2.png"}}
+
+-> DELETE /api/screens/11  auth=bare
+   body: {}
+<- 200 in 0.02s, content-type=None
+   {"data": {"id": 11, "model_id": 12, "label": "Spike C", "name": "spike-c-20261024-214225", "created_at": "2026-10-25T00:43:00+00:00", "updated_at": "2026-10-25T00:43:00+00:00", "filename": "spike-c-20261024-214225.png", "mime_type": "image/png", "bit_depth": 2, "width": 800, "height": 480, "size": 615, "uri": "/uploads/86493b910631fc649f3f61c95fc451ef.png"}}
+
+-> DELETE /api/screens/12  auth=bare
+   body: {}
+<- 200 in 0.02s, content-type=None
+   {"data": {"id": 12, "model_id": 12, "label": "Spike D", "name": "spike-d-20261024-214225", "created_at": "2026-10-25T00:43:01+00:00", "updated_at": "2026-10-25T00:43:02+00:00", "filename": "spike-d-20261024-214225.png", "mime_type": "image/png", "bit_depth": 2, "width": 800, "height": 480, "size": 615, "uri": "/uploads/140a2f0a36c5c4a26b443cfc2c186a36.png"}}
+   deleted test screens [9, 10, 11, 12]
+
+======== SUMMARY ========
+[T-2] GET /up -> 401 at http://<server-ip>:2300
+[T-3] login at POST /login works; Authorization format accepted: bare
+[T-4] device 7 uses model_id=12 (TRMNL OG (2-bit)), bit_depth=2, mime=image/png, 800x480, playlist_id=7
+[T-6] LAN image URL fetched by Terminus: YES (see per-variant lines)
+[T-1] POST /api/screens request/response shapes recorded above; created screen ids=[9, 10, 11]
+[T-5] compare per-variant 'band' match % and stored depth above: unprocessed vs preprocessed 1-bit vs preprocessed model-depth
+[T-8] PATCH 200; stored uri changed: True (/uploads/1a20f0049159d06066593a48b55eea82.png -> /uploads/140a2f0a36c5c4a26b443cfc2c186a36.png); screen id unchanged: True
+[T-9] first token still valid after 2nd login: True; refresh endpoint /api/jwt -> 200; refresh returns new tokens: True
+T-7 (extensions) is not tested by this script.

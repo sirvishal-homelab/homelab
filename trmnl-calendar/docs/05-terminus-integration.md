@@ -1,7 +1,8 @@
 # 05 - Terminus integration
 
-**Read this with the references open.** Several details below are marked *unverified*: they
-came from reading documentation, not from running Terminus.
+**Updated 2026-10-24.** The spike in `14-terminus-spike-log.md` ran against the owner's real
+Terminus and resolved T-1 to T-6, T-8 (mostly) and T-9. Rows below show the result and the
+confidence after verification.
 
 ## What is known
 
@@ -11,27 +12,28 @@ came from reading documentation, not from running Terminus.
 | It is **beta**; upgrades may need manual effort. | Terminus README | High |
 | Firmware 1.6.10+ requires Terminus 0.42.0+; older firmware needs older Terminus. | Terminus README | High |
 | `quick.sh` is for exploring only (not repeatable); use the Docker docs for a permanent install. | Terminus README | High |
-| A **Screens API** creates and updates screens: `POST /api/screens`, `PATCH /api/screens/<id>`. | `doc/api.adoc` | Medium-high |
+| A **Screens API** creates and updates screens: `POST /api/screens`, `PATCH /api/screens/<id>`; both return HTTP 200 with `{data:{id,...,uri}}`. | `doc/api.adoc`; spike | **High (verified)** |
 | A screen can be created from an image **URI**. The image is either *unprocessed* (Terminus converts it for the device) or *preprocessed* (cached as-is). | `doc/api.adoc` | Medium-high |
-| The URI is fetched **at the time of the API call**. No timed re-fetch of an image was found in the docs. | `doc/api.adoc`, absence of evidence | Medium |
-| `POST /login` with login and password returns an `access_token` (JWT, about 30 minutes) and a refresh token (about 14 days). | `doc/api.adoc` | Medium |
-| The docs show the token placed directly in the `Authorization` header. | `doc/api.adoc` | Medium; whether `Bearer ` is accepted is unknown |
+| The URI is fetched **during the API call, synchronously**, from Terminus's container. No timed re-fetch exists. | spike | **High (verified)** |
+| `POST /login` with login and password returns an `access_token` (JWT, about 30 minutes) and a refresh token (about 14 days). `POST /api/jwt` refreshes. | `doc/api.adoc`; spike | **High (login, refresh verified)** |
+| The token is placed directly in the `Authorization` header (bare). | spike | **High (verified)**; `Bearer` untested |
 | **Extensions** run on a schedule (none by default), run as Sidekiq jobs, and turn polled data into a screen with a **Liquid** template. | `doc/extensions.adoc` | Medium |
-| Device refresh-rate example in the docs is 900 s. | Terminus docs | Low-medium |
+| Device refresh rate is 900 s on the owner's device; no sleep window is set. | device page, API | **High (verified)** |
+| `preprocessed: true` stores the PNG byte-for-byte; unprocessed mode hard-thresholds to 1-bit. | spike | **High (verified)** |
 
-## What is not known (verify first)
+## Unknowns and spike results
 
-| # | Unknown | How to verify |
-|---|---------|---------------|
-| T-1 | Exact request/response bodies of `POST/PATCH /api/screens` (field names, `model_id` type and values, `playlist_id`). | Read `doc/api.adoc` again in full; try against a local Terminus. |
-| T-2 | Terminus HTTP port and scheme for a Docker install (the prototype's examples guessed `:2300`). | Terminus Docker docs. |
-| T-3 | `Authorization` header format: bare token or `Bearer`. The prototype tries bare first, then `Bearer`. | Test. |
-| T-4 | Correct `model_id` for the user's device, and its bit depth (OG 1-bit vs 2-bit). | Terminus UI model list; device docs. |
-| T-5 | How "unprocessed" conversion treats a pure 1-bit black/white PNG (threshold, dither, resample). | Push a test image, inspect Terminus's stored result. |
-| T-6 | Whether Terminus will fetch an image from a **private LAN address** (any SSRF-style restriction). | Test. |
-| T-7 | Whether an extension's polling can target a private LAN JSON URL. | `doc/extensions.adoc`; test. |
-| T-8 | Whether `PATCH` keeps the screen in the existing playlist and device rotation. | Test. |
-| T-9 | Rate limits or auth lockouts on `/login` if the app logs in on every push. | Docs; test. |
+| # | Unknown | Result (2026-10-24) |
+|---|---------|---------------------|
+| T-1 | Request/response bodies of screens API | **Resolved.** See `14`. HTTP 200 on POST and PATCH; `model_id` string accepted. |
+| T-2 | Port and scheme | **Resolved.** `http://<server-ip>:2300`. `/up` needs login for JSON requests. |
+| T-3 | Authorization header format | **Resolved.** Bare token. |
+| T-4 | `model_id` and bit depth | **Resolved.** id 12, `og_plus`, 2-bit, 800x480. 1-bit OG is id 2 (`og_png`). Resolve by name at run time. |
+| T-5 | Unprocessed conversion of a 1-bit PNG | **Resolved, and moot.** Use `preprocessed: true`; the image is stored unchanged. Unprocessed mode thresholds to 1-bit. |
+| T-6 | LAN image URL allowed? | **Resolved.** Yes; fetched by Terminus's container during the call. |
+| T-7 | Extension polling a LAN URL | **Not tested.** Not needed for option A. |
+| T-8 | PATCH and playlists | **Partly resolved.** PATCH is synchronous and keeps the screen id. Playlist membership and device behaviour still to test (S-1, S-2 in `14`). |
+| T-9 | Login limits | **Resolved enough.** Two logins fine; tokens independent; refresh works. |
 
 ## Options compared
 
@@ -44,10 +46,10 @@ came from reading documentation, not from running Terminus.
 | Coupling to Terminus | Screens API + auth | Extension format | Device protocol only |
 | Extra moving part | Publisher worker | None | Protocol implementation |
 | Main risk | API drift; auth handling; single-process constraint | Layout expressiveness; sections in Liquid | Not what the user asked for; protocol unknown to us |
-| Status | Code written, **untested** | Not started | Not started |
+| Status | **Verified by spike** (device display test pending) | Not started; not needed | Not started |
 
-Recommendation so far: **A**, pending T-1 to T-6. Option B is the fallback if pushing proves
-brittle. Option C was never discussed with the user as a goal. (ADR-0003)
+**Recommendation: A**, now supported by evidence (see `14` and ADR-0003, awaiting owner sign-off).
+Option B stays documented but is not needed. Option C was never a goal.
 
 ## Push sequence (option A)
 
@@ -79,10 +81,10 @@ Prototype configuration (environment variables; none are stored in the database)
 | `TERMINUS_URL` | Base address of Terminus. |
 | `TERMINUS_LOGIN`, `TERMINUS_PASSWORD` | Credentials. |
 | `TERMINUS_IMAGE_URL` | Address of `/calendar.png` **as seen from Terminus**. |
-| `TERMINUS_MODEL_ID` | Needed only to create the screen. |
+| `TERMINUS_MODEL_NAME` (replaces `TERMINUS_MODEL_ID`) | Model name such as `og_plus`; the app looks up the id via `GET /api/models`. |
 | `TERMINUS_PLAYLIST_ID` | Optional; adds the screen to a playlist on create. |
 | `TERMINUS_SCREEN_NAME` | Default `calendar`. |
-| `TERMINUS_PREPROCESSED` | Default false (let Terminus convert). |
+| `TERMINUS_PREPROCESSED` | **Default true**; the app renders the model's exact depth. |
 | `TERMINUS_VERIFY_TLS` | Default true. |
 | `TERMINUS_PUSH_INTERVAL` | Seconds between scheduled pushes, minimum 60, default 900. |
 
@@ -91,8 +93,10 @@ Prototype configuration (environment variables; none are stored in the database)
 - Terminus unreachable or login fails: record status, keep retrying on the next trigger;
   never block saving an event.
 - Screen deleted in Terminus (404): recreate once, store the new id.
-- Token expiry: current design logs in on every push (simple, wasteful). Alternative: cache the
-  token and use the refresh token. Needs T-9.
+- Token expiry: logging in on every push works (about 0.24 s). Better: cache the access token
+  for about 25 minutes and refresh through `POST /api/jwt` (verified).
+- Upload growth: every PATCH writes a new upload file, but the replaced one is removed (S-3 in
+  `14`, inferred). Still watch the uploads volume size after the app goes live.
 - Image fetch by Terminus fails (app unreachable from Terminus, wrong URL): surface Terminus's
   error text in the UI.
 

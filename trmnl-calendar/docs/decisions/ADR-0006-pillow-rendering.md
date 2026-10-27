@@ -1,18 +1,24 @@
-# ADR-0006: Render server-side with Pillow to a 1-bit PNG
-Status: Proposed
+# ADR-0006: Render server-side with Pillow to a grayscale PNG in two phases
+Status: **Proposed (revised 2026-10-27)**
 Date: 2026-10-20
 
 ## Context
-The display is 1-bit. Layouts must be crisp and deterministic and run on a small machine.
+The display is 800x480 and 2-bit on the owner's panel. The spike showed Terminus stores a
+preprocessed PNG unchanged and the panel shows four greys. Layouts must be crisp, deterministic,
+snapshot-testable, and previewable at native size.
 
 ## Decision
-Draw on a grey canvas with Pillow, then threshold to pure black and white and save a 1-bit PNG.
-Layouts are modules registered by name (proposed interface in `04`).
+Layouts **plan** a scene of primitives (pure, no drawing) and a generic rasteriser **draws** it with
+Pillow and a bundled font, quantises to the profile's depth, and encodes a grayscale PNG (colour
+type 0, 1 or 2 bit) with a small own encoder. The same function serves the preview and the push.
+Details and the module interface are in `04`.
 
 ## Consequences
-Good: light, fast, no browser; deterministic and snapshot-testable.
-Bad: manual layout math and text wrapping; a bundled font is required; no CSS.
+Good: light, fast, no browser; deterministic; a fit check and JSON snapshot tests fall out of the
+plan phase; one code path for preview and push.
+Bad: manual layout math and text wrapping; a bundled font and pinned Pillow and FreeType are
+required for stable snapshots; no CSS.
 
 ## Alternatives considered
-Headless browser screenshot of HTML (richer layout, heavy and slower); Terminus-side Liquid
-rendering (ADR-0002 alternative).
+Headless browser screenshot of HTML (richer layout, heavy and slower, and uncertain output); Terminus
+side Liquid rendering (ADR-0002 alternative).
