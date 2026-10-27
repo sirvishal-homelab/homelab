@@ -44,7 +44,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         conn = db.connect(settings.db_path)
         applied = migrate.migrate(conn, settings.db_path, settings.backup_dir)
         log.info("migrations applied: %s", applied or "none")
-        app.state.conn = conn
+        conn.close()  # request handlers open their own short-lived connection (thread safety)
         backup_if_due()  # synchronous, so a backup exists before the first request
         task = asyncio.create_task(backup_loop())
         try:
@@ -53,7 +53,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
-            conn.close()
 
     app = FastAPI(title="TRMNL Calendar", version=__version__, lifespan=lifespan)
     app.state.settings = settings
@@ -62,8 +61,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def healthz(response: Response) -> dict:
         body: dict = {"status": "ok", "version": __version__}
         try:
-            body["schema_version"] = migrate.current_version(app.state.conn)
+            with contextlib.closing(db.connect(settings.db_path)) as conn:
+                body["schema_version"] = migrate.current_version(conn)
         except Exception as exc:
+            log.exception("healthz: database check failed")
             response.status_code = 503
             return {"status": "error", "version": __version__, "detail": type(exc).__name__}
         body["last_backup_age_hours"] = backup.latest_age_hours(settings.backup_dir)
