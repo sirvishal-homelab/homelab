@@ -20,21 +20,21 @@ log = logging.getLogger("trmnl_calendar")
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
 
+    def backup_if_due() -> None:
+        age = backup.latest_age_hours(settings.backup_dir)
+        if age is None or age >= settings.backup_interval_hours:
+            path = backup.make_backup(
+                settings.db_path, settings.backup_dir, keep=settings.backup_keep
+            )
+            log.info("backup written: %s", path.name)
+
     async def backup_loop() -> None:
         while True:
-            age = backup.latest_age_hours(settings.backup_dir)
-            if age is None or age >= settings.backup_interval_hours:
-                try:
-                    path = await asyncio.to_thread(
-                        backup.make_backup,
-                        settings.db_path,
-                        settings.backup_dir,
-                        keep=settings.backup_keep,
-                    )
-                    log.info("backup written: %s", path.name)
-                except Exception:  # keep the loop alive; healthz shows the age
-                    log.exception("backup failed")
             await asyncio.sleep(600)
+            try:
+                await asyncio.to_thread(backup_if_due)
+            except Exception:  # keep the loop alive; healthz shows the age
+                log.exception("backup failed")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -45,6 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         applied = migrate.migrate(conn, settings.db_path, settings.backup_dir)
         log.info("migrations applied: %s", applied or "none")
         app.state.conn = conn
+        backup_if_due()  # synchronous, so a backup exists before the first request
         task = asyncio.create_task(backup_loop())
         try:
             yield

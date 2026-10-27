@@ -9,7 +9,7 @@ WORKDIR /src
 COPY pyproject.toml README.md uv.loc[k] ./
 COPY src ./src
 # --locked when a lock file is committed; otherwise resolve at build time (see docs/19)
-RUN if [ -f uv.lock ]; then uv sync --no-dev --locked; else uv sync --no-dev; fi
+RUN if [ -f uv.lock ]; then uv sync --no-dev --no-editable --locked; else uv sync --no-dev --no-editable; fi
 
 FROM python:3.12-slim
 ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
