@@ -6,18 +6,23 @@ import asyncio
 import contextlib
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Response
+from fastapi.staticfiles import StaticFiles
 
 from trmnl_calendar import __version__
 from trmnl_calendar.config import Settings, load_settings
 from trmnl_calendar.render.fontcheck import verify_fonts
+from trmnl_calendar.render.pipeline import RenderCache
 from trmnl_calendar.storage import backup, db, migrate
+from trmnl_calendar.web import errors, pages, render_service
+from trmnl_calendar.web.api import events as events_api
 
 log = logging.getLogger("trmnl_calendar")
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, clock=render_service.now_utc) -> FastAPI:
     settings = settings or load_settings()
 
     def backup_if_due() -> None:
@@ -56,6 +61,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="TRMNL Calendar", version=__version__, lifespan=lifespan)
     app.state.settings = settings
+    app.state.clock = clock
+    app.state.render_cache = RenderCache()
+    errors.install(app)
+    app.include_router(events_api.router)
+    app.include_router(pages.router)
+    app.mount(
+        "/static", StaticFiles(directory=Path(__file__).parent / "web" / "static"), name="static"
+    )
 
     @app.get("/healthz")
     def healthz(response: Response) -> dict:
