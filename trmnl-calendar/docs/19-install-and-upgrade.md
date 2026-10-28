@@ -63,6 +63,22 @@ events arrives in slice 1, the picture in slice 1, the push to Terminus in slice
 
 Leave Terminus and the device as they are for now; nothing in them changes until slice 4.
 
+### After slice 1 (events and the first image)
+
+Upgrading to slice 1 applies migration 0002 on start (a `pre-migration` backup is written first).
+Then, from your phone or desktop on the LAN:
+
+| URL | What |
+|-----|------|
+| `http://<server-ip>:8080/` | Home: the week picture and the next four weeks; **Add event** |
+| `/events/new` | Add: day, category, description, optional times; **More options** for trips (ends on), location, repeats |
+| `/render/current.png` | The 800 x 480 2-bit picture for this week, as the screen will get it |
+| `/deleted` | Recently deleted events (restorable for 30 days) |
+| `/api/v1/...` | JSON API (`06`); `/healthz` as before |
+
+The picture does **not** reach the device yet (slice 4). People, categories editing and views arrive
+in slices 2 and 3; the four seeded categories (Events, Work, Lunch, Dinner) are used until then.
+
 ## Upgrade
 
 ```bash
