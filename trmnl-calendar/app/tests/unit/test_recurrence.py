@@ -221,3 +221,51 @@ def test_window_limit():
 
     with pytest.raises(ValueError):
         occurrences([], None, date(2026, 1, 1), date(2028, 1, 1))
+
+
+# ---- repeat count (the first occurrence counts; skips still count)
+
+
+def test_count_limits_a_daily_series():
+    e = ev(start_date=date(2026, 3, 2), freq="daily", count=4)
+    assert days([e], date(2026, 3, 1), date(2026, 3, 31)) == [
+        date(2026, 3, d) for d in (2, 3, 4, 5)
+    ]
+
+
+def test_count_with_several_weekdays_counts_each_day():
+    e = ev(start_date=date(2026, 3, 2), freq="weekly", by_weekday=("MO", "WE"), count=5)
+    got = days([e], date(2026, 3, 1), date(2026, 4, 30))
+    assert got == [date(2026, 3, d) for d in (2, 4, 9, 11, 16)]
+
+
+def test_count_survives_a_window_that_starts_later():
+    e = ev(start_date=date(2026, 3, 2), freq="weekly", count=6)  # Mondays: Mar 2 .. Apr 6
+    got = days([e], date(2026, 3, 20), date(2026, 5, 31))
+    assert got == [date(2026, 3, 23), date(2026, 3, 30), date(2026, 4, 6)]
+
+
+def test_skipped_dates_still_count():
+    e = ev(start_date=date(2026, 3, 2), freq="weekly", count=3)
+    got = days([e], date(2026, 3, 1), date(2026, 5, 31), {1: {date(2026, 3, 9)}})
+    assert got == [date(2026, 3, 2), date(2026, 3, 16)]
+
+
+def test_count_monthly_clamp_and_yearly_and_trips():
+    monthly = ev(start_date=date(2026, 1, 31), freq="monthly", count=3)
+    assert days([monthly], date(2026, 1, 1), date(2026, 12, 31)) == [
+        date(2026, 1, 31),
+        date(2026, 2, 28),
+        date(2026, 3, 31),
+    ]
+    yearly = ev(id=2, start_date=date(2026, 6, 1), freq="yearly", count=2)
+    assert days([yearly], date(2026, 5, 1), date(2026, 12, 31)) == [date(2026, 6, 1)]
+    assert days([yearly], date(2027, 5, 1), date(2027, 12, 31)) == [date(2027, 6, 1)]
+    assert days([yearly], date(2028, 5, 1), date(2028, 12, 31)) == []  # the series has ended
+    trip = ev(id=3, start_date=date(2026, 7, 1), end_date=date(2026, 7, 3), freq="weekly", count=2)
+    assert len(days([trip], date(2026, 7, 1), date(2026, 8, 31))) == 6  # 2 x 3 days
+
+
+def test_count_on_a_non_repeating_event_is_ignored():
+    e = ev(start_date=date(2026, 3, 2), count=3)
+    assert len(days([e], date(2026, 3, 1), date(2026, 3, 31))) == 1

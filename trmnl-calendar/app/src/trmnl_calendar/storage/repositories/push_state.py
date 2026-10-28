@@ -53,3 +53,22 @@ def save(conn: sqlite3.Connection, **fields) -> None:
         (*fields.values(), DISPLAY_ID),
     )
     conn.commit()
+
+
+def remember_device(conn: sqlite3.Connection, devices: list[dict], model_id: int | None) -> None:
+    """Keep the device refresh time (seconds), so the status text can quote Terminus's setting."""
+    mine = [d for d in devices if model_id is not None and d.get("model_id") == model_id]
+    device = (mine or devices or [None])[0]
+    seconds = device.get("refresh_rate") if device else None
+    if isinstance(seconds, int) and not isinstance(seconds, bool) and seconds > 0:
+        conn.execute(
+            "INSERT INTO app_meta (key, value) VALUES ('device_refresh_seconds', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (str(seconds),),
+        )
+        conn.commit()
+
+
+def device_refresh_seconds(conn: sqlite3.Connection) -> int | None:
+    r = conn.execute("SELECT value FROM app_meta WHERE key = 'device_refresh_seconds'").fetchone()
+    return int(r["value"]) if r and str(r["value"]).isdigit() else None

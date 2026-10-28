@@ -46,7 +46,7 @@ monthly, yearly), `interval` (every N), `by_weekday` (weekly only) and an option
 | Every 2 weeks | weekly, interval 2 |
 | Every month | monthly, interval 1 |
 | Every year | yearly, interval 1 |
-| Custom... | any interval, chosen weekdays, and an end: never or on a date |
+| Custom... | any interval, chosen weekdays, and an end: never, on a date, or after N times (the first occurrence counts; skipped dates still count) |
 
 The form says it in words ("Repeats every 2 weeks on Thursday, until 30 June") so nobody has to
 decode the settings. Editing a repeating event changes the whole series; "skip this one" removes a

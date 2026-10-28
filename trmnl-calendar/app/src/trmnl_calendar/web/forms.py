@@ -47,6 +47,7 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
         "month_mode": None,
         "month_nth": None,
         "until": None,
+        "count": None,
         "people_ids": [int(v) for v in f.get("people", []) if v.isdigit()],
         "owner_id": int(_one(f, "owner_id")) if _one(f, "owner_id").isdigit() else None,
     }
@@ -61,7 +62,9 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
         data["by_weekday"] = [c for c in f.get("by_weekday", []) if c]
         data["month_mode"] = _one(f, "month_mode") or None
         data["month_nth"] = _one(f, "month_nth") or None
-        data["until"] = _one(f, "until") or None
+        ends = _one(f, "ends") or "never"
+        data["until"] = (_one(f, "until") or None) if ends == "until" else None
+        data["count"] = (_one(f, "count") or None) if ends == "count" else None
     return data
 
 
@@ -88,12 +91,14 @@ def event_to_values(
             "month_mode": "date",
             "month_nth": "1",
             "until": "",
+            "ends": "never",
+            "count": "",
             "people": [str(i) for i in default_people],
             "owner_id": "",
         }
     own_day = WEEKDAY_CODES[ev.start_date.weekday()]
     plain_weekly = ev.freq == "weekly" and ev.by_weekday in ((), (own_day,))
-    simple = ev.until is None and ev.month_mode in (None, "date")
+    simple = ev.until is None and ev.count is None and ev.month_mode in (None, "date")
     if ev.freq == "none":
         choice = "none"
     elif simple and ev.interval == 1 and ev.freq in ("daily", "monthly", "yearly"):
@@ -119,6 +124,8 @@ def event_to_values(
         "month_mode": ev.month_mode or "date",
         "month_nth": str(ev.month_nth or 1),
         "until": ev.until.isoformat() if ev.until else "",
+        "ends": "until" if ev.until else ("count" if ev.count else "never"),
+        "count": str(ev.count) if ev.count else "",
         "people": [str(i) for i in ev.people],
         "owner_id": str(ev.owner_id) if ev.owner_id else "",
     }

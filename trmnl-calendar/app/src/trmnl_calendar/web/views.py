@@ -140,6 +140,7 @@ def form_context(
                     "month_nth",
                     "month_mode",
                     "until",
+                    "count",
                     "freq",
                     "owner_id",
                 )
@@ -238,6 +239,9 @@ def screen_context(conn: sqlite3.Connection, settings, scheduler) -> dict:
         "attempt_when": when("last_attempt_at"),
         "next_when": when("next_check_at"),
         "interval_minutes": settings.push_interval_seconds // 60,
+        "device_minutes": -(-st["device_refresh_seconds"] // 60)
+        if st["device_refresh_seconds"]
+        else None,
     }
 
 

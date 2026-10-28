@@ -113,3 +113,24 @@ def test_categories_and_unknown_route(client):
     assert [c["name"] for c in cats] == ["Events", "Work", "Lunch", "Dinner"]
     r = client.get(f"{BASE}/nope")
     assert r.status_code == 404 and r.json()["error"]["code"] == "not_found"
+
+
+def test_repeat_count_through_the_api(client):
+    ev = post(client, repeat={"freq": "weekly", "count": 6})
+    assert ev["repeat"]["count"] == 6 and ev["repeat_text"].endswith(", 6 times")
+    r = client.patch(
+        f"{BASE}/events/{ev['id']}",
+        json={"repeat": {"until": "2026-12-01"}},
+        headers={"If-Match": '"1"'},
+    )
+    assert r.status_code == 200 and r.json()["repeat"]["count"] is None
+    bad = client.post(
+        f"{BASE}/events",
+        json={
+            "title": "x",
+            "category_id": 1,
+            "start_date": "2026-10-28",
+            "repeat": {"freq": "weekly", "count": 1},
+        },
+    )  # noqa: E501
+    assert bad.status_code == 422 and "count" in bad.json()["error"]["fields"]

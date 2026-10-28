@@ -28,6 +28,7 @@ def event_to_api(ev: Event, meta: dict | None = None, people: dict | None = None
             "month_mode": ev.month_mode,
             "month_nth": ev.month_nth,
             "until": ev.until.isoformat() if ev.until else None,
+            "count": ev.count,
         },
         "repeat_text": repeat_text(ev),
         "people": {"ids": list(ev.people), "owner_id": ev.owner_id},
@@ -57,6 +58,7 @@ def patch_from_api(body: dict) -> dict:
             "month_mode": "month_mode",
             "month_nth": "month_nth",
             "until": "until",
+            "count": "count",
         }
         for src, dst in mapping.items():
             if src in rep:

@@ -3,6 +3,7 @@ from datetime import date
 from trmnl_calendar.domain.models import Event
 from trmnl_calendar.domain.validation import validate_event
 from trmnl_calendar.web import forms
+from trmnl_calendar.web.forms import event_to_values
 from trmnl_calendar.web.serialize import event_to_api, patch_from_api
 
 
@@ -42,6 +43,7 @@ def test_custom_repeat_maps_all_fields_and_validates():
         month_mode="weekday",
         month_nth="-1",
         by_weekday=["FR"],
+        ends="until",
         until="2027-01-01",
     )
     clean, err = validate_event(d)
@@ -116,3 +118,23 @@ def test_people_in_forms_and_api():
     assert out["updated_by"] == {"id": 2, "label": "B"}
     patch = patch_from_api({"people": {"ids": [1], "owner_id": 1}})
     assert patch == {"people_ids": [1], "owner_id": 1}
+
+
+def test_ends_choice_decides_between_until_and_count():
+    base = dict(repeat="custom", custom_freq="weekly", until="2027-01-01", count="5")
+    d = data(ends="count", **base)
+    assert d["count"] == "5" and d["until"] is None
+    d = data(ends="until", **base)
+    assert d["until"] == "2027-01-01" and d["count"] is None
+    d = data(ends="never", **base)
+    assert d["until"] is None and d["count"] is None
+    clean, err = validate_event(data(ends="count", **base))
+    assert err == {} and clean["count"] == 5
+
+
+def test_count_form_values_round_trip():
+    ev = Event(
+        id=1, title="Class", section_id=1, start_date=date(2026, 11, 3), freq="weekly", count=6
+    )
+    v = event_to_values(ev)
+    assert v["ends"] == "count" and v["count"] == "6" and v["repeat"] == "custom"

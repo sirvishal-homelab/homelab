@@ -135,3 +135,14 @@ def test_back_must_be_same_site(client):
         "/events/new", data={**FORM, "back": "https://evil.example/x"}, follow_redirects=False
     )
     assert r.headers["location"].startswith("/?saved=")
+
+
+def test_form_repeat_ends_after_a_number_of_times(client):
+    add(client, repeat="custom", custom_freq="weekly", ends="count", count="3", by_weekday="WE")
+    page = client.get("/").text
+    assert page.count("Dentist") >= 3 or "3 times" in page
+    bad = client.post(
+        "/events/new",
+        data={**FORM, "repeat": "custom", "custom_freq": "weekly", "ends": "count", "count": "1"},
+    )
+    assert bad.status_code == 422 and "2 to 999" in bad.text

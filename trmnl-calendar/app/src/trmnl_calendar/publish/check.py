@@ -61,6 +61,7 @@ def run_check(
     screen_id: int | None,
     fetch: Callable[[str], tuple[int, bytes]] = _fetch,
     client: TerminusClient | None = None,
+    remember: Callable[[list[dict], int | None], None] | None = None,
 ) -> list[Step]:
     steps: list[Step] = []
     missing = missing_settings(settings)
@@ -151,6 +152,8 @@ def run_check(
     device = None
     try:
         devices = c.devices()
+        if remember:
+            remember(devices, model.get("id") if model else None)
         if not devices:
             steps.append(
                 Step(

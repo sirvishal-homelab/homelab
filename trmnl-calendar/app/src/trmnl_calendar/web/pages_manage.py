@@ -225,6 +225,7 @@ async def screen_check(request: Request):
                 request.app.state.settings,
                 views_repo.get_display(conn),
                 state_repo.get_state(conn).screen_id,
+                remember=lambda d, m: state_repo.remember_device(conn, d, m),
             )
             ctx = views.settings_context(conn, screen=_screen(request, conn), check_steps=steps)
             return _page(request, "settings.html", nav="settings", **ctx)

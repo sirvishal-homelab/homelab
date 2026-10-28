@@ -5,7 +5,7 @@ first; nothing outside the app depends on it (OQ-10: UI-only, but versioned so t
 framework generates an OpenAPI description from the code; that description is the contract the API tests
 check (`18`).
 
-> **Implemented so far (slices 1-4):** events (create, read, list, patch with `If-Match`, delete, restore, skips),
+> **Implemented so far (slices 1-4 and the repeat count):** a repeat's `count` (2 to 999) is an alternative to `until`. events (create, read, list, patch with `If-Match`, delete, restore, skips),
 > `GET /occurrences`, categories (list, create, patch, delete with `move_to`, `PUT /categories/order`), people
 > (list, create, patch, delete; `in_use` 409 when events use a person), `GET/PATCH /calendar` (name, timezone,
 > week start, time format), `GET/PUT /me` (the "who am I" cookie, a convenience and not authentication),

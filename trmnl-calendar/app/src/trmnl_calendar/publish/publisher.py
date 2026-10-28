@@ -113,8 +113,15 @@ class Publisher:
             last_pushed_at=_iso(now),
             failures=0,
         )
+        self._remember_device(conn, model["id"])
         log.info("pushed %s to Terminus screen %s", result.hash, screen_id)
         return PushOutcome("ok", "Sent to the screen.", result.hash, screen_id)
+
+    def _remember_device(self, conn, model_id: int) -> None:
+        try:  # best effort: the push already worked
+            state_repo.remember_device(conn, self.client.devices(), model_id)
+        except TerminusError:
+            log.info("could not read the device refresh time from Terminus")
 
     def _send(self, screen_id: int | None, model_id: int, uri: str) -> int:
         """PATCH the known screen; if it is gone (404) find it by name or create it."""
