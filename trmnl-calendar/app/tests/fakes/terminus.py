@@ -122,7 +122,17 @@ class FakeTerminus:
                         return self._send(status, {"error": "boom"})
                     s = self._body().get("screen", {})
                     if method == "PATCH" and sid not in fake.screens:
-                        return self._send(404, {"error": "Not found"})
+                        # the real Terminus answers 422, not 404, for a screen that is gone
+                        return self._send(
+                            422,
+                            {
+                                "type": "/problem_details#screen_payload",
+                                "title": "Unprocessable Content",
+                                "status": 422,
+                                "detail": f"Unable to find screen: {sid}.",
+                                "instance": "/api/screens",
+                            },
+                        )
                     try:
                         with urllib.request.urlopen(s["uri"], timeout=5) as r:  # noqa: S310
                             data = r.read()
