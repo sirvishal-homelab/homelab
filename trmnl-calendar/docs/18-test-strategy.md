@@ -61,6 +61,15 @@ a release.
 | "Easy for her" | Scripted trial with the wife on her phone before each slice is done: add an event, add a trip, make a repeating event, delete and undo; note every hesitation |
 | Anti-aliasing of larger headings (RD-3) | One on-device test in the first rendering slice |
 
+## 5a. Status after slice 1
+
+Built: unit tests for recurrence (leap years, month ends, nth weekday, interval, `until`, skips, trips),
+validation, repeat text, forms, the PNG encoder (round trip through Pillow at every bit depth) and the
+Week - lanes rules (hidden days, today highlight, overflow, lane size, banners, trips, determinism, text rules);
+integration tests for storage, migrations, the repositories, the render service, and the API and pages through
+FastAPI's test client. **Not yet built:** pixel-exact image goldens (they must be generated inside the project's
+container image, section 2), contract tests against the fake Terminus (slice 4), end-to-end browser tests.
+
 ## 6. Rules of thumb
 
 1. A bug found by hand gets a failing test first.

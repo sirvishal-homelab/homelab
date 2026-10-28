@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from trmnl_calendar.main import create_app
+from trmnl_calendar.storage import migrate
 
 
 def test_healthz_ok_and_first_backup(settings):
@@ -11,7 +12,7 @@ def test_healthz_ok_and_first_backup(settings):
         r = client.get("/healthz")
         assert r.status_code == 200
         body = r.json()
-        assert body["status"] == "ok" and body["schema_version"] == 1
+        assert body["status"] == "ok" and body["schema_version"] == len(migrate.available())
     assert list(settings.backup_dir.glob("calendar-*-auto.db"))
 
 

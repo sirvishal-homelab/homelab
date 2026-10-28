@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Recently deleted{% endblock %}
+{% block body %}
+<div class="bar"><h1>Recently deleted</h1><a class="btn" href="/">Back</a></div>
+{% if not events %}<p class="meta">Nothing deleted in the last 30 days.</p>{% endif %}
+<section class="day"><ul>
+{% for ev in events %}
+  <li style="padding:10px 12px;display:flex;justify-content:space-between;gap:12px;align-items:center">
+    <span><strong>{{ ev.title }}</strong> <span class="meta">· {{ ev.start_date.isoformat() }}</span></span>
+    <form method="post" action="/events/{{ ev.id }}/restore"><button type="submit">Restore</button></form>
+  </li>
+{% endfor %}
+</ul></section>
+{% endblock %}

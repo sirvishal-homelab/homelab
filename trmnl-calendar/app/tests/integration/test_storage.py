@@ -6,8 +6,8 @@ from trmnl_calendar.storage import backup, db, migrate
 def test_fresh_database_migrates_without_backup(settings):
     conn = db.connect(settings.db_path)
     applied = migrate.migrate(conn, settings.db_path, settings.backup_dir)
-    assert applied == ["0001_baseline.sql"]
-    assert migrate.current_version(conn) == 1
+    assert applied == [name for _, name, _ in migrate.available()]
+    assert migrate.current_version(conn) == len(applied)
     assert not settings.backup_dir.exists()
     assert migrate.migrate(conn, settings.db_path, settings.backup_dir) == []
 
@@ -38,23 +38,25 @@ def test_manual_backups_never_pruned(settings):
 def test_migration_backs_up_existing_db(settings, monkeypatch):
     conn = db.connect(settings.db_path)
     migrate.migrate(conn, settings.db_path, settings.backup_dir)
-    extra = ("0002_test.sql", "CREATE TABLE t (id INTEGER);")
     real = migrate.available()
-    monkeypatch.setattr(migrate, "available", lambda: [*real, (2, *extra)])
-    assert migrate.migrate(conn, settings.db_path, settings.backup_dir) == ["0002_test.sql"]
-    assert list(settings.backup_dir.glob("*pre-migration-v1*.db"))
-    assert migrate.current_version(conn) == 2
+    n = len(real)
+    extra = (n + 1, "9999_test.sql", "CREATE TABLE t (id INTEGER);")
+    monkeypatch.setattr(migrate, "available", lambda: [*real, extra])
+    assert migrate.migrate(conn, settings.db_path, settings.backup_dir) == ["9999_test.sql"]
+    assert list(settings.backup_dir.glob(f"*pre-migration-v{n}.db"))
+    assert migrate.current_version(conn) == n + 1
 
 
 def test_failed_migration_rolls_back(settings, monkeypatch):
     conn = db.connect(settings.db_path)
     migrate.migrate(conn, settings.db_path, settings.backup_dir)
     real = migrate.available()
-    bad = (2, "0002_bad.sql", "CREATE TABLE ok (id INTEGER); CREATE TABLE ok (id INTEGER);")
+    n = len(real)
+    bad = (n + 1, "9998_bad.sql", "CREATE TABLE ok (id INTEGER); CREATE TABLE ok (id INTEGER);")
     monkeypatch.setattr(migrate, "available", lambda: [*real, bad])
     try:
         migrate.migrate(conn, settings.db_path, settings.backup_dir)
     except sqlite3.Error:
         pass
-    assert migrate.current_version(conn) == 1
+    assert migrate.current_version(conn) == n
     assert conn.execute("SELECT name FROM sqlite_master WHERE name='ok'").fetchone() is None

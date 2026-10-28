@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit event" if event else "Add event" }}{% endblock %}
+{% block body %}
+<div class="bar">
+  <h1>{{ "Edit event" if event else "Add event" }}</h1>
+  <a class="btn" href="/">Cancel</a>
+</div>
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+{% if errors and not error_message %}<div class="notice error" role="alert">Please check the highlighted fields.</div>{% endif %}
+<form class="event" method="post" action="{{ '/events/%d/edit' % event.id if event else '/events/new' }}">
+  {% if rev is not none %}<input type="hidden" name="rev" value="{{ rev }}">{% endif %}
+
+  <label for="start_date">Day</label>
+  <input id="start_date" name="start_date" type="date" value="{{ values.start_date }}" required>
+  {% if errors.start_date %}<div class="err">{{ errors.start_date }}</div>{% endif %}
+
+  <label for="section_id">Category</label>
+  <select id="section_id" name="section_id">
+    {% for s in sections %}<option value="{{ s.id }}" {{ "selected" if values.section_id == s.id|string }}>{{ s.name }}</option>{% endfor %}
+  </select>
+  {% if errors.section_id %}<div class="err">{{ errors.section_id }}</div>{% endif %}
+
+  <label for="title">Description</label>
+  <input id="title" name="title" type="text" maxlength="120" value="{{ values.title }}" required {{ "autofocus" if not event }}>
+  {% if errors.title %}<div class="err">{{ errors.title }}</div>{% endif %}
+
+  <div class="row">
+    <div>
+      <label for="start_time">Start time <span class="meta">(optional)</span></label>
+      <input id="start_time" name="start_time" type="time" value="{{ values.start_time }}">
+      {% if errors.start_time %}<div class="err">{{ errors.start_time }}</div>{% endif %}
+    </div>
+    <div>
+      <label for="end_time">End time <span class="meta">(optional)</span></label>
+      <input id="end_time" name="end_time" type="time" value="{{ values.end_time }}">
+      {% if errors.end_time %}<div class="err">{{ errors.end_time }}</div>{% endif %}
+    </div>
+  </div>
+
+  <details {{ "open" if more_open }}>
+    <summary>More options</summary>
+    <label for="end_date">Ends on <span class="meta">(for a trip over several days)</span></label>
+    <input id="end_date" name="end_date" type="date" value="{{ values.end_date }}">
+    {% if errors.end_date %}<div class="err">{{ errors.end_date }}</div>{% endif %}
+
+    <label for="location">Location</label>
+    <input id="location" name="location" type="text" maxlength="120" value="{{ values.location }}">
+    {% if errors.location %}<div class="err">{{ errors.location }}</div>{% endif %}
+
+    <label for="repeat">Repeats</label>
+    <select id="repeat" name="repeat">
+      {% for key, label in repeat_choices %}<option value="{{ key }}" {{ "selected" if values.repeat == key }}>{{ label }}</option>{% endfor %}
+    </select>
+    {% if repeat_text and event and event.freq != "none" %}<div class="meta">{{ repeat_text }}</div>{% endif %}
+    {% if errors.freq %}<div class="err">{{ errors.freq }}</div>{% endif %}
+
+    <fieldset style="border:0;padding:0;margin:12px 0 0">
+      <legend class="meta">Custom repeat (used when “Custom...” is chosen)</legend>
+      <div class="row">
+        <div>
+          <label for="custom_interval">Every</label>
+          <input id="custom_interval" name="custom_interval" type="number" min="1" max="99" value="{{ values.custom_interval }}">
+          {% if errors.interval %}<div class="err">{{ errors.interval }}</div>{% endif %}
+        </div>
+        <div>
+          <label for="custom_freq">Unit</label>
+          <select id="custom_freq" name="custom_freq">
+            {% for key, label in freq_choices %}<option value="{{ key }}" {{ "selected" if values.custom_freq == key }}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <label>On these weekdays <span class="meta">(weekly, or one day for “monthly on the first Monday”)</span></label>
+      <div class="days">
+        {% for code, name in weekdays %}
+        <label><input type="checkbox" name="by_weekday" value="{{ code }}" {{ "checked" if code in values.by_weekday }}> {{ name[:3] }}</label>
+        {% endfor %}
+      </div>
+      {% if errors.by_weekday %}<div class="err">{{ errors.by_weekday }}</div>{% endif %}
+      <div class="row">
+        <div>
+          <label for="month_mode">Monthly on</label>
+          <select id="month_mode" name="month_mode">
+            <option value="date" {{ "selected" if values.month_mode == "date" }}>the same date</option>
+            <option value="weekday" {{ "selected" if values.month_mode == "weekday" }}>a weekday of the month</option>
+          </select>
+        </div>
+        <div>
+          <label for="month_nth">Which</label>
+          <select id="month_nth" name="month_nth">
+            {% for key, label in nth_choices %}<option value="{{ key }}" {{ "selected" if values.month_nth == key }}>{{ label }}</option>{% endfor %}
+          </select>
+          {% if errors.month_nth %}<div class="err">{{ errors.month_nth }}</div>{% endif %}
+        </div>
+      </div>
+      <label for="until">Stop repeating after <span class="meta">(optional)</span></label>
+      <input id="until" name="until" type="date" value="{{ values.until }}">
+      {% if errors.until %}<div class="err">{{ errors.until }}</div>{% endif %}
+    </fieldset>
+  </details>
+
+  <div class="actions">
+    <button class="primary" type="submit">{{ "Save changes" if event else "Add event" }}</button>
+  </div>
+</form>
+
+{% if event %}
+  {% if event.freq != "none" %}
+  <h2>Skip one date</h2>
+  <form method="post" action="/events/{{ event.id }}/skip" class="event">
+    <label for="skip_date">Not on this date</label>
+    <div class="row">
+      <input id="skip_date" name="date" type="date" value="{{ values.start_date }}" required style="width:100%;min-height:44px;font:inherit">
+      <button type="submit">Skip</button>
+    </div>
+  </form>
+  {% for d in skips %}
+    <form method="post" action="/events/{{ event.id }}/unskip" class="inline">
+      <input type="hidden" name="date" value="{{ d.isoformat() }}">
+      <span class="meta">Skipped {{ d.isoformat() }}</span> <button type="submit">Bring back</button>
+    </form><br>
+  {% endfor %}
+  {% endif %}
+  <h2>Delete</h2>
+  <form method="post" action="/events/{{ event.id }}/delete">
+    <input type="hidden" name="rev" value="{{ event.rev }}">
+    <button class="danger" type="submit">Delete this event{{ " (all repeats)" if event.freq != "none" }}</button>
+    <span class="meta">You can undo for 30 days.</span>
+  </form>
+{% endif %}
+{% endblock %}

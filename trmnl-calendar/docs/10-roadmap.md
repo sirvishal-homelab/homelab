@@ -17,7 +17,7 @@ flowchart LR
 | 1 Verify | Spike log; `05` updated; ADR-0003 accepted with review gate E-1 | Done |
 | 2 Design | `02`, `03`, `04`, `06`, `app/README.md`, ADRs 0003 to 0010 | Signed off 2026-10-27 |
 | 3 Test strategy | `18` | Written |
-| 4 Build | Slices below | Not started |
+| 4 Build | Slices below | Slice 0 done (2026-10-27); slice 1 in review |
 
 ## Slices (each demoable; each ends with a trial on the real panel or phone)
 

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block body %}
+<div class="bar">
+  <h1>Calendar</h1>
+  <a class="btn primary" href="/events/new">Add event</a>
+</div>
+{% if flash_deleted %}
+<div class="notice" role="status">
+  <span>Deleted “{{ flash_deleted.title }}”.</span>
+  <form method="post" action="/events/{{ flash_deleted.id }}/restore" class="inline"><button type="submit">Undo</button></form>
+</div>
+{% elif flash %}
+<div class="notice" role="status">{{ flash }}</div>
+{% endif %}
+<div class="preview">
+  <img src="/render/current.png" width="800" height="480" alt="The week as shown on the screen">
+  <small>This is the picture for the screen (this week). It reaches the display in a later release.</small>
+</div>
+<h2>Coming up</h2>
+{% if empty %}
+<p class="meta">Nothing in the next {{ window_days }} days. Tap “Add event” to start.</p>
+{% endif %}
+{% for d, label, items in days %}
+<section class="day">
+  <h3>{{ label }}</h3>
+  <ul>
+  {% for it in items %}
+    <li><a href="/events/{{ it.event_id }}/edit">
+      <strong>{{ it.title }}</strong>
+      <span class="meta">
+        {% if it.when %}· {{ it.when }}{% endif %}
+        {% if it.trip %}· {{ it.trip }}{% endif %}
+        {% if it.category %}· {{ it.category }}{% endif %}
+        {% if it.repeats %}· repeats{% endif %}
+        {% if it.location %}· {{ it.location }}{% endif %}
+      </span>
+    </a></li>
+  {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+<p class="meta"><a href="/deleted">Recently deleted</a></p>
+{% endblock %}
