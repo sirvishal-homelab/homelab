@@ -36,6 +36,20 @@ the verified spike. The UI is built a little in each slice; slice 5 hardens it. 
 as templates (Day rows, Agenda, Two weeks - lanes, Overview, Month), ICS import, "this and following" edits,
 several displays.
 
+**Owner decision 2026-10-28:** the slice plan above stays as it is. ICS import is a **later phase, after
+slice 5**, and its real-data testing waits until then. Notes for when it is picked up:
+
+- One-time, file-based import of a Google Calendar `.ics` export; **no ongoing sync**, and her personal
+  calendar is not mirrored (she keeps her work schedule in a personal Google calendar; the owner keeps the
+  shared paper calendar's days in this app).
+- Pick-and-choose, nothing saved until confirmed: preview with date range (default next 6 months), text
+  search, per-event tick boxes, target category; re-import is safe (events keep their Google UID).
+- Unsupported items (a changed single occurrence, unsupported repeat rules) are listed with the reason, never
+  dropped silently. Times convert to the calendar's local time (ADR-0010).
+- Open questions for then: are her shifts all-day or timed, single or repeating; whether a trimmed sample export
+  is available (kept out of the public repo; tests use made-up fixtures).
+- Needs slice 2 (categories, people) to exist; write an ADR when it starts.
+
 ## Gate checklist before slice 0
 
 1. ~~Owner signs off ADRs 0003 to 0010~~ Done 2026-10-27.
