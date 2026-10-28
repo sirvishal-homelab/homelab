@@ -23,6 +23,14 @@ from trmnl_calendar.render.scene import FitReport, Glyph, Line, Rect, Scene, Tex
 
 LAYOUT_ID = "week_lanes"
 LABEL = "Week - lanes"
+OPTIONS = (
+    "show_times",
+    "show_badges",
+    "show_locations",
+    "show_banners",
+    "show_hidden_marker",
+    "hide_empty_lanes",
+)
 
 MARGIN = 12
 GUTTER = 58
@@ -38,7 +46,7 @@ MAX_BADGES = 3
 
 def _badge_spec(ctx: PlanContext, o: Occurrence) -> list[tuple[str, int, bool]]:
     """(label, width, is_owner) for the person badges of an occurrence, owner first."""
-    if not ctx.options.get("show_badges", True):
+    if not ctx.opt("show_badges"):
         return []
     out = []
     for pid in o.people[:MAX_BADGES]:
@@ -93,7 +101,9 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
     add(Line(MARGIN, y0 + 22, W - MARGIN, y0 + 22, width=2))
 
     lanes = [s for s in ctx.sections if s.placement == "lane"]
-    banners = [s for s in ctx.sections if s.placement == "banner"]
+    banners = (
+        [s for s in ctx.sections if s.placement == "banner"] if ctx.opt("show_banners") else []
+    )
     banner_y = y0 + 24
     lane_top = banner_y + 17 if banners else y0 + 27
     lane_bot = H - 14
@@ -107,6 +117,11 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
             hidden += 1
             continue
         occ_by.setdefault((o.section_id, o.date), []).append(o)
+
+    if ctx.opt("hide_empty_lanes"):
+        used = {sid for sid, _ in occ_by}
+        if any(s.id in used for s in lanes):
+            lanes = [s for s in lanes if s.id in used]
 
     # header: day names, today fill, banner strip, vertical rules
     for i, d in enumerate(days):
@@ -199,8 +214,10 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
             shown = 0
             for o in items:
                 label = o.title
-                if o.start_time and ctx.options.get("show_times", True):
-                    label = f"{fmt_time(o.start_time, ctx.time_format)} {o.title}"
+                if ctx.opt("show_locations") and o.location:
+                    label = f"{label} @ {o.location}"
+                if o.start_time and ctx.opt("show_times"):
+                    label = f"{fmt_time(o.start_time, ctx.time_format)} {label}"
                 badges = _badge_spec(ctx, o)
                 badge_w = _badge_width(badges) + (2 if badges else 0)
                 lines, cut = T.wrap(label, 12, False, cw - 8 - badge_w, 2)
@@ -220,8 +237,9 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
         ty += lh
     add(Line(MARGIN, lane_bot, W - MARGIN, lane_bot, dotted=True))
 
-    if hidden:
+    if hidden and ctx.opt("show_hidden_marker"):
         add(Text(W - MARGIN, H - 3, f"+{hidden} on hidden days", 11, anchor="r"))
+    if hidden:
         fit.add("hidden_day_events", f"{hidden} events fall on days this view hides.")
     if overflow:
         fit.add("events_overflow", f"{overflow} events do not fit and show as +N.")

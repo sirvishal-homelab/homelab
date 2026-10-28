@@ -238,3 +238,78 @@ def who_context(conn: sqlite3.Connection, current: int | None, next_url: str = "
         "current": current,
         "next_url": next_url,
     }
+
+
+def views_list_context(conn: sqlite3.Connection, error_message: str = "") -> dict:
+    from trmnl_calendar.domain.view_templates import TEMPLATES
+    from trmnl_calendar.render.layouts import registry
+    from trmnl_calendar.storage.repositories import views as views_repo
+
+    active = views_repo.active_view(conn)
+    return {
+        "views": [(v, registry.LAYOUTS[v.layout].LABEL) for v in views_repo.list_views(conn)],
+        "active_id": active.id,
+        "templates": [(tid, t["label"], t["help"]) for tid, t in TEMPLATES.items()],
+        "error_message": error_message,
+    }
+
+
+def view_editor_context(
+    conn: sqlite3.Connection,
+    now_utc: datetime,
+    cache,
+    values: dict,
+    view_id: int | None = None,
+    errors: dict | None = None,
+    error_message: str = "",
+    flash: str = "",
+) -> dict:
+    """Everything the editor page needs, including a server-rendered preview (works without JS)."""
+    from trmnl_calendar.domain.models import WEEKDAY_CODES, WEEKDAY_NAMES
+    from trmnl_calendar.errors import ValidationFailed
+    from trmnl_calendar.render.layouts import registry
+    from trmnl_calendar.storage.repositories import views as views_repo
+    from trmnl_calendar.web import render_service
+
+    image = None
+    fit: list = []
+    try:
+        preview_view = views_repo.build_view(conn, {**values, "name": "Preview"})
+        result = render_service.render_view(conn, preview_view, now_utc, cache)
+        image = {
+            "url": f"/render/{result.hash}.png",
+            "width": result.width,
+            "height": result.height,
+        }
+        fit = [f for f in result.fit.findings if f.code != "titles_truncated"]
+        cut = [f for f in result.fit.findings if f.code == "titles_truncated"]
+        fit = fit + cut
+    except ValidationFailed:
+        pass
+    display = views_repo.get_display(conn)
+    layouts = [
+        {
+            "id": lid,
+            "label": m.LABEL,
+            "options": list(m.OPTIONS),
+        }
+        for lid, m in registry.LAYOUTS.items()
+    ]
+    return {
+        "view_id": view_id,
+        "is_active": bool(view_id) and views_repo.active_view(conn).id == view_id,
+        "values": values,
+        "errors": errors or {},
+        "error_message": error_message,
+        "flash": flash,
+        "image": image,
+        "fit": fit,
+        "profile": display,
+        "layouts": layouts,
+        "option_labels": registry.OPTION_LABELS,
+        "option_order": list(registry.OPTION_DEFAULTS),
+        "option_defaults": registry.OPTION_DEFAULTS,
+        "weekdays": list(zip(WEEKDAY_CODES, WEEKDAY_NAMES, strict=True)),
+        "categories": cal.list_sections(conn),
+        "people_all": [p for p in people_repo.list_people(conn)],
+    }

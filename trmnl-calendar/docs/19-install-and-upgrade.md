@@ -79,6 +79,20 @@ Then, from your phone or desktop on the LAN:
 The picture does **not** reach the device yet (slice 4). People, categories editing and views arrive
 in slices 2 and 3; the four seeded categories (Events, Work, Lunch, Dinner) are used until then.
 
+### After slice 3 (views and the editor)
+
+Upgrading applies migration 0004 (a `pre-migration` backup is written first). It adds the display and two
+starter views, so the picture looks the same until you change something.
+
+| URL | What |
+|-----|------|
+| `/views` | All views; **Show on screen**; start a new view from a template |
+| `/views/new?template=...` | Editor: layout, days shown, categories, people, what to show, live preview |
+| `/render/current.png` | The picture for the **active** view |
+
+Try it: **Views** → **Blank** → name it "Work days" → press **Work days** under *Days shown* → watch the
+preview → **Save and show on screen**. The week and two-week templates differ in how much of the calendar fits.
+
 ## Upgrade
 
 ```bash

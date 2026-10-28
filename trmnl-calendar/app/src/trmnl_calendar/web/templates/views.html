@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Views{% endblock %}
+{% block body %}
+<div class="bar"><h1>Views</h1></div>
+<p class="meta">A view is one way of drawing the calendar on the screen. Build as many as you like and choose which one is showing.</p>
+{% if flash %}<div class="notice" role="status">{{ flash }}</div>{% endif %}
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+<section class="day"><ul>
+{% for v, label in views %}
+  <li class="row-item">
+    <a href="/views/{{ v.id }}/edit">
+      <strong>{{ v.name }}</strong>
+      <span class="meta">· {{ label }}{{ " · showing on the screen" if v.id == active_id }}</span>
+    </a>
+    <span class="movers">
+      {% if v.id != active_id %}
+      <form method="post" action="/views/{{ v.id }}/activate" class="inline"><button type="submit">Show on screen</button></form>
+      {% endif %}
+      <form method="post" action="/views/{{ v.id }}/move" class="inline"><input type="hidden" name="direction" value="-1"><button type="submit" aria-label="Move {{ v.name }} up" {{ "disabled" if loop.first }}>↑</button></form>
+      <form method="post" action="/views/{{ v.id }}/move" class="inline"><input type="hidden" name="direction" value="1"><button type="submit" aria-label="Move {{ v.name }} down" {{ "disabled" if loop.last }}>↓</button></form>
+    </span>
+  </li>
+{% endfor %}
+</ul></section>
+
+<h2>Make a new view</h2>
+<p class="meta">Start from a template. You can change everything afterwards, and the template itself never changes.</p>
+<section class="day"><ul>
+{% for tid, label, help in templates %}
+  <li><a href="/views/new?template={{ tid }}"><strong>{{ label }}</strong><br><span class="meta">{{ help }}</span></a></li>
+{% endfor %}
+</ul></section>
+{% endblock %}
