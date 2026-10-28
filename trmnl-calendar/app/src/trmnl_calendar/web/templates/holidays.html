@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Add holidays{% endblock %}
+{% block body %}
+<div class="bar"><h1>Add holidays</h1><a href="/categories">Categories</a></div>
+<p class="meta">Add a region's holidays in one go. They become ordinary events that you can edit or delete later. Nothing is synced: run this again for another year.</p>
+{% if done %}<div class="notice" role="status">{{ done }} <a href="/">See the calendar</a></div>{% endif %}
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+
+<form class="event" method="get" action="/holidays">
+  <label for="region">Region</label>
+  <select id="region" name="region" required>
+    <option value="">Choose…</option>
+    {% for rid, label in regions %}<option value="{{ rid }}" {{ "selected" if rid == region }}>{{ label }}</option>{% endfor %}
+  </select>
+  {% if region_note %}<div class="meta">{{ region_note }}</div>{% endif %}
+  <fieldset class="who">
+    <legend>Years</legend>
+    <div class="days">
+      {% for y in year_choices %}<label><input type="checkbox" name="year" value="{{ y }}" {{ "checked" if y in years or (not years and loop.first) }}> {{ y }}</label>{% endfor %}
+    </div>
+  </fieldset>
+  <div class="actions"><button type="submit">Show holidays</button></div>
+</form>
+
+{% if groups %}
+<form class="event" method="post" action="/holidays/import">
+  <input type="hidden" name="region" value="{{ region }}">
+  {% for g in groups %}
+  <fieldset class="who">
+    <legend>{{ g.label }}</legend>
+    {% for r in g.rows %}
+    <label class="check"><input type="checkbox" name="h" value="{{ r.token }}" {{ "checked" if r.checked }} {{ "disabled" if r.added }}> {{ r.name }} <span class="meta">· {{ r.when }}{{ " · already added" if r.added }}</span></label>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+
+  <label for="category_id">Add them to</label>
+  <select id="category_id" name="category_id">
+    <option value="" {{ "selected" if not category_id }}>{{ target_name }}{{ "" if target_exists else " (new banner category)" }}</option>
+    {% for s in sections %}{% if s.name | lower != target_name | lower %}<option value="{{ s.id }}" {{ "selected" if s.id == category_id }}>{{ s.name }}</option>{% endif %}{% endfor %}
+  </select>
+  <div class="meta">A banner category shows as a grey strip at the top of each day.</div>
+  <div class="actions"><button class="primary" type="submit">Add the ticked holidays</button></div>
+</form>
+{% endif %}
+{% endblock %}

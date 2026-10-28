@@ -18,9 +18,17 @@ from trmnl_calendar.publish.scheduler import Scheduler
 from trmnl_calendar.render.fontcheck import verify_fonts
 from trmnl_calendar.render.pipeline import RenderCache
 from trmnl_calendar.storage import backup, db, migrate
-from trmnl_calendar.web import errors, pages, pages_manage, pages_views, render_service
+from trmnl_calendar.web import (
+    errors,
+    pages,
+    pages_holidays,
+    pages_manage,
+    pages_views,
+    render_service,
+)
 from trmnl_calendar.web.api import display as display_api
 from trmnl_calendar.web.api import events as events_api
+from trmnl_calendar.web.api import holidays as holidays_api
 from trmnl_calendar.web.api import manage as manage_api
 from trmnl_calendar.web.api import views as views_api
 
@@ -117,8 +125,10 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.include_router(manage_api.router)
     app.include_router(views_api.router)
     app.include_router(display_api.router)
+    app.include_router(holidays_api.router)
     app.include_router(pages_manage.router)
     app.include_router(pages_views.router)
+    app.include_router(pages_holidays.router)
     app.include_router(pages.router)
     app.mount(
         "/static", StaticFiles(directory=Path(__file__).parent / "web" / "static"), name="static"

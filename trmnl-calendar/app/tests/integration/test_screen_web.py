@@ -154,3 +154,43 @@ def test_end_to_end_startup_push_then_change_push(tmp_path, fake):
     finally:
         server.should_exit = True
         thread.join(timeout=10)
+
+
+# ---- holidays
+
+
+def test_holidays_api_and_page(settings):
+    with TestClient(create_app(settings, clock=lambda: NOW)) as c:
+        regions = c.get(f"{API}/holidays/regions").json()
+        assert {"CA", "CA-NS"} == {r["id"] for r in regions}
+        listing = c.get(f"{API}/holidays", params={"region": "CA-NS", "years": "2026"}).json()
+        heritage = next(i for i in listing["items"] if i["key"] == "heritage_day")
+        assert heritage["date"] == "2026-02-16" and heritage["default"] is True
+        r = c.post(f"{API}/holidays/import", json={"region": "CA-NS", "years": [2026]})
+        assert r.status_code == 201 and r.json()["added"] == 10
+        again = c.post(f"{API}/holidays/import", json={"region": "CA-NS", "years": [2026]})
+        assert again.status_code == 200 and again.json() == {
+            "added": 0,
+            "skipped": 10,
+            "category": r.json()["category"],
+        }
+        bad = c.post(f"{API}/holidays/import", json={"region": "XX", "years": [2026]})
+        assert bad.status_code == 422 and "region" in bad.json()["error"]["fields"]
+        assert c.get(f"{API}/holidays", params={"region": "CA", "years": "1900"}).status_code == 422
+        assert c.get("/holidays").status_code == 200
+        page = c.get("/holidays", params={"region": "CA-NS", "year": "2026"})
+        assert page.status_code == 200 and "Heritage Day" in page.text
+
+
+def test_holiday_form_import_and_home_banner(settings):
+    with TestClient(create_app(settings, clock=lambda: NOW)) as c:
+        r = c.post(
+            "/holidays/import",
+            data={"region": "CA-NS", "h": ["christmas:2026", "boxing_day:2026"]},
+            follow_redirects=False,
+        )
+        assert r.status_code == 303 and "Added%202" in r.headers["location"]
+        empty = c.post("/holidays/import", data={"region": "CA-NS"})
+        assert empty.status_code == 422
+        events = c.get(f"{API}/events", params={"from": "2026-12-01", "to": "2026-12-31"}).json()
+        assert {e["title"] for e in events} >= {"Christmas Day", "Boxing Day"}
