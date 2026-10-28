@@ -93,6 +93,22 @@ starter views, so the picture looks the same until you change something.
 Try it: **Views** → **Blank** → name it "Work days" → press **Work days** under *Days shown* → watch the
 preview → **Save and show on screen**. The week and two-week templates differ in how much of the calendar fits.
 
+### After slice 4 (push to the screen)
+
+Upgrading applies migration 0005. The four settings in `.env` (`TERMINUS_URL`, `TERMINUS_LOGIN`,
+`TERMINUS_PASSWORD`, `PUBLIC_BASE_URL`) are now used; optional ones are `TERMINUS_MODEL_NAME` (default `og_plus`),
+`TERMINUS_SCREEN_NAME` (default `trmnl-calendar`), `TERMINUS_PUSH_INTERVAL` (seconds, default 900, minimum 60) and
+`TERMINUS_VERIFY_TLS`. After editing `.env`, run `docker compose up -d` so the app restarts with the new values.
+
+1. Open **Settings**, section **The screen**, and press **Check connection**. Fix anything marked ✗ or !.
+2. Press **Push now**. The app creates a Terminus screen called `trmnl-calendar` and sends the picture.
+3. In Terminus, open the device's playlist and make `trmnl-calendar` its **only** item (remove the others). The
+   device then shows it at its next check-in (about every 15 minutes). Run the connection check again to confirm.
+4. From then on every edit is sent a few seconds after you save it, and only when the picture changed.
+
+If a push fails the reason is shown on the same page and the screen keeps its old picture; the app retries at the next
+15-minute check. **Switch pushing off** stops all sending. Bulk holiday import is on **Categories → Add holidays**.
+
 ## Upgrade
 
 ```bash

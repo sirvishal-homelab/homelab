@@ -82,3 +82,8 @@ button.linklike { border: 0; background: none; color: var(--accent); min-height:
   .pane-preview { position: sticky; top: 64px; }
 }
 [hidden] { display: none !important; }
+.status-line { padding: 12px; }
+ul.check { list-style: none; margin: 0; padding: 0; }
+ul.check li { padding: 10px 12px; }
+ul.check li + li { border-top: 1px solid var(--line); }
+.check-fail strong, .check-warn strong { color: var(--danger); }

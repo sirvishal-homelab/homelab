@@ -214,11 +214,48 @@ def person_edit_context(
     }
 
 
+def local_when(iso: str | None, timezone: str, time_format: str) -> str:
+    """'Oct 28, 10:44a' from a stored UTC timestamp, in the calendar's timezone."""
+    if not iso:
+        return ""
+    from zoneinfo import ZoneInfo
+
+    t = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=ZoneInfo("UTC"))
+    t = t.astimezone(ZoneInfo(timezone))
+    return f"{MONTH_ABBR[t.month - 1]} {t.day}, {fmt_time(t.strftime('%H:%M'), time_format)}"
+
+
+def screen_context(conn: sqlite3.Connection, settings, scheduler) -> dict:
+    from trmnl_calendar.publish import check, status
+
+    c = cal.get_calendar(conn)
+    st = status.screen_status(conn, settings, scheduler)
+    when = lambda k: local_when(st[k], c.timezone, c.time_format)  # noqa: E731
+    return {
+        **st,
+        "missing": check.missing_settings(settings),
+        "pushed_when": when("last_pushed_at"),
+        "attempt_when": when("last_attempt_at"),
+        "next_when": when("next_check_at"),
+        "interval_minutes": settings.push_interval_seconds // 60,
+    }
+
+
 def settings_context(
-    conn: sqlite3.Connection, values=None, errors=None, error_message="", saved=False
+    conn: sqlite3.Connection,
+    values=None,
+    errors=None,
+    error_message="",
+    saved=False,
+    screen=None,
+    check_steps=None,
+    screen_flash="",
 ) -> dict:
     c = cal.get_calendar(conn)
     return {
+        "screen": screen,
+        "check_steps": check_steps,
+        "screen_flash": screen_flash,
         "values": values
         or {
             "name": c.name,
@@ -312,4 +349,67 @@ def view_editor_context(
         "weekdays": list(zip(WEEKDAY_CODES, WEEKDAY_NAMES, strict=True)),
         "categories": cal.list_sections(conn),
         "people_all": [p for p in people_repo.list_people(conn)],
+    }
+
+
+def holidays_context(
+    conn: sqlite3.Connection,
+    region: str,
+    years: list[int],
+    this_year: int,
+    category_id: int | None = None,
+    done: str = "",
+    error_message: str = "",
+) -> dict:
+    """The holiday picker: regions, years, and (once chosen) the list with what is already added."""
+    from trmnl_calendar.domain import holidays as H
+    from trmnl_calendar.storage.repositories import calendar as cal_repo
+
+    sections = cal_repo.list_sections(conn)
+    target = next((s for s in sections if s.id == category_id), None) or next(
+        (s for s in sections if s.name.lower() == "holidays"), None
+    )
+    groups = []
+    if region in H.REGIONS and years:
+        items = [h for y in years for h in H.holidays_for(region, y)]
+        for gid, label in H.GROUPS:
+            rows = []
+            for h in items:
+                if h.group != gid:
+                    continue
+                added = bool(
+                    target
+                    and conn.execute(
+                        "SELECT 1 FROM events WHERE calendar_id = ? AND section_id = ? "
+                        "AND deleted_at IS NULL AND start_date = ? AND title = ? COLLATE NOCASE",
+                        (cal_repo.CALENDAR_ID, target.id, h.date.isoformat(), h.name),
+                    ).fetchone()
+                )
+                rows.append(
+                    {
+                        "token": f"{h.key}:{h.date.year}",
+                        "name": h.name,
+                        "when": (
+                            f"{DAY_ABBR[h.date.weekday()]} {MONTH_ABBR[h.date.month - 1]} "
+                            f"{h.date.day}, {h.date.year}"
+                        ),
+                        "checked": gid in H.CHECKED_BY_DEFAULT and not added,
+                        "added": added,
+                    }
+                )
+            if rows:
+                groups.append({"id": gid, "label": label, "rows": rows})
+    return {
+        "regions": H.region_choices(),
+        "region": region if region in H.REGIONS else "",
+        "region_note": H.REGIONS[region]["note"] if region in H.REGIONS else "",
+        "year_choices": [this_year, this_year + 1, this_year + 2],
+        "years": years,
+        "groups": groups,
+        "sections": sections,
+        "category_id": category_id,
+        "target_name": target.name if target else "Holidays",
+        "target_exists": target is not None,
+        "done": done,
+        "error_message": error_message,
     }

@@ -5,16 +5,18 @@ first; nothing outside the app depends on it (OQ-10: UI-only, but versioned so t
 framework generates an OpenAPI description from the code; that description is the contract the API tests
 check (`18`).
 
-> **Implemented so far (slices 1-3):** events (create, read, list, patch with `If-Match`, delete, restore, skips),
+> **Implemented so far (slices 1-4):** events (create, read, list, patch with `If-Match`, delete, restore, skips),
 > `GET /occurrences`, categories (list, create, patch, delete with `move_to`, `PUT /categories/order`), people
 > (list, create, patch, delete; `in_use` 409 when events use a person), `GET/PATCH /calendar` (name, timezone,
 > week start, time format), `GET/PUT /me` (the "who am I" cookie, a convenience and not authentication),
 > views (`GET /layouts`, `GET /templates`, list, create from a template, read, patch, delete, `PUT /views/order`,
-> `POST /views/{id}/activate`, `POST /views/preview`), `GET /display`, `/healthz`, `/render/current.png` (the
+> `POST /views/{id}/activate`, `POST /views/preview`), `GET /display`, `PATCH /display` (`enabled` only), `GET /display/status`, `POST /display/push` (502
+> `push_failed` with Terminus's reason), `POST /display/check` (the connection check), holidays (`GET /holidays/regions`,
+> `GET /holidays?region=&years=`, `POST /holidays/import`), `/healthz`, `/render/current.png` (the
 > active view), `/render/{hash}.png`, and the single error shape. A view's `weekdays` are codes (`MO`..`SU`),
 > `categories` and `people` are `{mode: all|only, ids}`, and `options` are booleans the layout understands. Handlers take plain JSON
 > bodies, so the generated OpenAPI description does not yet describe request fields; typed models and OpenAPI
-> contract tests are still to do (tracked for slice 5). Not yet built: push endpoints (`POST /display/push`, status) and `PATCH /display`.
+> contract tests are still to do (tracked for slice 5). Not yet built: `GET /export`, `GET /version`, `PATCH /display` profile overrides.
 
 ## 1. Conventions
 

@@ -195,10 +195,64 @@ async def person_delete(person_id: int, request: Request):
 # ---- settings
 
 
+def _screen(request: Request, conn):
+    return views.screen_context(conn, request.app.state.settings, request.app.state.scheduler)
+
+
 @router.get("/settings")
-def settings(request: Request, saved: int = 0, conn=Depends(get_conn)):
-    ctx = views.settings_context(conn, saved=bool(saved))
+def settings(request: Request, saved: int = 0, screen: str = "", conn=Depends(get_conn)):
+    flash = {
+        "pushed": "Sent to the screen.",
+        "failed": "The push did not work. The reason is shown below.",
+        "on": "Pushing is switched on.",
+        "off": "Pushing is switched off.",
+    }.get(screen, "")
+    ctx = views.settings_context(
+        conn, saved=bool(saved), screen=_screen(request, conn), screen_flash=flash
+    )
     return _page(request, "settings.html", nav="settings", **ctx)
+
+
+@router.post("/settings/screen/check")
+async def screen_check(request: Request):
+    def work() -> Response:
+        from trmnl_calendar.publish import check
+        from trmnl_calendar.storage.repositories import push_state as state_repo
+        from trmnl_calendar.storage.repositories import views as views_repo
+
+        with _open(request) as conn:
+            steps = check.run_check(
+                request.app.state.settings,
+                views_repo.get_display(conn),
+                state_repo.get_state(conn).screen_id,
+            )
+            ctx = views.settings_context(conn, screen=_screen(request, conn), check_steps=steps)
+            return _page(request, "settings.html", nav="settings", **ctx)
+
+    return await run_in_threadpool(work)
+
+
+@router.post("/settings/screen/push")
+async def screen_push(request: Request):
+    def work() -> Response:
+        out = request.app.state.publisher.run(force=True)
+        return _go("/settings?screen=" + ("pushed" if out.status == "ok" else "failed") + "#screen")
+
+    return await run_in_threadpool(work)
+
+
+@router.post("/settings/screen/enabled")
+async def screen_enabled(request: Request):
+    form = forms.parse_body(await request.body())
+
+    def work() -> Response:
+        on = _one(form, "enabled") == "1"
+        with _open(request) as conn:
+            conn.execute("UPDATE displays SET enabled = ? WHERE id = 1", (int(on),))
+            conn.commit()
+        return _go("/settings?screen=" + ("on" if on else "off") + "#screen")
+
+    return await run_in_threadpool(work)
 
 
 @router.post("/settings")

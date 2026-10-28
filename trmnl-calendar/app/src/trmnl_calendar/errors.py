@@ -47,3 +47,11 @@ class PreconditionRequired(AppError):
 
 class InUse(AppError):
     status, code = 409, "in_use"
+
+
+class BadGateway(AppError):
+    status, code = 502, "push_failed"
+
+
+class NotConfigured(AppError):
+    status, code = 409, "not_configured"

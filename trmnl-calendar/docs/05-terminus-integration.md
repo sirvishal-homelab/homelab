@@ -80,13 +80,29 @@ Prototype configuration (environment variables; none are stored in the database)
 |----------|---------|
 | `TERMINUS_URL` | Base address of Terminus. |
 | `TERMINUS_LOGIN`, `TERMINUS_PASSWORD` | Credentials. |
-| `TERMINUS_IMAGE_URL` | Address of `/calendar.png` **as seen from Terminus**. |
+| `PUBLIC_BASE_URL` | The app's address **as seen from Terminus** (use the IP). The pushed image is `PUBLIC_BASE_URL/render/<hash>.png`, a content-addressed URL (built in slice 4; `TERMINUS_IMAGE_URL` and `/calendar.png` are not used). |
 | `TERMINUS_MODEL_NAME` (replaces `TERMINUS_MODEL_ID`) | Model name such as `og_plus`; the app looks up the id via `GET /api/models`. |
-| `TERMINUS_PLAYLIST_ID` | Optional; adds the screen to a playlist on create. |
-| `TERMINUS_SCREEN_NAME` | Default `calendar`. |
+| ~~`TERMINUS_PLAYLIST_ID`~~ | **Not built.** No verified API call adds a screen to a playlist. The owner puts the `trmnl-calendar` screen in the device's playlist once, in Terminus; the connection check warns if it is missing or shares the playlist. |
+| `TERMINUS_SCREEN_NAME` | Default `trmnl-calendar`. An existing screen with this name is adopted instead of creating a second one. |
 | `TERMINUS_PREPROCESSED` | **Default true**; the app renders the model's exact depth. |
 | `TERMINUS_VERIFY_TLS` | Default true. |
 | `TERMINUS_PUSH_INTERVAL` | Seconds between scheduled pushes, minimum 60, default 900. |
+
+## Built in slice 4
+
+- `publish/terminus.py`: the only module that knows the API (standard library only). Bare token, cached about
+  25 minutes, refreshed through `/api/jwt`, one re-login on a 401.
+- `publish/publisher.py`: render the active view, **skip the network call when the hash is unchanged**, else
+  resolve the model by name, refuse if Terminus's size or bit depth differs from the display profile, then PATCH
+  the known screen (on 404: find by name, else create). State is saved in `push_state`.
+- `publish/scheduler.py`: one loop. A change wakes it, a 5 s debounce merges edits, and a 15-minute timer re-checks
+  (this also moves "today" at midnight and retries after a failure). The first push waits 10 s after start so the
+  web server is up when Terminus fetches the image.
+- Every successful write request (page or API) asks for a push, except previews, who-am-I and the push actions.
+- `publish/check.py`: the **Connection check** on the Settings page (settings, login, model, device, picture
+  address, screen and playlist), each with a plain-language fix. **Push now** is the real end-to-end test.
+- Tests use a **fake Terminus** (`tests/fakes/terminus.py`) with the paths and shapes from the spike, and an
+  end-to-end test over real sockets. The real server has not been exercised by CI.
 
 ## Error handling to design
 
