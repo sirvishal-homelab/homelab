@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block body %}
+<div class="bar"><h1>Settings</h1></div>
+{% if saved %}<div class="notice" role="status">Saved.</div>{% endif %}
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+<form class="event" method="post" action="/settings">
+  <label for="name">Calendar name</label>
+  <input id="name" name="name" type="text" maxlength="40" value="{{ values.name }}" required>
+  {% if errors.name %}<div class="err">{{ errors.name }}</div>{% endif %}
+
+  <label for="timezone">Timezone</label>
+  <input id="timezone" name="timezone" type="text" value="{{ values.timezone }}" list="zones" required autocapitalize="off" autocomplete="off">
+  <datalist id="zones">
+    {% for z in ["America/Halifax", "America/St_Johns", "America/Toronto", "America/Winnipeg", "America/Edmonton", "America/Vancouver", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Paris", "UTC"] %}<option value="{{ z }}">{% endfor %}
+  </datalist>
+  <div class="meta">Decides what “today” is. Event times are not converted; 2 PM stays 2 PM.</div>
+  {% if errors.timezone %}<div class="err">{{ errors.timezone }}</div>{% endif %}
+
+  <div class="row">
+    <div>
+      <label for="week_start">Week starts on</label>
+      <select id="week_start" name="week_start">
+        <option value="sun" {{ "selected" if values.week_start == "sun" }}>Sunday</option>
+        <option value="mon" {{ "selected" if values.week_start == "mon" }}>Monday</option>
+      </select>
+      {% if errors.week_start %}<div class="err">{{ errors.week_start }}</div>{% endif %}
+    </div>
+    <div>
+      <label for="time_format">Times</label>
+      <select id="time_format" name="time_format">
+        <option value="12" {{ "selected" if values.time_format == "12" }}>12-hour (9:30a)</option>
+        <option value="24" {{ "selected" if values.time_format == "24" }}>24-hour (09:30)</option>
+      </select>
+      {% if errors.time_format %}<div class="err">{{ errors.time_format }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="actions"><button class="primary" type="submit">Save settings</button></div>
+</form>
+{% endblock %}

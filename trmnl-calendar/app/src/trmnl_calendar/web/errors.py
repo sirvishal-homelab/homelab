@@ -19,7 +19,8 @@ def _is_api(request: Request) -> bool:
 
 def _page(status: int, title: str, message: str) -> HTMLResponse:
     return HTMLResponse(
-        views.render_page("error.html", title=title, message=message), status_code=status
+        views.render_page("error.html", title=title, message=message, me=None, request_path="/"),
+        status_code=status,
     )
 
 

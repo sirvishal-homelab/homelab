@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Edit category{% endblock %}
+{% block body %}
+<div class="bar"><h1>Edit category</h1><a class="btn" href="/categories">Back</a></div>
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+<form class="event" method="post" action="/categories/{{ category.id }}/edit">
+  <label for="name">Name</label>
+  <input id="name" name="name" type="text" maxlength="30" value="{{ values.name }}" required>
+  {% if errors.name %}<div class="err">{{ errors.name }}</div>{% endif %}
+
+  <label for="placement">Shown as</label>
+  <select id="placement" name="placement">
+    <option value="lane" {{ "selected" if values.placement == "lane" }}>A lane (a row of its own)</option>
+    <option value="banner" {{ "selected" if values.placement == "banner" }}>A banner (strip at the top of the day)</option>
+  </select>
+  {% if errors.placement %}<div class="err">{{ errors.placement }}</div>{% endif %}
+
+  <label for="weight">Lane height</label>
+  <select id="weight" name="weight">
+    {% for w, label in [("1", "1 - normal"), ("2", "2 - taller"), ("3", "3 - much taller"), ("4", "4 - tallest")] %}
+    <option value="{{ w }}" {{ "selected" if values.weight|string == w }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <div class="meta">Only used for lanes. A taller lane leaves less room for the others.</div>
+  {% if errors.weight %}<div class="err">{{ errors.weight }}</div>{% endif %}
+
+  <label class="check"><input type="checkbox" name="visible" value="1" {{ "checked" if values.visible }}> Show on the screen</label>
+  <div class="actions"><button class="primary" type="submit">Save</button></div>
+</form>
+
+<h2>Delete</h2>
+{% if only_one %}
+<p class="meta">You need at least one category, so this one can’t be deleted.</p>
+{% else %}
+<form method="post" action="/categories/{{ category.id }}/delete" class="event">
+  {% if event_count %}
+  <p>{{ event_count }} event{{ "" if event_count == 1 else "s" }} use this category. Move them to:</p>
+  <select name="move_to" aria-label="Move events to">
+    {% for o in others %}<option value="{{ o.id }}">{{ o.name }}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <div class="actions"><button class="danger" type="submit">Delete “{{ category.name }}”</button></div>
+</form>
+{% endif %}
+{% endblock %}

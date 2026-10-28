@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Edit person{% endblock %}
+{% block body %}
+<div class="bar"><h1>Edit person</h1><a class="btn" href="/people">Back</a></div>
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+<form class="event" method="post" action="/people/{{ person.id }}/edit">
+  <div class="row">
+    <div>
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" maxlength="30" value="{{ values.name }}" required>
+      {% if errors.name %}<div class="err">{{ errors.name }}</div>{% endif %}
+    </div>
+    <div>
+      <label for="label">Label</label>
+      <input id="label" name="label" type="text" maxlength="2" value="{{ values.label }}" required>
+      {% if errors.label %}<div class="err">{{ errors.label }}</div>{% endif %}
+    </div>
+  </div>
+  <label class="check"><input type="checkbox" name="active" value="1" {{ "checked" if values.active }}> Active</label>
+  <div class="meta">Untick to retire someone. They disappear from new events and filters; old events keep them.</div>
+  <div class="actions"><button class="primary" type="submit">Save</button></div>
+</form>
+<h2>Delete</h2>
+<form method="post" action="/people/{{ person.id }}/delete" class="event">
+  <p class="meta">Only possible if no event uses this person; otherwise retire them above.</p>
+  <button class="danger" type="submit">Delete {{ person.name }}</button>
+</form>
+{% endblock %}

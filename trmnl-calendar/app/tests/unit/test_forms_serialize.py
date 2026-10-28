@@ -92,8 +92,27 @@ def test_api_serialisation_and_patch_mapping():
     out = event_to_api(ev(freq="weekly", interval=2), {"updated_at": "t", "deleted_at": None})
     assert out["category_id"] == 2 and out["repeat"]["interval"] == 2
     assert out["repeat_text"] == "Repeats every 2 weeks on Thursday" and out["updated_at"] == "t"
-    assert out["people"] == {"ids": [], "owner_id": None}
+    assert out["people"] == {"ids": [], "owner_id": None} and out["updated_by"] is None
     patch = patch_from_api(
         {"title": "T", "category_id": 3, "repeat": {"freq": "daily", "weekdays": []}}
     )
     assert patch == {"title": "T", "section_id": 3, "freq": "daily", "by_weekday": []}
+
+
+def test_people_in_forms_and_api():
+    d = data(people=["2", "1", "x"], owner_id="2")
+    assert d["people_ids"] == [2, 1] and d["owner_id"] == 2
+    assert data()["people_ids"] == [] and data()["owner_id"] is None
+    e = ev(people=(2, 1), owner_id=2)
+    v = forms.event_to_values(e)
+    assert v["people"] == ["2", "1"] and v["owner_id"] == "2"
+    assert forms.event_to_values(None, default_people=(3,))["people"] == ["3"]
+    echoed = forms.values_from_form({"people": ["1", "2"], "owner_id": ["1"]})
+    assert echoed["people"] == ["1", "2"] and echoed["owner_id"] == "1"
+    from trmnl_calendar.domain.models import Person
+
+    out = event_to_api(e, {"updated_by_person_id": 2}, {2: Person(2, "Bea", "B")})
+    assert out["people"] == {"ids": [2, 1], "owner_id": 2}
+    assert out["updated_by"] == {"id": 2, "label": "B"}
+    patch = patch_from_api({"people": {"ids": [1], "owner_id": 1}})
+    assert patch == {"people_ids": [1], "owner_id": 1}

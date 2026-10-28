@@ -32,6 +32,34 @@ BAR_STEP = 19
 MAX_BAR_LEVELS = 3
 MIN_LANE_PX = 28
 GREY = 170
+BADGE_H = 12
+MAX_BADGES = 3
+
+
+def _badge_spec(ctx: PlanContext, o: Occurrence) -> list[tuple[str, int, bool]]:
+    """(label, width, is_owner) for the person badges of an occurrence, owner first."""
+    if not ctx.options.get("show_badges", True):
+        return []
+    out = []
+    for pid in o.people[:MAX_BADGES]:
+        person = ctx.people.get(pid)
+        if person:
+            width = 12 if len(person.label) == 1 else 18
+            out.append((person.label, width, pid == o.owner_id))
+    return out
+
+
+def _badge_width(spec: list[tuple[str, int, bool]]) -> int:
+    return sum(w for _, w, _ in spec) + max(0, len(spec) - 1)
+
+
+def _draw_badges(add, spec: list[tuple[str, int, bool]], right: int, y: int) -> None:
+    """Boxed initials, right-aligned at x=right; the owner's box is grey (docs/04 section 3)."""
+    x = right - _badge_width(spec)
+    for label, width, is_owner in spec:
+        add(Rect(x, y, width, BADGE_H, fill=GREY if is_owner else 255, outline=0))
+        add(Text(x + width // 2, y + 10, label, 10, True, anchor="m"))
+        x += width + 1
 
 
 def window(today: date, week_start: str = "sun") -> tuple[date, date]:
@@ -156,9 +184,12 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                     title = with_range
             if cut_r:
                 title += " ▸"
-            title, cut = T.ellipsize(title, 12, True, bw - 10)
+            badges = _badge_spec(ctx, o0)
+            badge_w = _badge_width(badges) + (4 if badges else 0)
+            title, cut = T.ellipsize(title, 12, True, bw - 10 - badge_w)
             truncated += cut
             add(Text(x + 5, y + 13, title, 12, True))
+            _draw_badges(add, badges, x + bw - 4, y + 2)
 
         # single-day items in each day cell
         for i, d in enumerate(days):
@@ -170,7 +201,9 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                 label = o.title
                 if o.start_time and ctx.options.get("show_times", True):
                     label = f"{fmt_time(o.start_time, ctx.time_format)} {o.title}"
-                lines, cut = T.wrap(label, 12, False, cw - 8, 2)
+                badges = _badge_spec(ctx, o)
+                badge_w = _badge_width(badges) + (2 if badges else 0)
+                lines, cut = T.wrap(label, 12, False, cw - 8 - badge_w, 2)
                 need = 14 * len(lines)
                 last_item = o is items[-1]
                 if (yy + need > ty + lh - 12 and not last_item) or yy + need > ty + lh - 2:
@@ -181,6 +214,7 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                 truncated += cut
                 for k, line in enumerate(lines):
                     add(Text(x + 4, yy + 11 + k * 14, line, 12))
+                _draw_badges(add, badges, x + cw - 4, yy + 1)
                 yy += need + 3
                 shown += 1
         ty += lh
