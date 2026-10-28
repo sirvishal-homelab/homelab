@@ -5,9 +5,10 @@ views, people, recurrence, multi-day events and the manage experience (`15`, `17
 SQLite file in WAL mode. Everything the user can configure lives here, so a restart or rebuild
 loses nothing. Secrets do not (ADR-0005 addendum).
 
-> **Built so far (migrations 0001-0002, slice 1):** `calendars`, `sections` (seeded), `events`, `event_exceptions`,
-> `idempotency_keys`. Not yet created: `people`, `event_people` (slice 2), `displays`, `views`, `push_state` (slices 3-4).
-> `calendars.options_json` and `events.updated_by_person_id` exist; the latter has no foreign key until people exist.
+> **Built so far (migrations 0001-0003, slices 1-2):** `calendars`, `sections` (seeded), `events`, `event_exceptions`,
+> `idempotency_keys`, `people`, `event_people`. Not yet created: `displays`, `views`, `push_state` (slices 3-4).
+> `calendars.options_json` holds timezone-adjacent options (week start, time format). `events.updated_by_person_id`
+> is a plain integer with no foreign key, so retiring or deleting a person never blocks history.
 
 ## 1. Entities
 

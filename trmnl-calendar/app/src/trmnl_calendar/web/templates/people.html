@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}People{% endblock %}
+{% block body %}
+<div class="bar"><h1>People</h1><span class="meta">{{ count }} of {{ max }}</span></div>
+<p class="meta">Add everyone who has events. Their short label (one or two letters) is drawn in a small box on the screen. An event with nobody ticked is for everyone.</p>
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+<section class="day"><ul>
+{% for p in people %}
+  <li class="row-item"><a href="/people/{{ p.id }}/edit"><strong>{{ p.name }}</strong> <span class="meta">· label {{ p.label }}{{ " · not active" if not p.active }}</span></a></li>
+{% endfor %}
+{% if not people %}<li style="padding:10px 12px" class="meta">Nobody yet.</li>{% endif %}
+</ul></section>
+{% if count < max %}
+<h2>Add a person</h2>
+<form class="event" method="post" action="/people">
+  <div class="row">
+    <div>
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" maxlength="30" value="{{ values.name }}" required>
+      {% if errors.name %}<div class="err">{{ errors.name }}</div>{% endif %}
+    </div>
+    <div>
+      <label for="label">Label <span class="meta">(1-2 letters)</span></label>
+      <input id="label" name="label" type="text" maxlength="2" value="{{ values.label }}" required>
+      {% if errors.label %}<div class="err">{{ errors.label }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="actions"><button class="primary" type="submit">Add person</button></div>
+</form>
+{% else %}
+<p class="meta">You have reached the limit of {{ max }} people.</p>
+{% endif %}
+{% endblock %}

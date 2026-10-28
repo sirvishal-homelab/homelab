@@ -37,11 +37,34 @@
     </div>
   </div>
 
+  {% if people %}
+  <fieldset class="who">
+    <legend>Who is it for?</legend>
+    <div class="days">
+      {% for p in people %}
+      <label><input type="checkbox" name="people" value="{{ p.id }}" {{ "checked" if p.id|string in values.people }}> {{ p.name }}{{ " (not active)" if not p.active }}</label>
+      {% endfor %}
+    </div>
+    <div class="meta">Leave everyone unticked if it is for the whole household.</div>
+    {% if errors.people %}<div class="err">{{ errors.people }}</div>{% endif %}
+  </fieldset>
+  {% endif %}
+
   <details {{ "open" if more_open }}>
     <summary>More options</summary>
     <label for="end_date">Ends on <span class="meta">(for a trip over several days)</span></label>
     <input id="end_date" name="end_date" type="date" value="{{ values.end_date }}">
     {% if errors.end_date %}<div class="err">{{ errors.end_date }}</div>{% endif %}
+
+    {% if people|length > 1 %}
+    <label for="owner_id">Main person <span class="meta">(shown first, in a grey box)</span></label>
+    <select id="owner_id" name="owner_id">
+      <option value="">No main person</option>
+      {% for p in people %}<option value="{{ p.id }}" {{ "selected" if values.owner_id == p.id|string }}>{{ p.name }}</option>{% endfor %}
+    </select>
+    <div class="meta">With one person ticked, that person is the main person automatically.</div>
+    {% if errors.owner_id %}<div class="err">{{ errors.owner_id }}</div>{% endif %}
+    {% endif %}
 
     <label for="location">Location</label>
     <input id="location" name="location" type="text" maxlength="120" value="{{ values.location }}">

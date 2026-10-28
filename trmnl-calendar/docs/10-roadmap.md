@@ -25,7 +25,7 @@ flowchart LR
 |-------|---------|------------------|----------------|
 | 0 Foundations | `app/` skeleton, Dockerfile with bundled fonts, `/healthz`, migration runner and baseline, CI (stage 1 of ADR-0008), `deploy/compose.yml`, backup job | Container builds in CI, runs on the server, `/healthz` is green, a backup file appears | No |
 | 1 Events and the first image | Event create, edit, delete with undo (soft delete), recurrence (daily to yearly, every N, weekdays, nth weekday, skips), trips; the 2-bit PNG encoder; the **Week - lanes** layout; `/render/<hash>.png`; a plain page to add events | Add a repeating event and a trip; the week image matches the approved mock-up | No |
-| 2 Categories and people | Category manager (lanes and banner), people with labels and owner, "who am I", filters | Create "Outings", mark an owner, see badges | No |
+| 2 Categories and people | Category manager (lanes and banner), people with labels and owner, "who am I", filters | Create "Outings", mark an owner, see badges (built; also settings, filters, zoomable preview) | No |
 | 3 Views and the editor | Views table, templates, **Two weeks - list**, live native-size preview, fit check, active view | Build a Work-days view and watch the preview; wife builds one | No |
 | 4 Push | Terminus client (login cache, models by name, create or PATCH, 404 recovery), scheduler (debounce, 15-minute check, push only on change), status panel, "Push now", fake-Terminus contract tests | Edit an event on a phone; the panel changes within one check-in | **Yes** |
 | 4b Experiment E-1 | Stable `/calendar.png`; trial a Terminus poll extension against push; measures M1 to M5 | Results in ADR-0003; owner picks push, pull or both | Yes |

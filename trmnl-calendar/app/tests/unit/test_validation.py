@@ -89,3 +89,16 @@ def test_repeat_text():
         == "Repeats every month on the last Friday"
     )
     assert repeat_text(e(freq="yearly")) == "Repeats every year"
+
+
+def test_normalize_people():
+    from trmnl_calendar.domain.validation import normalize_people as n
+
+    assert n([], None) == ((), None, {})
+    assert n([3], None) == ((3,), 3, {})  # alone: the owner
+    assert n([1, 2, 3], None) == ((1, 2, 3), None, {})
+    assert n([1, 2, 3], 3) == ((3, 1, 2), 3, {})  # owner first
+    assert n([1, 1, 2], 2)[0] == (2, 1)  # duplicates dropped
+    assert "owner_id" in n([1, 2], 9)[2]
+    assert "people" in n(["x"], None)[2]
+    assert n(None, None) == ((), None, {})

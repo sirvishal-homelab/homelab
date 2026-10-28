@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import dataclasses
 import sqlite3
 import uuid
 from datetime import UTC, date, datetime, timedelta
 
 from trmnl_calendar.domain.models import Event
-from trmnl_calendar.domain.validation import parse_date, validate_event
+from trmnl_calendar.domain.validation import normalize_people, parse_date, validate_event
 from trmnl_calendar.errors import EditConflict, NotFound, ValidationFailed
 from trmnl_calendar.storage.repositories.calendar import CALENDAR_ID
 
@@ -89,8 +90,68 @@ def _params(clean: dict) -> dict:
     return p
 
 
+def _attach_people(conn: sqlite3.Connection, events: list[Event]) -> list[Event]:
+    if not events:
+        return events
+    marks = ",".join("?" * len(events))
+    by_event: dict[int, list[tuple[int, str]]] = {}
+    for r in conn.execute(
+        f"""SELECT ep.event_id, ep.person_id, ep.role FROM event_people ep
+            JOIN people p ON p.id = ep.person_id
+            WHERE ep.event_id IN ({marks}) ORDER BY p.position, p.id""",
+        [e.id for e in events],
+    ):
+        by_event.setdefault(r["event_id"], []).append((r["person_id"], r["role"]))
+    out = []
+    for e in events:
+        rows = by_event.get(e.id, [])
+        owner = next((pid for pid, role in rows if role == "owner"), None)
+        ids = ([owner] if owner is not None else []) + [pid for pid, _ in rows if pid != owner]
+        out.append(dataclasses.replace(e, people=tuple(ids), owner_id=owner))
+    return out
+
+
+def _clean_people(
+    conn: sqlite3.Connection, current: Event | None, ids_in: object, owner_in: object
+):
+    """Validate people against the database. Returns (ids with owner first, owner_id)."""
+    ids, owner, err = normalize_people(ids_in, owner_in)
+    if not err and ids:
+        marks = ",".join("?" * len(ids))
+        found = {
+            r["id"]: bool(r["active"])
+            for r in conn.execute(
+                f"SELECT id, active FROM people WHERE calendar_id = ? AND id IN ({marks})",
+                [CALENDAR_ID, *ids],
+            )
+        }
+        attached = set(current.people) if current else set()
+        if set(ids) - set(found):
+            err["people"] = "Choose people from the list"
+        elif any(not found[i] and i not in attached for i in ids):
+            err["people"] = "That person is no longer active"
+    if err:
+        raise ValidationFailed(err)
+    return ids, owner
+
+
+def _write_people(conn: sqlite3.Connection, event_id: int, ids: tuple[int, ...], owner: int | None):
+    conn.execute("DELETE FROM event_people WHERE event_id = ?", (event_id,))
+    for pid in ids:
+        conn.execute(
+            "INSERT INTO event_people (event_id, person_id, role) VALUES (?, ?, ?)",
+            (event_id, pid, "owner" if pid == owner else "with"),
+        )
+
+
 def create_event(conn: sqlite3.Connection, data: dict, *, person_id: int | None = None) -> Event:
     clean, errors = validate_event(data)
+    people_ids: tuple[int, ...] = ()
+    owner = None
+    try:
+        people_ids, owner = _clean_people(conn, None, data.get("people_ids"), data.get("owner_id"))
+    except ValidationFailed as exc:
+        errors.update(exc.fields)
     if errors:
         raise ValidationFailed(errors)
     _check_section(conn, clean["section_id"])
@@ -110,6 +171,7 @@ def create_event(conn: sqlite3.Connection, data: dict, *, person_id: int | None 
             "now": now,
         },
     )
+    _write_people(conn, cur.lastrowid, people_ids, owner)
     conn.commit()
     return get_event(conn, cur.lastrowid)
 
@@ -121,7 +183,7 @@ def get_event(conn: sqlite3.Connection, event_id: int, *, include_deleted: bool 
     row = conn.execute(sql, (event_id, CALENDAR_ID)).fetchone()
     if not row:
         raise NotFound("That event no longer exists.")
-    return row_to_event(row)
+    return _attach_people(conn, [row_to_event(row)])[0]
 
 
 def meta(conn: sqlite3.Connection, event_id: int) -> dict:
@@ -148,7 +210,7 @@ def list_events(conn: sqlite3.Connection, window_start: date, window_end: date) 
             window_start.isoformat(),
         ),
     ).fetchall()
-    return [row_to_event(r) for r in rows]
+    return _attach_people(conn, [row_to_event(r) for r in rows])
 
 
 def list_upcoming(conn: sqlite3.Connection, today: date, limit: int = 200) -> list[Event]:
@@ -161,7 +223,7 @@ def list_upcoming(conn: sqlite3.Connection, today: date, limit: int = 200) -> li
            ORDER BY start_date, id LIMIT ?""",
         (CALENDAR_ID, today.isoformat(), today.isoformat(), limit),
     ).fetchall()
-    return [row_to_event(r) for r in rows]
+    return _attach_people(conn, [row_to_event(r) for r in rows])
 
 
 def update_event(
@@ -178,11 +240,22 @@ def update_event(
             "This event was changed by someone else.",
             extra={"current_rev": current.rev, "changed_at": meta(conn, event_id)["updated_at"]},
         )
-    unknown = set(patch) - set(_FIELDS)
+    unknown = set(patch) - set(_FIELDS) - {"people_ids", "owner_id"}
     if unknown:
         raise ValidationFailed({k: "Unknown field" for k in sorted(unknown)})
     merged = {**event_to_form(current), **patch}
     clean, errors = validate_event(merged)
+    people_ids, owner = current.people, current.owner_id
+    if "people_ids" in patch or "owner_id" in patch:
+        new_ids = patch.get("people_ids", list(current.people))
+        if "owner_id" in patch:
+            new_owner = patch["owner_id"]
+        else:
+            new_owner = current.owner_id if current.owner_id in (new_ids or []) else None
+        try:
+            people_ids, owner = _clean_people(conn, current, new_ids, new_owner)
+        except ValidationFailed as exc:
+            errors.update(exc.fields)
     if errors:
         raise ValidationFailed(errors)
     _check_section(conn, clean["section_id"])
@@ -195,9 +268,11 @@ def update_event(
            WHERE id=:id AND rev=:rev AND deleted_at IS NULL""",
         {**_params(clean), "person": person_id, "now": _now(), "id": event_id, "rev": expected_rev},
     )
-    conn.commit()
     if cur.rowcount != 1:  # lost a race between the check and the write
+        conn.rollback()
         raise EditConflict("This event was changed by someone else.")
+    _write_people(conn, event_id, people_ids, owner)
+    conn.commit()
     return get_event(conn, event_id)
 
 
@@ -238,7 +313,7 @@ def list_deleted(conn: sqlite3.Connection) -> list[Event]:
         "ORDER BY deleted_at DESC",
         (CALENDAR_ID, cutoff),
     ).fetchall()
-    return [row_to_event(r) for r in rows]
+    return _attach_people(conn, [row_to_event(r) for r in rows])
 
 
 def purge_deleted(conn: sqlite3.Connection) -> int:

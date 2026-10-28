@@ -46,6 +46,8 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
         "month_mode": None,
         "month_nth": None,
         "until": None,
+        "people_ids": [int(v) for v in f.get("people", []) if v.isdigit()],
+        "owner_id": int(_one(f, "owner_id")) if _one(f, "owner_id").isdigit() else None,
     }
     choice = _one(f, "repeat") or "none"
     if choice in ("daily", "weekly", "monthly", "yearly"):
@@ -63,7 +65,10 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
 
 
 def event_to_values(
-    ev: Event | None, default_date: str = "", default_section: int | None = None
+    ev: Event | None,
+    default_date: str = "",
+    default_section: int | None = None,
+    default_people: tuple[int, ...] = (),
 ) -> dict:
     """Prefill values (all strings) for the form; the repeat choice is inferred from the rule."""
     if ev is None:
@@ -82,6 +87,8 @@ def event_to_values(
             "month_mode": "date",
             "month_nth": "1",
             "until": "",
+            "people": [str(i) for i in default_people],
+            "owner_id": "",
         }
     own_day = WEEKDAY_CODES[ev.start_date.weekday()]
     plain_weekly = ev.freq == "weekly" and ev.by_weekday in ((), (own_day,))
@@ -111,6 +118,8 @@ def event_to_values(
         "month_mode": ev.month_mode or "date",
         "month_nth": str(ev.month_nth or 1),
         "until": ev.until.isoformat() if ev.until else "",
+        "people": [str(i) for i in ev.people],
+        "owner_id": str(ev.owner_id) if ev.owner_id else "",
     }
 
 
@@ -118,7 +127,7 @@ def values_from_form(f: dict[str, list[str]]) -> dict:
     """Echo submitted values back into the form after a validation error."""
     v = event_to_values(None)
     for k in v:
-        if k == "by_weekday":
+        if k in ("by_weekday", "people"):
             v[k] = [c for c in f.get(k, []) if c]
         elif k in f:
             v[k] = _one(f, k)

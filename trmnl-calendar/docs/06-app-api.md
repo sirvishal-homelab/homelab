@@ -5,11 +5,13 @@ first; nothing outside the app depends on it (OQ-10: UI-only, but versioned so t
 framework generates an OpenAPI description from the code; that description is the contract the API tests
 check (`18`).
 
-> **Implemented so far (slice 1):** events (create, read, list, patch with `If-Match`, delete, restore, skips),
-> `GET /occurrences`, read-only `GET /categories`, `/healthz`, `/render/current.png`, `/render/{hash}.png`, and
-> the single error shape. Handlers take plain JSON bodies, so the generated OpenAPI description does not yet
-> describe request fields; typed models and the OpenAPI contract tests come with slice 2. `people` is always
-> empty until slice 2. Not yet built: people, category editing, views, display and push endpoints.
+> **Implemented so far (slices 1-2):** events (create, read, list, patch with `If-Match`, delete, restore, skips),
+> `GET /occurrences`, categories (list, create, patch, delete with `move_to`, `PUT /categories/order`), people
+> (list, create, patch, delete; `in_use` 409 when events use a person), `GET/PATCH /calendar` (name, timezone,
+> week start, time format), `GET/PUT /me` (the "who am I" cookie, a convenience and not authentication),
+> `/healthz`, `/render/current.png`, `/render/{hash}.png`, and the single error shape. Handlers take plain JSON
+> bodies, so the generated OpenAPI description does not yet describe request fields; typed models and OpenAPI
+> contract tests are still to do (tracked for slice 5). Not yet built: views, display and push endpoints.
 
 ## 1. Conventions
 

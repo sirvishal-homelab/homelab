@@ -43,3 +43,7 @@ class EditConflict(AppError):
 
 class PreconditionRequired(AppError):
     status, code = 428, "precondition_required"
+
+
+class InUse(AppError):
+    status, code = 409, "in_use"

@@ -96,7 +96,6 @@ def occurrences(
     window_start: date,
     window_end: date,
     week_start: str = "sun",
-    people: dict[int, tuple[int, ...]] | None = None,
 ) -> list[Occurrence]:
     """Per-day occurrences inside [window_start, window_end], in display order."""
     if window_end < window_start:
@@ -104,7 +103,6 @@ def occurrences(
     if (window_end - window_start).days > MAX_WINDOW_DAYS:
         raise ValueError(f"window longer than {MAX_WINDOW_DAYS} days")
     skips = skips or {}
-    people = people or {}
     out: list[Occurrence] = []
     for ev in events:
         dur = ev.duration_days
@@ -131,7 +129,8 @@ def occurrences(
                         day_number=i + 1,
                         day_count=dur + 1,
                         series_start=start,
-                        people=people.get(ev.id, ()),
+                        people=ev.people,
+                        owner_id=ev.owner_id,
                     )
                 )
     out.sort(key=sort_key)

@@ -36,6 +36,8 @@ class Event:
     until: date | None = None
     uid: str = ""
     rev: int = 1
+    people: tuple[int, ...] = ()  # person ids, owner first; empty means everyone
+    owner_id: int | None = None
 
     @property
     def duration_days(self) -> int:
@@ -57,7 +59,8 @@ class Occurrence:
     day_number: int = 1
     day_count: int = 1
     series_start: date | None = None  # start date of the occurrence this day belongs to
-    people: tuple[int, ...] = field(default_factory=tuple)
+    people: tuple[int, ...] = field(default_factory=tuple)  # owner first
+    owner_id: int | None = None
 
     @property
     def is_first(self) -> bool:
@@ -89,3 +92,12 @@ class CalendarInfo:
     timezone: str
     week_start: str = "sun"  # "sun" | "mon"
     time_format: str = "12"  # "12" | "24"
+
+
+@dataclass(frozen=True)
+class Person:
+    id: int
+    name: str
+    label: str  # one or two characters, drawn on the screen
+    position: int = 0
+    active: bool = True

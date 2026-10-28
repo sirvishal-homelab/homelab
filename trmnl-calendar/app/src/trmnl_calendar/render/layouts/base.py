@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from trmnl_calendar.domain.models import Occurrence, Section
+from trmnl_calendar.domain.models import Occurrence, Person, Section
 
 DAY_ABBR = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")  # index == date.weekday()
 MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
@@ -24,6 +24,7 @@ class PlanContext:
     height: int = 480
     bit_depth: int = 2
     options: dict = field(default_factory=dict)
+    people: dict[int, Person] = field(default_factory=dict)  # for badges
 
 
 def fmt_time(hhmm: str, time_format: str) -> str:

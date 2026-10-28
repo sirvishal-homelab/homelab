@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Categories{% endblock %}
+{% block body %}
+<div class="bar"><h1>Categories</h1><span class="meta">{{ count }} of {{ max }}</span></div>
+<p class="meta">Categories are the parts of a day on the screen, such as Events, Work, Lunch and Dinner. Each is a row (a “lane”), or a grey strip at the top of the day (a “banner”, good for holidays).</p>
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+<section class="day"><ul>
+{% for c, n in categories %}
+  <li class="row-item">
+    <a href="/categories/{{ c.id }}/edit">
+      <strong>{{ c.name }}</strong>
+      <span class="meta">· {{ "banner" if c.placement == "banner" else "lane, height " ~ c.weight }}{{ " · hidden" if not c.visible }} · {{ n }} event{{ "" if n == 1 else "s" }}</span>
+    </a>
+    <span class="movers">
+      <form method="post" action="/categories/{{ c.id }}/move" class="inline"><input type="hidden" name="direction" value="-1"><button type="submit" aria-label="Move {{ c.name }} up" {{ "disabled" if loop.first }}>↑</button></form>
+      <form method="post" action="/categories/{{ c.id }}/move" class="inline"><input type="hidden" name="direction" value="1"><button type="submit" aria-label="Move {{ c.name }} down" {{ "disabled" if loop.last }}>↓</button></form>
+    </span>
+  </li>
+{% endfor %}
+</ul></section>
+
+{% if count < max %}
+<h2>Add a category</h2>
+<form class="event" method="post" action="/categories">
+  <label for="name">Name</label>
+  <input id="name" name="name" type="text" maxlength="30" value="{{ values.name }}" required>
+  {% if errors.name %}<div class="err">{{ errors.name }}</div>{% endif %}
+  <label for="placement">Shown as</label>
+  <select id="placement" name="placement">
+    <option value="lane" {{ "selected" if values.placement == "lane" }}>A lane (a row of its own)</option>
+    <option value="banner" {{ "selected" if values.placement == "banner" }}>A banner (strip at the top of the day)</option>
+  </select>
+  <div class="actions"><button class="primary" type="submit">Add category</button></div>
+</form>
+{% else %}
+<p class="meta">You have reached the limit of {{ max }} categories.</p>
+{% endif %}
+{% endblock %}

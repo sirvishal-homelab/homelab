@@ -16,8 +16,9 @@ from trmnl_calendar.config import Settings, load_settings
 from trmnl_calendar.render.fontcheck import verify_fonts
 from trmnl_calendar.render.pipeline import RenderCache
 from trmnl_calendar.storage import backup, db, migrate
-from trmnl_calendar.web import errors, pages, render_service
+from trmnl_calendar.web import errors, pages, pages_manage, render_service
 from trmnl_calendar.web.api import events as events_api
+from trmnl_calendar.web.api import manage as manage_api
 
 log = logging.getLogger("trmnl_calendar")
 
@@ -65,6 +66,8 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.state.render_cache = RenderCache()
     errors.install(app)
     app.include_router(events_api.router)
+    app.include_router(manage_api.router)
+    app.include_router(pages_manage.router)
     app.include_router(pages.router)
     app.mount(
         "/static", StaticFiles(directory=Path(__file__).parent / "web" / "static"), name="static"

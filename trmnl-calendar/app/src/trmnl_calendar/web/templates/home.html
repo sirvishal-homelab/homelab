@@ -13,11 +13,28 @@
 {% elif flash %}
 <div class="notice" role="status">{{ flash }}</div>
 {% endif %}
-<div class="preview">
-  <img src="/render/current.png" width="800" height="480" alt="The week as shown on the screen">
-  <small>This is the picture for the screen (this week). It reaches the display in a later release.</small>
+{% if show_who_prompt %}
+<div class="notice" role="region" aria-label="Who are you?">
+  <span>Who are you? New events will be for you by default.</span>
+  <span class="chips">
+    {% for p in people_list %}
+    <form method="post" action="/who" class="inline"><input type="hidden" name="person_id" value="{{ p.id }}"><input type="hidden" name="next" value="/"><button type="submit">{{ p.name }}</button></form>
+    {% endfor %}
+    <form method="post" action="/who" class="inline"><input type="hidden" name="person_id" value="0"><input type="hidden" name="next" value="/"><button type="submit">Skip</button></form>
+  </span>
+</div>
+{% endif %}
+<div class="preview" id="preview">
+  <div class="scroll"><img id="preview-img" src="/render/current.png" width="800" height="480" alt="The week as shown on the screen"></div>
+  <small>This is the picture for the screen (this week). <button type="button" class="linklike" id="zoom-toggle">Show actual size</button> It reaches the display in a later release.</small>
 </div>
 <h2>Coming up</h2>
+{% if people_list %}
+<p class="chips" aria-label="Show events for">
+  <a class="chip {{ 'on' if filter_person is none }}" href="/">Everyone</a>
+  {% for p in people_list %}<a class="chip {{ 'on' if filter_person == p.id }}" href="/?person={{ p.id }}">{{ p.name }}</a>{% endfor %}
+</p>
+{% endif %}
 {% if empty %}
 <p class="meta">Nothing in the next {{ window_days }} days. Tap “Add event” to start.</p>
 {% endif %}
@@ -34,6 +51,7 @@
         {% if it.category %}· {{ it.category }}{% endif %}
         {% if it.repeats %}· repeats{% endif %}
         {% if it.location %}· {{ it.location }}{% endif %}
+        {% if it.people %}· {{ it.people | join(", ") }}{% endif %}
       </span>
     </a></li>
   {% endfor %}

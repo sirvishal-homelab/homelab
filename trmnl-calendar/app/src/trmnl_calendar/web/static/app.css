@@ -22,7 +22,7 @@ a { color: var(--accent); }
 .btn.danger, button.danger { color: var(--danger); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .preview { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; }
-.preview img { width: 100%; height: auto; display: block; image-rendering: pixelated; }
+.preview img { width: 100%; height: auto; display: block; }
 .preview small { color: var(--muted); }
 .day { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin: 8px 0; }
 .day h3 { margin: 0; padding: 8px 12px; font-size: .95rem; border-bottom: 1px solid var(--line); }
@@ -45,3 +45,23 @@ summary { min-height: 44px; display: flex; align-items: center; cursor: pointer;
 .days label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; min-height: 44px; }
 .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 .inline { display: inline; }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; padding: 6px 12px; background: var(--card);
+  border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: var(--radius);
+  color: var(--ink); text-decoration: none; }
+.nav a[aria-current=page] { background: var(--bg); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
+.nav .me { margin-left: auto; color: var(--muted); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
+.chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.row-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.row-item > a { flex: 1; }
+.movers { display: inline-flex; gap: 4px; padding-right: 8px; }
+.movers button { min-width: 44px; padding: 0; }
+label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; min-height: 44px; margin-top: 12px; }
+fieldset.who { border: 1px solid var(--line); border-radius: var(--radius); margin: 16px 0 0; padding: 4px 12px 12px; background: var(--card); }
+fieldset.who legend { font-weight: 600; padding: 0 6px; }
+button.linklike { border: 0; background: none; color: var(--accent); min-height: 0; padding: 0; text-decoration: underline; display: inline; }
+.preview .scroll { overflow-x: auto; }
+.preview.zoomed img { width: 800px; max-width: none; }

@@ -12,6 +12,7 @@ from trmnl_calendar.render.layouts.base import PlanContext
 from trmnl_calendar.render.pipeline import RenderCache, RenderResult, render
 from trmnl_calendar.storage.repositories import calendar as cal
 from trmnl_calendar.storage.repositories import events as repo
+from trmnl_calendar.storage.repositories import people as people_repo
 
 PROFILE = {"width": 800, "height": 480, "bit_depth": 2}  # the display profile arrives in slice 4
 
@@ -38,6 +39,7 @@ def render_current(
         occurrences=tuple(o for o in occ if o.section_id in visible_ids),
         week_start=calendar.week_start,
         time_format=calendar.time_format,
+        people={p.id: p for p in people_repo.list_people(conn)},
         **PROFILE,
     )
     result = render(ctx)

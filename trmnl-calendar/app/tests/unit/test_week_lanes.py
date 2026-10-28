@@ -172,3 +172,77 @@ def test_render_cache_is_lru():
     c.get("a")
     c.put("c", b"3")
     assert c.get("a") == b"1" and c.get("b") is None and c.get("c") == b"3"
+
+
+# ---- person badges (slice 2)
+
+from trmnl_calendar.domain.models import Person  # noqa: E402
+
+PEOPLE = {1: Person(1, "Alex", "A"), 2: Person(2, "Bea", "B"), 3: Person(3, "Chris", "Ch")}
+
+
+def pctx(events, **kw):
+    c = ctx(events, **kw)
+    return base.PlanContext(**{**c.__dict__, "people": PEOPLE})
+
+
+def boxes(scene):
+    return [i for i in scene.items if isinstance(i, Rect) and i.h == 12 and i.outline == 0]
+
+
+def test_badges_show_owner_first_and_grey():
+    ev = E(1, "Skating", people=(2, 1), owner_id=2)
+    scene, _ = week_lanes.plan(pctx([ev]))
+    bx = boxes(scene)
+    assert [b.fill for b in bx] == [170, 255]  # owner grey, then the other
+    assert bx[0].x < bx[1].x
+    labels = [t.text for t in texts(scene) if t.bold and t.size == 10]
+    assert labels == ["B", "A"]
+
+
+def test_no_badges_for_everyone_events():
+    scene, _ = week_lanes.plan(pctx([E(1, "Bin day")]))
+    assert boxes(scene) == []
+
+
+def test_two_letter_label_gets_a_wider_box_and_max_three_badges():
+    scene, _ = week_lanes.plan(pctx([E(1, "X", people=(3,), owner_id=3)]))
+    assert boxes(scene)[0].w == 18
+    p4 = {**PEOPLE, 4: Person(4, "Dee", "D")}
+    c = ctx([E(1, "X", people=(1, 2, 3, 4))])
+    scene, _ = week_lanes.plan(base.PlanContext(**{**c.__dict__, "people": p4}))
+    assert len(boxes(scene)) == 3
+
+
+def test_badges_can_be_switched_off_and_unknown_people_are_skipped():
+    ev = E(1, "Skating", people=(1, 99), owner_id=1)
+    c = ctx([ev], options={"show_badges": False})
+    scene, _ = week_lanes.plan(base.PlanContext(**{**c.__dict__, "people": PEOPLE}))
+    assert boxes(scene) == []
+    scene, _ = week_lanes.plan(pctx([ev]))
+    assert len(boxes(scene)) == 1  # 99 has no person record
+
+
+def test_badges_shorten_the_title_not_overlap_it():
+    long = "A really quite long appointment title"
+    plain, _ = week_lanes.plan(pctx([E(1, long)]))
+    badged, _ = week_lanes.plan(pctx([E(1, long, people=(1, 2), owner_id=1)]))
+    w_plain = max(T.measure(t.text, 12) for t in texts(plain) if t.size == 12 and not t.bold)
+    w_badged = max(T.measure(t.text, 12) for t in texts(badged) if t.size == 12 and not t.bold)
+    assert w_badged < w_plain
+    b = boxes(badged)[0]
+    cell_left = 12 + 58
+    text_right = max(
+        t.x + T.measure(t.text, 12) for t in texts(badged) if t.size == 12 and not t.bold
+    )
+    assert text_right < b.x and b.x > cell_left
+
+
+def test_trip_bar_shows_badges_inside_the_bar():
+    ev = E(
+        1, "Cabin", start=date(2026, 10, 27), end_date=date(2026, 10, 29), people=(1, 2), owner_id=1
+    )
+    scene, _ = week_lanes.plan(pctx([ev]))
+    bar = next(i for i in scene.items if isinstance(i, Rect) and i.h == 16)
+    for b in boxes(scene):
+        assert bar.x < b.x and b.x + b.w <= bar.x + bar.w

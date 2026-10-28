@@ -155,3 +155,34 @@ def validate_event(data: dict) -> tuple[dict, dict[str, str]]:
         until=until,
     )
     return clean, err
+
+
+def normalize_people(
+    ids: object, owner_id: object
+) -> tuple[tuple[int, ...], int | None, dict[str, str]]:
+    """Clean the people of an event. Returns (ids with owner first, owner, errors).
+
+    Empty ids means everyone. One person alone becomes the owner; with several, the owner is
+    only the one explicitly chosen (docs/03).
+    """
+    err: dict[str, str] = {}
+    raw = ids if isinstance(ids, list | tuple) else []
+    clean: list[int] = []
+    for v in raw:
+        if isinstance(v, bool) or not isinstance(v, int):
+            err["people"] = "Choose people from the list"
+            continue
+        if v not in clean:
+            clean.append(v)
+    owner = None
+    if owner_id not in (None, "", 0):
+        if isinstance(owner_id, bool) or not isinstance(owner_id, int):
+            err["owner_id"] = "Choose the main person from the list"
+        elif owner_id not in clean:
+            err["owner_id"] = "The main person must be one of the chosen people"
+        else:
+            owner = owner_id
+    if owner is None and len(clean) == 1 and "people" not in err:
+        owner = clean[0]
+    ordered = ([owner] if owner is not None else []) + [i for i in clean if i != owner]
+    return tuple(ordered), owner, err

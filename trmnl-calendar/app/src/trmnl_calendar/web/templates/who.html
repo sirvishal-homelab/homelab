@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Who are you?{% endblock %}
+{% block body %}
+<h1>Who are you?</h1>
+<p class="meta">This only sets who new events are for by default, and who gets the credit for a change. It is not a login; this device remembers your choice.</p>
+{% if not people %}<p>Add people first on the <a href="/people">People</a> page.</p>{% endif %}
+<div class="actions">
+  {% for p in people %}
+  <form method="post" action="/who" class="inline"><input type="hidden" name="person_id" value="{{ p.id }}"><input type="hidden" name="next" value="{{ next_url }}"><button class="{{ 'primary' if current == p.id }}" type="submit">{{ p.name }}</button></form>
+  {% endfor %}
+  <form method="post" action="/who" class="inline"><input type="hidden" name="person_id" value="0"><input type="hidden" name="next" value="{{ next_url }}"><button type="submit">Nobody in particular</button></form>
+</div>
+{% endblock %}
