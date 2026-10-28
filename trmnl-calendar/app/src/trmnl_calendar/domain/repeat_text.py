@@ -37,4 +37,6 @@ def repeat_text(ev: Event) -> str:
         text += f" on day {ev.start_date.day}"
     if ev.until:
         text += f", until {_long_date(ev.until)}"
+    elif ev.count:
+        text += f", {ev.count} times"
     return text

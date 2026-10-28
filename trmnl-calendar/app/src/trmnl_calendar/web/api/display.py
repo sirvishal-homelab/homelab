@@ -55,6 +55,7 @@ def connection_check(request: Request, conn: sqlite3.Connection = Depends(get_co
         request.app.state.settings,
         views_repo.get_display(conn),
         state_repo.get_state(conn).screen_id,
+        remember=lambda d, m: state_repo.remember_device(conn, d, m),
     )
     return {
         "ok": not any(s.status == "fail" for s in steps),

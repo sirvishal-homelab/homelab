@@ -11,6 +11,7 @@ from trmnl_calendar.storage import db, migrate
 from trmnl_calendar.storage.repositories import events as events_repo
 from trmnl_calendar.storage.repositories import push_state as state_repo
 from trmnl_calendar.storage.repositories import views as views_repo
+from trmnl_calendar.web import views
 
 NOW = datetime(2026, 10, 28, 15, 0, tzinfo=UTC)
 
@@ -169,3 +170,17 @@ def test_active_view_is_what_gets_pushed(env):
     views_repo.activate_view(conn, 2)
     b = pub.run()
     assert b.status == "ok" and b.image_hash != a.image_hash
+
+
+def test_device_refresh_time_is_read_from_terminus(env):
+    fake, _, pub, conn, _ = env
+    assert state_repo.device_refresh_seconds(conn) is None
+    pub.run()
+    assert state_repo.device_refresh_seconds(conn) == 900
+    fake.devices[0]["refresh_rate"] = 600
+    pub.run(force=True)
+    assert state_repo.device_refresh_seconds(conn) == 600
+    ctx = views.screen_context(conn, pub.settings, None)
+    assert ctx["device_minutes"] == 10
+    html = views.render_page("settings.html", **views.settings_context(conn, screen=ctx))
+    assert "every 10 minutes in Terminus" in html

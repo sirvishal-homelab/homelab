@@ -100,6 +100,7 @@ def validate_event(data: dict) -> tuple[dict, dict[str, str]]:
     if month_nth in ("", None):
         month_nth = None
     until = None
+    count = None
     if freq not in FREQS:
         err["freq"] = "Choose how often it repeats"
         freq = "none"
@@ -126,6 +127,21 @@ def validate_event(data: dict) -> tuple[dict, dict[str, str]]:
                 err["until"] = "Choose a valid end date for the repeat"
             elif start is not None and until < start:
                 err["until"] = "The repeat can't end before the event starts"
+        if not _blank(data.get("count")):
+            raw = data.get("count")
+            if isinstance(raw, bool) or not isinstance(raw, int | str):
+                count = None
+                err["count"] = "Enter a number from 2 to 999"
+            else:
+                try:
+                    count = int(raw)
+                except ValueError:
+                    count = None
+                if count is None or not 2 <= count <= 999:
+                    count = None
+                    err["count"] = "Enter a number from 2 to 999"
+            if until is not None or (not _blank(data.get("until")) and "until" not in err):
+                err.setdefault("count", "Choose an end date or a number of times, not both")
         if freq == "weekly":
             month_mode, month_nth = None, None
         elif freq == "monthly":
@@ -153,6 +169,7 @@ def validate_event(data: dict) -> tuple[dict, dict[str, str]]:
         month_mode=month_mode,
         month_nth=month_nth,
         until=until,
+        count=count,
     )
     return clean, err
 

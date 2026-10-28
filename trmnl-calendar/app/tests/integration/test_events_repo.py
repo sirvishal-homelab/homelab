@@ -126,3 +126,26 @@ def test_database_constraints_back_up_validation(conn):
             "INSERT INTO events (uid, calendar_id, section_id, title, start_date, freq, created_at,"
             " updated_at) VALUES ('u', 1, 1, 'x', '2026-01-01', 'hourly', 'n', 'n')"
         )
+
+
+def test_repeat_count_is_stored_cleared_and_switched(conn):
+    ev = repo.create_event(
+        conn,
+        {
+            "title": "Course",
+            "section_id": 1,
+            "start_date": "2026-03-10",
+            "freq": "weekly",
+            "count": 6,
+        },
+    )
+    assert ev.count == 6 and repo.get_event(conn, ev.id).count == 6
+    # switching to an end date clears the count (and the other way round)
+    ev = repo.update_event(conn, ev.id, {"until": "2026-06-01"}, ev.rev)
+    assert ev.count is None and ev.until == date(2026, 6, 1)
+    ev = repo.update_event(conn, ev.id, {"count": 3}, ev.rev)
+    assert ev.count == 3 and ev.until is None
+    with pytest.raises(ValidationFailed):
+        repo.update_event(conn, ev.id, {"count": 1}, ev.rev)
+    ev = repo.update_event(conn, ev.id, {"freq": "none"}, ev.rev)
+    assert ev.count is None

@@ -102,3 +102,19 @@ def test_normalize_people():
     assert "owner_id" in n([1, 2], 9)[2]
     assert "people" in n(["x"], None)[2]
     assert n(None, None) == ((), None, {})
+
+
+def test_count_rules():
+    base = good(freq="weekly")
+    clean, err = validate_event({**base, "count": "10"})
+    assert err == {} and clean["count"] == 10
+    for bad in ("1", "1000", "abc", 2.5):
+        assert "count" in validate_event({**base, "count": bad})[1], bad
+    assert "count" in validate_event({**base, "count": 3, "until": "2026-12-01"})[1]
+    clean, err = validate_event({**good(), "freq": "none", "count": 3})
+    assert err == {} and clean["count"] is None
+
+
+def test_repeat_text_mentions_the_count():
+    e = Event(id=1, title="x", section_id=1, start_date=date(2026, 3, 10), freq="weekly", count=6)
+    assert repeat_text(e) == "Repeats every week on Tuesday, 6 times"
