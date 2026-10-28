@@ -166,3 +166,9 @@ Authentication, import (export exists), a third-party API, named profiles for se
 ## 7. Decisions this closes
 
 OQ-10 (UI-only but versioned; PATCH not PUT) and prototype defects 3 and 5 in `08`.
+
+## Month page route
+
+`GET /month` (HTML only, no JSON equivalent; the JSON API already lists events by date range).
+`GET /events/new` and `GET /events/{id}/edit` accept `back=<same-site path>`; the create, edit and
+delete form posts accept a hidden `back` and redirect there with `saved=` / `deleted=` added.

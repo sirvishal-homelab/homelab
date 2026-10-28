@@ -36,6 +36,10 @@ the verified spike. The UI is built a little in each slice; slice 5 hardens it. 
 as templates (Day rows, Agenda, Two weeks - lanes, Overview, Month), ICS import, "this and following" edits,
 several displays.
 
+**Owner additions 2026-10-28 (built between slices 4 and 5):** a repeat count ("repeat N times"), the
+screen's refresh interval read from Terminus instead of hard-coded, and a web-only month page with
+click-to-add (not an e-ink layout: too cramped at 800x480).
+
 **Owner decision 2026-10-28:** the slice plan above stays as it is. ICS import is a **later phase, after
 slice 5**, and its real-data testing waits until then. Notes for when it is picked up:
 

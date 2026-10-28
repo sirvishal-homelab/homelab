@@ -106,3 +106,32 @@ def test_current_image_and_hash_route(client):
 
 def test_static_css_is_served(client):
     assert client.get("/static/app.css").status_code == 200
+
+
+def test_month_page_shows_events_and_add_links(client):
+    add(client, start_date="2026-10-28", title="Dentist")
+    page = client.get("/month?y=2026&m=10")
+    assert page.status_code == 200
+    assert "October 2026" in page.text and "Dentist" in page.text
+    assert "/events/new?date=2026-10-28&amp;back=" in page.text
+
+
+def test_month_page_tolerates_bad_params(client):
+    assert client.get("/month?y=abc").status_code in (200, 422)
+    assert client.get("/month?y=2026&m=99&day=nope").status_code == 200
+
+
+def test_form_from_month_returns_to_month(client):
+    back = "/month?y=2026&m=10"
+    form = client.get("/events/new", params={"date": "2026-10-30", "back": back})
+    assert 'name="back"' in form.text and "2026-10-30" in form.text
+    r = client.post("/events/new", data={**FORM, "back": back}, follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"].startswith("/month?y=2026&m=10&saved=")
+
+
+def test_back_must_be_same_site(client):
+    r = client.post(
+        "/events/new", data={**FORM, "back": "https://evil.example/x"}, follow_redirects=False
+    )
+    assert r.headers["location"].startswith("/?saved=")

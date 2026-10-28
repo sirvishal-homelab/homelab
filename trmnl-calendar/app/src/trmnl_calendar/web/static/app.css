@@ -87,3 +87,38 @@ ul.check { list-style: none; margin: 0; padding: 0; }
 ul.check li { padding: 10px 12px; }
 ul.check li + li { border-top: 1px solid var(--line); }
 .check-fail strong, .check-warn strong { color: var(--danger); }
+
+/* Month view */
+.seg { display: inline-flex; border: 1px solid var(--line, #888); border-radius: 999px; overflow: hidden; }
+.seg a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; text-decoration: none; color: inherit; }
+.seg a.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.monthbar { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+.monthbar h2 { margin: 0; flex: 1; text-align: center; }
+.month { border: 1px solid var(--line, #888); border-radius: 8px; overflow: hidden; }
+.mrow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mhead div { padding: 6px 4px; text-align: center; font-weight: 600; font-size: .85rem; }
+.mcell { position: relative; min-height: 96px; padding: 2px 4px; border-top: 1px solid var(--line, #888); border-left: 1px solid var(--line, #888); }
+.mcell:first-child { border-left: 0; }
+.mcell.out { opacity: .55; }
+.mcell.today .mday { background: var(--accent); color: var(--accent-ink); border-radius: 999px; }
+.mcell.sel { outline: 2px solid var(--accent); outline-offset: -2px; }
+.mtop { display: flex; justify-content: space-between; align-items: center; }
+.mday, .madd { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; min-height: 28px; text-decoration: none; color: inherit; font-weight: 600; }
+.madd { opacity: .6; }
+.madd:hover, .madd:focus { opacity: 1; }
+.mitems { list-style: none; margin: 0; padding: 0; }
+.mitems li { font-size: .8rem; line-height: 1.3; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.mitems a { color: inherit; text-decoration: none; }
+.mitems .more a { text-decoration: underline; }
+.sym { margin-right: 3px; }
+.mcount { display: none; }
+.dayview { margin-top: 16px; }
+.daylist { list-style: none; padding: 0; }
+.daylist li { padding: 8px 0; border-bottom: 1px solid var(--line, #888); }
+.daylist li a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 639px) {
+  .mcell { min-height: 56px; }
+  .mitems { display: none; }
+  .madd { display: none; }
+  .mcount { display: block; position: absolute; right: 4px; bottom: 2px; font-size: .75rem; opacity: .8; }
+}

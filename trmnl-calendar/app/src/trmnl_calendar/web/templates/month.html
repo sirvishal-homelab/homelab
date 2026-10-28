@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+{% set q = '&person=%d' % filter_person if filter_person else '' %}
+<div class="bar">
+  <h1>Calendar</h1>
+  <nav class="seg" aria-label="Calendar view"><a href="/{{ '?person=%d' % filter_person if filter_person }}">List</a><a class="on" href="/month" aria-current="page">Month</a></nav>
+  <a class="btn primary" href="/events/new?back={{ back | urlencode }}">Add event</a>
+</div>
+{% if flash_deleted %}
+<div class="notice" role="status">
+  <span>Deleted “{{ flash_deleted.title }}”.</span>
+  <form method="post" action="/events/{{ flash_deleted.id }}/restore" class="inline"><button type="submit">Undo</button></form>
+</div>
+{% elif flash %}
+<div class="notice" role="status">{{ flash }}</div>
+{% endif %}
+<div class="monthbar">
+  <a class="btn" href="/month?y={{ prev[0] }}&m={{ prev[1] }}{{ q }}" aria-label="Previous month">‹</a>
+  <h2>{{ title }}</h2>
+  <a class="btn" href="/month?y={{ next[0] }}&m={{ next[1] }}{{ q }}" aria-label="Next month">›</a>
+  {% if not is_current %}<a class="btn" href="/month{{ '?person=%d' % filter_person if filter_person }}">Today</a>{% endif %}
+</div>
+{% if people_list %}
+<p class="chips" aria-label="Show events for">
+  <a class="chip {{ 'on' if filter_person is none }}" href="/month?y={{ year }}&m={{ month }}">Everyone</a>
+  {% for p in people_list %}<a class="chip {{ 'on' if filter_person == p.id }}" href="/month?y={{ year }}&m={{ month }}&person={{ p.id }}">{{ p.name }}</a>{% endfor %}
+</p>
+{% endif %}
+<div class="month" role="grid" aria-label="{{ title }}">
+  <div class="mrow mhead" role="row">{% for n in weekday_names %}<div role="columnheader">{{ n }}</div>{% endfor %}</div>
+  {% for row in rows %}
+  <div class="mrow" role="row">
+    {% for c in row %}
+    <div class="mcell{{ ' out' if not c.in_month }}{{ ' today' if c.today }}{{ ' sel' if c.selected }}" role="gridcell">
+      <div class="mtop">
+        <a class="mday" href="/month?y={{ year }}&m={{ month }}&day={{ c.iso }}{{ q }}#day" aria-label="{{ c.label }}, {{ c.count }} event{{ '' if c.count == 1 else 's' }}">{{ c.day }}</a>
+        <a class="madd" href="/events/new?date={{ c.iso }}&back={{ back | urlencode }}" aria-label="Add event on {{ c.label }}">+</a>
+      </div>
+      <ul class="mitems">
+        {% for it in c.items %}
+        <li><a href="/events/{{ it.event_id }}/edit?back={{ back | urlencode }}" title="{{ it.label }}{{ ' · ' ~ it.category if it.category }}"><span class="sym" aria-hidden="true">{{ it.symbol }}</span><span class="ttl">{{ it.mark }} {{ it.label }}</span></a></li>
+        {% endfor %}
+        {% if c.more %}<li class="more"><a href="/month?y={{ year }}&m={{ month }}&day={{ c.iso }}{{ q }}#day">+{{ c.more }} more</a></li>{% endif %}
+      </ul>
+      {% if c.count %}<span class="mcount" aria-hidden="true">{{ c.count }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% if selected %}
+<section id="day" class="dayview" aria-label="{{ selected_label }}">
+  <h2>{{ selected_label }}</h2>
+  {% if selected_items %}
+  <ul class="daylist">
+    {% for it in selected_items %}
+    <li><a href="/events/{{ it.event_id }}/edit?back={{ back | urlencode }}"><span class="sym" aria-hidden="true">{{ it.symbol }}</span> {{ it.mark }} {{ it.label }}</a>
+      <span class="meta">{{ it.category }}{{ ' · ' ~ it.location if it.location }}{{ ' · ' ~ it.people | join(', ') if it.people }}{{ ' · ' ~ it.trip if it.trip }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="meta">Nothing on this day.</p>{% endif %}
+  <a class="btn primary" href="/events/new?date={{ selected.isoformat() }}&back={{ back | urlencode }}">Add event on this day</a>
+</section>
+{% endif %}
+{% endblock %}

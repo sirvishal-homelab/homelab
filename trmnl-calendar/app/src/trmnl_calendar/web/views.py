@@ -9,7 +9,7 @@ from functools import lru_cache
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from trmnl_calendar.domain.models import Event, Section
-from trmnl_calendar.domain.recurrence import occurrences
+from trmnl_calendar.domain.recurrence import occurrences, week_floor
 from trmnl_calendar.domain.repeat_text import repeat_text
 from trmnl_calendar.render.layouts.base import DAY_ABBR, MONTH_ABBR, fmt_range, fmt_time
 from trmnl_calendar.storage.repositories import calendar as cal
@@ -412,4 +412,125 @@ def holidays_context(
         "target_exists": target is not None,
         "done": done,
         "error_message": error_message,
+    }
+
+
+SYMBOLS = "■▲●◆✚✖○□"  # the same shapes the screen's legend uses, in the same order
+MONTH_NAMES = (
+    "January February March April May June July August September October November December"
+).split()
+MAX_CELL_ITEMS = 3
+
+
+def add_query(url: str, **params: str) -> str:
+    """Append query parameters to a same-site path (used to return to the month after saving)."""
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+    parts = urlsplit(url)
+    query = [(k, v) for k, v in parse_qsl(parts.query) if k not in params]
+    query += list(params.items())
+    return urlunsplit(("", "", parts.path, urlencode(query), ""))
+
+
+def month_context(
+    conn: sqlite3.Connection,
+    now_utc: datetime,
+    year: int | None = None,
+    month: int | None = None,
+    person_id: int | None = None,
+    day: str | None = None,
+) -> dict:
+    """A month grid: weeks of day cells with short event lists, plus an optional selected day."""
+    calendar = cal.get_calendar(conn)
+    today = today_for(calendar.timezone, now_utc)
+    if not (year and month and 1970 <= year <= 2100 and 1 <= month <= 12):
+        year, month = today.year, today.month
+    first_of_month = date(year, month, 1)
+    grid_start = week_floor(first_of_month, calendar.week_start)
+    next_month = date(year + (month == 12), month % 12 + 1, 1)
+    last_of_month = next_month - timedelta(days=1)
+    weeks = -(-((last_of_month - grid_start).days + 1) // 7)
+    grid_end = grid_start + timedelta(days=weeks * 7 - 1)
+
+    events = repo.list_events(conn, grid_start, grid_end)
+    skips = repo.skips_for(conn, [e.id for e in events])
+    occ = occurrences(events, skips, grid_start, grid_end, calendar.week_start)
+    sections = cal.list_sections(conn)
+    symbol = {s.id: SYMBOLS[i % len(SYMBOLS)] for i, s in enumerate(sections)}
+    names = {s.id: s.name for s in sections}
+    everyone = people_repo.list_people(conn)
+    person_names = {p.id: p.name for p in everyone}
+
+    by_day: dict[date, list[dict]] = {}
+    for o in occ:
+        if person_id is not None and o.people and person_id not in o.people:
+            continue
+        label = o.title
+        if o.start_time:
+            label = f"{fmt_time(o.start_time, calendar.time_format)} {o.title}"
+        mark = ""
+        if o.is_multi_day:
+            mark = ("◂ " if not o.is_first else "") + ("▸" if not o.is_last else "")
+        by_day.setdefault(o.date, []).append(
+            {
+                "event_id": o.event_id,
+                "title": o.title,
+                "label": label,
+                "mark": mark.strip(),
+                "symbol": symbol.get(o.section_id, ""),
+                "category": names.get(o.section_id, ""),
+                "location": o.location,
+                "people": [person_names[i] for i in o.people if i in person_names],
+                "trip": (f"Day {o.day_number} of {o.day_count}" if o.is_multi_day else ""),
+            }
+        )
+
+    selected = None
+    if day:
+        try:
+            selected = date.fromisoformat(day)
+        except ValueError:
+            selected = None
+    rows = []
+    for w in range(weeks):
+        cells = []
+        for i in range(7):
+            d = grid_start + timedelta(days=w * 7 + i)
+            items = by_day.get(d, [])
+            cells.append(
+                {
+                    "date": d,
+                    "iso": d.isoformat(),
+                    "day": d.day,
+                    "in_month": d.month == month,
+                    "today": d == today,
+                    "selected": d == selected,
+                    "items": items[:MAX_CELL_ITEMS],
+                    "more": max(0, len(items) - MAX_CELL_ITEMS),
+                    "count": len(items),
+                    "label": f"{DAY_ABBR[d.weekday()]} {MONTH_ABBR[d.month - 1]} {d.day}",
+                }
+            )
+        rows.append(cells)
+    prev_month = first_of_month - timedelta(days=1)
+    weekday_names = [DAY_ABBR[(grid_start + timedelta(days=i)).weekday()] for i in range(7)]
+    return {
+        "year": year,
+        "month": month,
+        "title": f"{MONTH_NAMES[month - 1]} {year}",
+        "weekday_names": weekday_names,
+        "rows": rows,
+        "prev": (prev_month.year, prev_month.month),
+        "next": (next_month.year, next_month.month),
+        "is_current": (year, month) == (today.year, today.month),
+        "today_iso": today.isoformat(),
+        "selected": selected,
+        "selected_label": (
+            f"{DAY_ABBR[selected.weekday()]} {MONTH_ABBR[selected.month - 1]} {selected.day}"
+            if selected
+            else ""
+        ),
+        "selected_items": by_day.get(selected, []) if selected else [],
+        "people_list": [p for p in everyone if p.active],
+        "filter_person": person_id,
     }
