@@ -214,11 +214,48 @@ def person_edit_context(
     }
 
 
+def local_when(iso: str | None, timezone: str, time_format: str) -> str:
+    """'Oct 28, 10:44a' from a stored UTC timestamp, in the calendar's timezone."""
+    if not iso:
+        return ""
+    from zoneinfo import ZoneInfo
+
+    t = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=ZoneInfo("UTC"))
+    t = t.astimezone(ZoneInfo(timezone))
+    return f"{MONTH_ABBR[t.month - 1]} {t.day}, {fmt_time(t.strftime('%H:%M'), time_format)}"
+
+
+def screen_context(conn: sqlite3.Connection, settings, scheduler) -> dict:
+    from trmnl_calendar.publish import check, status
+
+    c = cal.get_calendar(conn)
+    st = status.screen_status(conn, settings, scheduler)
+    when = lambda k: local_when(st[k], c.timezone, c.time_format)  # noqa: E731
+    return {
+        **st,
+        "missing": check.missing_settings(settings),
+        "pushed_when": when("last_pushed_at"),
+        "attempt_when": when("last_attempt_at"),
+        "next_when": when("next_check_at"),
+        "interval_minutes": settings.push_interval_seconds // 60,
+    }
+
+
 def settings_context(
-    conn: sqlite3.Connection, values=None, errors=None, error_message="", saved=False
+    conn: sqlite3.Connection,
+    values=None,
+    errors=None,
+    error_message="",
+    saved=False,
+    screen=None,
+    check_steps=None,
+    screen_flash="",
 ) -> dict:
     c = cal.get_calendar(conn)
     return {
+        "screen": screen,
+        "check_steps": check_steps,
+        "screen_flash": screen_flash,
         "values": values
         or {
             "name": c.name,

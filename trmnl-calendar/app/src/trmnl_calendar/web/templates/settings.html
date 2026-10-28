@@ -37,4 +37,56 @@
   </div>
   <div class="actions"><button class="primary" type="submit">Save settings</button></div>
 </form>
+
+{% if screen %}
+<h2 id="screen">The screen</h2>
+{% if screen_flash %}<div class="notice" role="status">{{ screen_flash }}</div>{% endif %}
+<section class="day" aria-label="Screen status"><ul>
+  <li class="status-line">
+  {% if not screen.configured %}
+    <strong>Not set up.</strong> Add {{ screen.missing | join(", ") }} to the <code>.env</code> file on the server and restart the app. Until then the picture is only shown here.
+  {% elif not screen.enabled %}
+    <strong>Pushing is switched off.</strong> The picture is not being sent to the screen.
+  {% elif screen.status == "error" %}
+    <span class="err"><strong>Could not send the picture.</strong> {{ screen.last_error }}</span><br>
+    <span class="meta">Last tried {{ screen.attempt_when }}. It tries again at the next check{% if screen.next_when %} (about {{ screen.next_when }}){% endif %}, or press Push now.</span>
+  {% elif screen.status == "never" %}
+    <strong>Nothing sent yet.</strong> The first push happens a few seconds after the app starts, or press Push now.
+  {% elif screen.status == "in_progress" %}
+    <strong>Sending…</strong> Reload in a moment.
+  {% else %}
+    <strong>On the screen: {{ screen.active_view.name }}.</strong>
+    <span class="meta">Sent {{ screen.pushed_when }}. The device picks it up at its next check-in, within about 15 minutes.</span><br>
+    <span class="meta">Checked every {{ screen.interval_minutes }} minutes{% if screen.next_when %}; next about {{ screen.next_when }}{% endif %}. It is only sent again when the picture changes.</span>
+  {% endif %}
+  </li>
+  {% if screen.configured %}
+  <li class="status-line meta">Terminus: {{ screen.terminus_url }} · model {{ screen.model_name }} · the picture is fetched from {{ screen.public_base_url }}</li>
+  {% endif %}
+</ul></section>
+<div class="actions">
+  <form method="post" action="/settings/screen/check" class="inline"><button type="submit">Check connection</button></form>
+  {% if screen.configured %}
+  <form method="post" action="/settings/screen/push" class="inline"><button class="primary" type="submit">Push now</button></form>
+  <form method="post" action="/settings/screen/enabled" class="inline">
+    <input type="hidden" name="enabled" value="{{ '0' if screen.enabled else '1' }}">
+    <button type="submit">{{ "Switch pushing off" if screen.enabled else "Switch pushing on" }}</button>
+  </form>
+  {% endif %}
+</div>
+<p class="meta">Push now sends the picture even if it hasn't changed, and is the real test that Terminus can reach this app. It changes what the screen shows.</p>
+
+{% if check_steps is not none %}
+<h3>Connection check</h3>
+<section class="day"><ul class="check">
+  {% for st in check_steps %}
+  <li class="check-{{ st.status }}">
+    <strong>{{ {"ok": "✓", "warn": "!", "fail": "✗", "info": "i", "skip": "–"}[st.status] }} {{ st.title }}</strong>
+    <div>{{ st.detail }}</div>
+    {% if st.fix %}<div class="meta">{{ st.fix }}</div>{% endif %}
+  </li>
+  {% endfor %}
+</ul></section>
+{% endif %}
+{% endif %}
 {% endblock %}

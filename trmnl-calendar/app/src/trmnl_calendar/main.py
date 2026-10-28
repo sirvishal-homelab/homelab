@@ -13,15 +13,30 @@ from fastapi.staticfiles import StaticFiles
 
 from trmnl_calendar import __version__
 from trmnl_calendar.config import Settings, load_settings
+from trmnl_calendar.publish.publisher import Publisher
+from trmnl_calendar.publish.scheduler import Scheduler
 from trmnl_calendar.render.fontcheck import verify_fonts
 from trmnl_calendar.render.pipeline import RenderCache
 from trmnl_calendar.storage import backup, db, migrate
 from trmnl_calendar.web import errors, pages, pages_manage, pages_views, render_service
+from trmnl_calendar.web.api import display as display_api
 from trmnl_calendar.web.api import events as events_api
 from trmnl_calendar.web.api import manage as manage_api
 from trmnl_calendar.web.api import views as views_api
 
 log = logging.getLogger("trmnl_calendar")
+
+
+# Writes that cannot change the picture: previews, the who-am-I cookie, the push/check actions.
+NO_PUSH_PATHS = {
+    "/api/v1/views/preview",
+    "/api/v1/me",
+    "/who",
+    "/api/v1/display/push",
+    "/api/v1/display/check",
+    "/settings/screen/push",
+    "/settings/screen/check",
+}
 
 
 def create_app(settings: Settings | None = None, clock=render_service.now_utc) -> FastAPI:
@@ -54,9 +69,16 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
         conn.close()  # request handlers open their own short-lived connection (thread safety)
         backup_if_due()  # synchronous, so a backup exists before the first request
         task = asyncio.create_task(backup_loop())
+        scheduler = app.state.scheduler
+        if scheduler is not None:
+            scheduler.start()
+        else:
+            log.info("Terminus is not configured (.env): pushing to the screen is off")
         try:
             yield
         finally:
+            if scheduler is not None:
+                await scheduler.stop()
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
@@ -65,10 +87,36 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.state.settings = settings
     app.state.clock = clock
     app.state.render_cache = RenderCache()
+    app.state.publisher = Publisher(settings, app.state.render_cache, clock)
+    app.state.scheduler = (
+        Scheduler(
+            app.state.publisher,
+            settings.push_interval_seconds,
+            settings.push_debounce_seconds,
+            settings.push_startup_delay_seconds,
+        )
+        if settings.terminus_configured
+        else None
+    )
+
+    @app.middleware("http")
+    async def push_after_changes(request, call_next):
+        response = await call_next(request)
+        scheduler = request.app.state.scheduler
+        if (
+            scheduler is not None
+            and request.method in ("POST", "PUT", "PATCH", "DELETE")
+            and response.status_code < 400
+            and request.url.path not in NO_PUSH_PATHS
+        ):
+            scheduler.request_push("change")
+        return response
+
     errors.install(app)
     app.include_router(events_api.router)
     app.include_router(manage_api.router)
     app.include_router(views_api.router)
+    app.include_router(display_api.router)
     app.include_router(pages_manage.router)
     app.include_router(pages_views.router)
     app.include_router(pages.router)
