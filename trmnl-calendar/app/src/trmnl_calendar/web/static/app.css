@@ -22,7 +22,7 @@ a { color: var(--accent); }
 .btn.danger, button.danger { color: var(--danger); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .preview { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; }
-.preview img { width: 100%; height: auto; display: block; }
+.preview img { width: 100%; max-width: 800px; height: auto; display: block; margin: 0 auto; }
 .preview small { color: var(--muted); }
 .day { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin: 8px 0; }
 .day h3 { margin: 0; padding: 8px 12px; font-size: .95rem; border-bottom: 1px solid var(--line); }
@@ -64,4 +64,4 @@ fieldset.who { border: 1px solid var(--line); border-radius: var(--radius); marg
 fieldset.who legend { font-weight: 600; padding: 0 6px; }
 button.linklike { border: 0; background: none; color: var(--accent); min-height: 0; padding: 0; text-decoration: underline; display: inline; }
 .preview .scroll { overflow-x: auto; }
-.preview.zoomed img { width: 800px; max-width: none; }
+.preview.zoomed img { width: 1600px; max-width: none; margin: 0; }
