@@ -116,17 +116,18 @@
           {% if errors.month_nth %}<div class="err">{{ errors.month_nth }}</div>{% endif %}
         </div>
       </div>
-      <fieldset class="who">
-        <legend>Ends</legend>
-        <label class="check"><input type="radio" name="ends" value="never" {{ "checked" if values.ends == "never" }}> Never</label>
-        <label class="check"><input type="radio" name="ends" value="until" {{ "checked" if values.ends == "until" }}> On a date</label>
-        <input id="until" name="until" type="date" value="{{ values.until }}" aria-label="End date of the repeat">
-        {% if errors.until %}<div class="err">{{ errors.until }}</div>{% endif %}
-        <label class="check"><input type="radio" name="ends" value="count" {{ "checked" if values.ends == "count" }}> After a number of times</label>
-        <input id="count" name="count" type="number" min="2" max="999" inputmode="numeric" value="{{ values.count }}" placeholder="for example 10" aria-label="How many times it happens, counting the first">
-        <div class="meta">The first one counts. “10” means ten in total.</div>
-        {% if errors.count %}<div class="err">{{ errors.count }}</div>{% endif %}
-      </fieldset>
+    </fieldset>
+
+    <fieldset class="who">
+      <legend>Ends (for repeating events)</legend>
+      <label class="check"><input type="radio" name="ends" value="never" {{ "checked" if values.ends == "never" }}> Never</label>
+      <label class="check"><input type="radio" name="ends" value="until" {{ "checked" if values.ends == "until" }}> On a date</label>
+      <input id="until" name="until" type="date" value="{{ values.until }}" aria-label="End date of the repeat">
+      {% if errors.until %}<div class="err">{{ errors.until }}</div>{% endif %}
+      <label class="check"><input type="radio" name="ends" value="count" {{ "checked" if values.ends == "count" }}> After a number of times</label>
+      <input id="count" name="count" type="number" min="2" max="999" inputmode="numeric" value="{{ values.count }}" placeholder="for example 10" aria-label="How many times it happens, counting the first">
+      <div class="meta">The first one counts. “10” means ten in total.</div>
+      {% if errors.count %}<div class="err">{{ errors.count }}</div>{% endif %}
     </fieldset>
   </details>
 

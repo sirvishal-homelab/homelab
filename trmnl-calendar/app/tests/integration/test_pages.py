@@ -146,3 +146,10 @@ def test_form_repeat_ends_after_a_number_of_times(client):
         data={**FORM, "repeat": "custom", "custom_freq": "weekly", "ends": "count", "count": "1"},
     )
     assert bad.status_code == 422 and "2 to 999" in bad.text
+
+
+def test_preset_weekly_with_a_count_really_stops(client):
+    add(client, repeat="weekly", ends="count", count="3", start_date="2026-10-31")
+    page = client.get("/month?y=2026&m=12").text
+    assert "Dentist" not in page  # Oct 31, Nov 7, Nov 14 only
+    assert "Dentist" in client.get("/month?y=2026&m=11").text
