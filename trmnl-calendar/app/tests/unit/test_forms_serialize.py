@@ -70,7 +70,7 @@ def test_repeat_choice_is_inferred_for_editing():
     assert v(ev(freq="weekly", by_weekday=("TH",)))["repeat"] == "weekly"
     assert v(ev(freq="weekly", interval=2))["repeat"] == "biweekly"
     assert v(ev(freq="weekly", by_weekday=("MO", "TH")))["repeat"] == "custom"
-    assert v(ev(freq="monthly", until=date(2027, 1, 1)))["repeat"] == "custom"
+    assert v(ev(freq="monthly", until=date(2027, 1, 1)))["repeat"] == "monthly"
     assert (
         v(ev(freq="monthly", month_mode="weekday", month_nth=1, by_weekday=("MO",)))["repeat"]
         == "custom"
@@ -137,4 +137,13 @@ def test_count_form_values_round_trip():
         id=1, title="Class", section_id=1, start_date=date(2026, 11, 3), freq="weekly", count=6
     )
     v = event_to_values(ev)
-    assert v["ends"] == "count" and v["count"] == "6" and v["repeat"] == "custom"
+    assert v["ends"] == "count" and v["count"] == "6" and v["repeat"] == "weekly"
+
+
+def test_ends_applies_to_preset_repeats_too():
+    d = data(repeat="weekly", ends="count", count="5")
+    assert d["freq"] == "weekly" and d["count"] == "5"
+    d = data(repeat="daily", ends="until", until="2027-01-01")
+    assert d["until"] == "2027-01-01"
+    d = data(repeat="none", ends="count", count="5")
+    assert d["count"] is None

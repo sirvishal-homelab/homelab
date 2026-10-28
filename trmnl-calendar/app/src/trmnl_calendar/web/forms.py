@@ -62,6 +62,7 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
         data["by_weekday"] = [c for c in f.get("by_weekday", []) if c]
         data["month_mode"] = _one(f, "month_mode") or None
         data["month_nth"] = _one(f, "month_nth") or None
+    if data["freq"] != "none":  # "Ends" applies to every repeat choice, not only custom
         ends = _one(f, "ends") or "never"
         data["until"] = (_one(f, "until") or None) if ends == "until" else None
         data["count"] = (_one(f, "count") or None) if ends == "count" else None
@@ -98,7 +99,7 @@ def event_to_values(
         }
     own_day = WEEKDAY_CODES[ev.start_date.weekday()]
     plain_weekly = ev.freq == "weekly" and ev.by_weekday in ((), (own_day,))
-    simple = ev.until is None and ev.count is None and ev.month_mode in (None, "date")
+    simple = ev.month_mode in (None, "date")
     if ev.freq == "none":
         choice = "none"
     elif simple and ev.interval == 1 and ev.freq in ("daily", "monthly", "yearly"):
