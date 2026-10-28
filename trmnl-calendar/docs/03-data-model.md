@@ -5,8 +5,9 @@ views, people, recurrence, multi-day events and the manage experience (`15`, `17
 SQLite file in WAL mode. Everything the user can configure lives here, so a restart or rebuild
 loses nothing. Secrets do not (ADR-0005 addendum).
 
-> **Built so far (migrations 0001-0003, slices 1-2):** `calendars`, `sections` (seeded), `events`, `event_exceptions`,
-> `idempotency_keys`, `people`, `event_people`. Not yet created: `displays`, `views`, `push_state` (slices 3-4).
+> **Built so far (migrations 0001-0004, slices 1-3):** `calendars`, `sections` (seeded), `events`, `event_exceptions`,
+> `idempotency_keys`, `people`, `event_people`, `displays` (one seeded row: `og_plus`, 800 x 480, 2-bit), `views`
+> (two seeded: Week - lanes and Two weeks - list). Not yet created: `push_state` (slice 4).
 > `calendars.options_json` holds timezone-adjacent options (week start, time format). `events.updated_by_person_id`
 > is a plain integer with no foreign key, so retiring or deleting a person never blocks history.
 

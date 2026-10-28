@@ -26,7 +26,7 @@
 {% endif %}
 <div class="preview" id="preview">
   <div class="scroll"><img id="preview-img" src="/render/current.png" width="800" height="480" alt="The week as shown on the screen"></div>
-  <small>This is the picture for the screen (this week). <button type="button" class="linklike" id="zoom-toggle">Show actual size</button> It reaches the display in a later release.</small>
+  <small>This is the picture for the screen{% if active_view %}: {{ active_view.name }} (<a href="/views">change view</a>){% endif %}. <button type="button" class="linklike" id="zoom-toggle">Enlarge</button> It reaches the display in a later release.</small>
 </div>
 <h2>Coming up</h2>
 {% if people_list %}

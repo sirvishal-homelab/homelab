@@ -5,6 +5,7 @@ from __future__ import annotations
 from urllib.parse import parse_qs
 
 from trmnl_calendar.domain.models import WEEKDAY_CODES, WEEKDAY_NAMES, Event
+from trmnl_calendar.render.layouts.base import OPTION_DEFAULTS
 
 REPEAT_CHOICES = (
     ("none", "Does not repeat"),
@@ -132,3 +133,20 @@ def values_from_form(f: dict[str, list[str]]) -> dict:
         elif k in f:
             v[k] = _one(f, k)
     return v
+
+
+def view_form_to_dict(f: dict[str, list[str]]) -> dict:
+    """Turn the view editor's fields into the dict build_view validates."""
+
+    def ids(key: str) -> list[int]:
+        return [int(v) for v in f.get(key, []) if v.isdigit()]
+
+    return {
+        "name": _one(f, "name"),
+        "template": _one(f, "template") or "blank",
+        "layout": _one(f, "layout"),
+        "weekdays": [c for c in f.get("weekday", []) if c],
+        "categories": {"mode": _one(f, "categories_mode") or "all", "ids": ids("category")},
+        "people": {"mode": _one(f, "people_mode") or "all", "ids": ids("person")},
+        "options": {k: k in f for k in OPTION_DEFAULTS},
+    }

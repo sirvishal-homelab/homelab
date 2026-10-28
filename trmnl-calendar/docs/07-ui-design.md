@@ -3,6 +3,11 @@
 > **Partly superseded (2026-10-27).** The target layout below predates the phone-first manage area, people,
 > undo, saved views and the live native-size preview (`15`, `17`). It is rewritten at the start of the slice
 > that builds the UI (`10-roadmap.md`).
+>
+> **Built in slice 3:** the Views page and the view editor. On a desktop the settings sit left and the
+> native-size preview right; on a phone two tabs (Settings, Preview). The preview refreshes about 300 ms
+> after each change (`POST /api/v1/views/preview`); without JavaScript an **Update preview** button does
+> the same. The fit check sits under the preview. Leaving with unsaved changes asks first.
 
 Single page, no framework, server-rendered shell plus a small script. Built in v1; the
 screenshots show **v1 only** (no section or layout controls yet).

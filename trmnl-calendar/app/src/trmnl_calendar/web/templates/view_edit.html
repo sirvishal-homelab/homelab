@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit view" if view_id else "New view" }}{% endblock %}
+{% block body %}
+<div class="bar"><h1>{{ "Edit view" if view_id else "New view" }}</h1><a href="/views">All views</a></div>
+{% if flash %}<div class="notice" role="status">{{ flash }}</div>{% endif %}
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+{% if errors %}<div class="notice error" role="alert">Please check the highlighted fields.</div>{% endif %}
+
+<div class="tabs" role="tablist" aria-label="Editor">
+  <button type="button" role="tab" data-tab-btn="settings" aria-selected="true">Settings</button>
+  <button type="button" role="tab" data-tab-btn="preview" aria-selected="false">Preview</button>
+</div>
+
+<div class="editor" id="editor" data-tab="settings">
+<form class="event pane-settings" id="view-form" method="post" action="{{ '/views/' ~ view_id ~ '/edit' if view_id else '/views' }}">
+  <input type="hidden" name="template" value="{{ values.template }}">
+
+  <label for="name">Name</label>
+  <input id="name" name="name" type="text" maxlength="40" value="{{ values.name }}" required>
+  {% if errors.name %}<div class="err">{{ errors.name }}</div>{% endif %}
+
+  <label for="layout">Layout</label>
+  <select id="layout" name="layout">
+    {% for l in layouts %}<option value="{{ l.id }}" data-options="{{ l.options | join(' ') }}" {{ "selected" if values.layout == l.id }}>{{ l.label }}</option>{% endfor %}
+  </select>
+  {% if errors.layout %}<div class="err">{{ errors.layout }}</div>{% endif %}
+
+  <fieldset class="who">
+    <legend>Days shown</legend>
+    <div class="days">
+      {% for code, name in weekdays %}
+      <label><input type="checkbox" name="weekday" value="{{ code }}" {{ "checked" if code in values.weekdays }}> {{ name[:3] }}</label>
+      {% endfor %}
+    </div>
+    <div class="chips presets" hidden>
+      <button type="button" data-days="MO TU WE TH FR SA SU">Every day</button>
+      <button type="button" data-days="MO TU WE TH FR">Work days</button>
+      <button type="button" data-days="SA SU">Weekend</button>
+    </div>
+    {% if errors.weekdays %}<div class="err">{{ errors.weekdays }}</div>{% endif %}
+  </fieldset>
+
+  <fieldset class="who">
+    <legend>Categories</legend>
+    <label class="check"><input type="radio" name="categories_mode" value="all" {{ "checked" if values.categories.mode == "all" }}> All categories (new ones appear automatically)</label>
+    <label class="check"><input type="radio" name="categories_mode" value="only" {{ "checked" if values.categories.mode == "only" }}> Only these:</label>
+    <div class="days">
+      {% for c in categories %}
+      <label><input type="checkbox" name="category" value="{{ c.id }}" {{ "checked" if c.id in values.categories.ids }}> {{ c.name }}</label>
+      {% endfor %}
+    </div>
+    {% if errors.categories %}<div class="err">{{ errors.categories }}</div>{% endif %}
+  </fieldset>
+
+  {% if people_all %}
+  <fieldset class="who">
+    <legend>People</legend>
+    <label class="check"><input type="radio" name="people_mode" value="all" {{ "checked" if values.people.mode == "all" }}> Everyone</label>
+    <label class="check"><input type="radio" name="people_mode" value="only" {{ "checked" if values.people.mode == "only" }}> Only these (plus events that are for everyone):</label>
+    <div class="days">
+      {% for p in people_all %}
+      <label><input type="checkbox" name="person" value="{{ p.id }}" {{ "checked" if p.id in values.people.ids }}> {{ p.name }}</label>
+      {% endfor %}
+    </div>
+    {% if errors.people %}<div class="err">{{ errors.people }}</div>{% endif %}
+  </fieldset>
+  {% else %}
+  <input type="hidden" name="people_mode" value="all">
+  {% endif %}
+
+  <fieldset class="who">
+    <legend>What to show</legend>
+    {% for key in option_order %}
+    <label class="check" data-option="{{ key }}"><input type="checkbox" name="{{ key }}" {{ "checked" if values.options.get(key, option_defaults[key]) }}> {{ option_labels[key] }}</label>
+    {% endfor %}
+    {% if errors.options %}<div class="err">{{ errors.options }}</div>{% endif %}
+  </fieldset>
+
+  <div class="actions">
+    <button class="primary" type="submit" name="action" value="save">Save view</button>
+    <button type="submit" name="action" value="save_show">Save and show on screen</button>
+    <button type="submit" name="action" value="preview" id="preview-btn">Update preview</button>
+  </div>
+</form>
+
+<section class="pane-preview" aria-label="Preview">
+  <div class="preview" id="preview">
+    <div class="scroll">
+      {% if image %}
+      <img id="preview-img" src="{{ image.url }}" width="{{ image.width }}" height="{{ image.height }}" alt="Preview of this view at the screen's native size">
+      {% else %}
+      <p class="meta">Fix the highlighted fields to see the preview.</p>
+      {% endif %}
+    </div>
+    <small>Exactly what the screen will receive ({{ profile.width }} × {{ profile.height }}). <button type="button" class="linklike" id="zoom-toggle">Enlarge</button></small>
+  </div>
+  <div id="fit" class="fit" aria-live="polite">
+    {% if image %}
+      {% if fit %}
+      <ul>{% for f in fit %}<li>{{ f.message }}</li>{% endfor %}</ul>
+      {% else %}<p class="ok">Everything fits.</p>{% endif %}
+    {% endif %}
+  </div>
+</section>
+</div>
+
+{% if view_id %}
+<details>
+  <summary>Delete this view</summary>
+  {% if is_active %}
+  <p class="meta">This view is showing on the screen. Show another view first.</p>
+  {% else %}
+  <form method="post" action="/views/{{ view_id }}/delete"><button type="submit">Delete “{{ values.name }}”</button></form>
+  {% endif %}
+</details>
+{% endif %}
+{% endblock %}

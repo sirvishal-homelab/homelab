@@ -11,6 +11,24 @@ DAY_ABBR = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")  # index == date.we
 MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 ALL_DAYS = 127  # bit i set = weekday i shown (0 = Monday)
 
+# Options the editor knows about; each layout lists the subset it uses (its OPTIONS).
+OPTION_LABELS = {
+    "show_times": "Show times",
+    "show_badges": "Show who it is for (initials)",
+    "show_locations": "Show locations",
+    "show_banners": "Show banner categories (holidays and similar)",
+    "show_hidden_marker": "Note events on hidden days",
+    "hide_empty_lanes": "Hide categories with nothing this week",
+}
+OPTION_DEFAULTS = {
+    "show_times": True,
+    "show_badges": True,
+    "show_locations": False,
+    "show_banners": True,
+    "show_hidden_marker": True,
+    "hide_empty_lanes": False,
+}
+
 
 @dataclass(frozen=True)
 class PlanContext:
@@ -25,6 +43,9 @@ class PlanContext:
     bit_depth: int = 2
     options: dict = field(default_factory=dict)
     people: dict[int, Person] = field(default_factory=dict)  # for badges
+
+    def opt(self, key: str) -> bool:
+        return bool(self.options.get(key, OPTION_DEFAULTS[key]))
 
 
 def fmt_time(hhmm: str, time_format: str) -> str:

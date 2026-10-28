@@ -14,6 +14,7 @@ from trmnl_calendar.errors import EditConflict, NotFound, ValidationFailed
 from trmnl_calendar.storage import db
 from trmnl_calendar.storage.repositories import calendar as cal
 from trmnl_calendar.storage.repositories import events as repo
+from trmnl_calendar.storage.repositories import views as views_repo
 from trmnl_calendar.web import forms, render_service, views
 from trmnl_calendar.web.deps import chrome, get_conn, now_utc, who_chosen, who_from_cookie
 
@@ -67,6 +68,7 @@ def home(
         flash=(saved or "")[:80],
         flash_deleted=flash_deleted,
         show_who_prompt=bool(model["people_list"]) and not who_chosen(request),
+        active_view=views_repo.active_view(conn),
         **model,
     )
 

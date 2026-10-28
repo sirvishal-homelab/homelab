@@ -9,6 +9,7 @@
 <body>
 <nav class="nav" aria-label="Main">
   <a href="/" {{ 'aria-current=page' if nav == 'home' }}>Calendar</a>
+  <a href="/views" {{ 'aria-current=page' if nav == 'views' }}>Views</a>
   <a href="/categories" {{ 'aria-current=page' if nav == 'categories' }}>Categories</a>
   <a href="/people" {{ 'aria-current=page' if nav == 'people' }}>People</a>
   <a href="/settings" {{ 'aria-current=page' if nav == 'settings' }}>Settings</a>

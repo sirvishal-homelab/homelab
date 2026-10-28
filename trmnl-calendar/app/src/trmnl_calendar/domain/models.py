@@ -101,3 +101,32 @@ class Person:
     label: str  # one or two characters, drawn on the screen
     position: int = 0
     active: bool = True
+
+
+@dataclass(frozen=True)
+class View:
+    """A saved way of drawing the calendar (docs/03). Filters apply before a layout plans."""
+
+    name: str
+    layout: str
+    id: int | None = None
+    template: str = "blank"
+    weekdays: int = 127  # bit i set = weekday i shown (0 = Monday)
+    categories_mode: str = "all"  # "all" | "only"
+    category_ids: tuple[int, ...] = ()
+    people_mode: str = "all"
+    person_ids: tuple[int, ...] = ()
+    options: dict = field(default_factory=dict)
+    position: int = 0
+
+
+@dataclass(frozen=True)
+class Display:
+    id: int
+    name: str
+    model_name: str
+    width: int
+    height: int
+    bit_depth: int
+    active_view_id: int | None
+    enabled: bool = True
