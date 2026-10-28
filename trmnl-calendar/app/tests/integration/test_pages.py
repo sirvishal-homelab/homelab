@@ -113,7 +113,7 @@ def test_month_page_shows_events_and_add_links(client):
     page = client.get("/month?y=2026&m=10")
     assert page.status_code == 200
     assert "October 2026" in page.text and "Dentist" in page.text
-    assert "/events/new?date=2026-10-28&amp;back=" in page.text
+    assert "/events/new?date=2026-10-28&back=" in page.text
 
 
 def test_month_page_tolerates_bad_params(client):
