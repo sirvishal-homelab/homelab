@@ -153,7 +153,9 @@ class TerminusClient:
         if reply.status == 401:
             self._access = None
             reply = self._raw(method, path, payload, self._token())
-        if reply.status == 404:
+        # Terminus answers 422 "Unable to find screen: N" (not 404) for a screen that was deleted
+        gone = reply.status == 422 and "unable to find" in self._text(reply).lower()
+        if reply.status == 404 or gone:
             raise TerminusError("not_found", f"Terminus has no {path}.", 404, self._text(reply))
         if reply.status == 401:
             raise TerminusError("auth", "Terminus keeps refusing the login.", 401)
