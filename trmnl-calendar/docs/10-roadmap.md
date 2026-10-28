@@ -53,7 +53,7 @@ slice 5**, and its real-data testing waits until then. Notes for when it is pick
 ## Gate checklist before slice 0
 
 1. ~~Owner signs off ADRs 0003 to 0010~~ Done 2026-10-27.
-2. ~~Server disk enlarged (`13`, P-7)~~ Done (20 GB). DHCP leases set (P-1): open.
+2. ~~Server disk enlarged (`13`, P-7)~~ Done (20 GB). ~~DHCP leases set (P-1)~~ Done (2026-10-28).
 3. Branch protection and secret scanning on in `homelab` (`12`); decision on what in `13` and `spikes/` stays
    public.
 4. Open items RD-3 and RD-4 (`04`) get a short on-device test inside slice 1.
