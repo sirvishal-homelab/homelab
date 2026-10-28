@@ -38,7 +38,7 @@
         <a class="madd" href="/events/new?date={{ c.iso }}&back={{ back | urlencode }}" aria-label="Add event on {{ c.label }}">+</a>
       </div>
       <ul class="mitems">
-        {% for it in c.items %}
+        {% for it in c.events %}
         <li><a href="/events/{{ it.event_id }}/edit?back={{ back | urlencode }}" title="{{ it.label }}{{ ' · ' ~ it.category if it.category }}"><span class="sym" aria-hidden="true">{{ it.symbol }}</span><span class="ttl">{{ it.mark }} {{ it.label }}</span></a></li>
         {% endfor %}
         {% if c.more %}<li class="more"><a href="/month?y={{ year }}&m={{ month }}&day={{ c.iso }}{{ q }}#day">+{{ c.more }} more</a></li>{% endif %}

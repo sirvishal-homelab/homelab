@@ -505,7 +505,7 @@ def month_context(
                     "in_month": d.month == month,
                     "today": d == today,
                     "selected": d == selected,
-                    "items": items[:MAX_CELL_ITEMS],
+                    "events": items[:MAX_CELL_ITEMS],
                     "more": max(0, len(items) - MAX_CELL_ITEMS),
                     "count": len(items),
                     "label": f"{DAY_ABBR[d.weekday()]} {MONTH_ABBR[d.month - 1]} {d.day}",

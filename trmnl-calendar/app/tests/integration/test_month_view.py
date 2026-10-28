@@ -50,9 +50,9 @@ def test_events_trips_and_overflow(conn):
     for i in range(4):
         add(conn, title=f"E{i}", start_date="2026-03-20")
     c = cells(views.month_context(conn, NOW, 2026, 3))
-    assert c["2026-03-10"]["items"][0]["label"].endswith("A")
-    assert [len(c[d]["items"]) for d in ("2026-03-11", "2026-03-12", "2026-03-13")] == [1, 1, 1]
-    assert c["2026-03-12"]["items"][0]["mark"] == "◂ ▸"
+    assert c["2026-03-10"]["events"][0]["label"].endswith("A")
+    assert [len(c[d]["events"]) for d in ("2026-03-11", "2026-03-12", "2026-03-13")] == [1, 1, 1]
+    assert c["2026-03-12"]["events"][0]["mark"] == "◂ ▸"
     assert c["2026-03-20"]["count"] == 4 and c["2026-03-20"]["more"] == 1
 
 
