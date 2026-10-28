@@ -34,11 +34,18 @@ flowchart LR
 Ordering rationale: slices 0 to 3 need no Terminus and can be tested fully off the device; slice 4 depends on
 the verified spike. The UI is built a little in each slice; slice 5 hardens it. Later candidates: more layouts
 as templates (Day rows, Agenda, Two weeks - lanes, Overview, Month), ICS import, "this and following" edits,
-several displays.
+several displays, **more holiday regions** (see below).
 
 **Owner additions 2026-10-28 (built between slices 4 and 5):** a repeat count ("repeat N times"), the
 screen's refresh interval read from Terminus instead of hard-coded, and a web-only month page with
 click-to-add (not an e-ink layout: too cramped at 800x480).
+
+**Owner request 2026-10-28, later phase: add more holiday regions.** The holiday import works well for
+Nova Scotia. Regions are rules in `domain/holidays.py` (`REGIONS`), so adding one is a code change, not a
+settings screen. Candidates: other Canadian provinces and the federal list, and other countries when
+the owner names them. Each region needs its dates checked against the official source and tests for two
+years, as Nova Scotia has. Whether a region can be added from the UI instead (owner types names and
+date rules) is left open; the code route is simplest and keeps the rules testable.
 
 **Owner decision 2026-10-28:** the slice plan above stays as it is. ICS import is a **later phase, after
 slice 5**, and its real-data testing waits until then. Notes for when it is picked up:
