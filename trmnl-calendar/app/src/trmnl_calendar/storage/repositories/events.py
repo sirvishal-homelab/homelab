@@ -27,6 +27,7 @@ _FIELDS = (
     "month_mode",
     "month_nth",
     "until",
+    "count",
 )
 
 
@@ -51,6 +52,7 @@ def row_to_event(r: sqlite3.Row) -> Event:
         month_mode=r["month_mode"],
         month_nth=r["month_nth"],
         until=date.fromisoformat(r["until"]) if r["until"] else None,
+        count=r["repeat_count"],
         rev=r["rev"],
     )
 
@@ -71,6 +73,7 @@ def event_to_form(ev: Event) -> dict:
         "month_mode": ev.month_mode,
         "month_nth": ev.month_nth,
         "until": ev.until.isoformat() if ev.until else None,
+        "count": ev.count,
     }
 
 
@@ -87,6 +90,7 @@ def _params(clean: dict) -> dict:
     for k in ("start_date", "end_date", "until"):
         p[k] = p[k].isoformat() if p[k] else None
     p["by_weekday"] = ",".join(p["by_weekday"])
+    p["repeat_count"] = p.pop("count", None)
     return p
 
 
@@ -159,10 +163,10 @@ def create_event(conn: sqlite3.Connection, data: dict, *, person_id: int | None 
     cur = conn.execute(
         """INSERT INTO events (uid, calendar_id, section_id, title, location, start_date, end_date,
                start_time, end_time, freq, interval, by_weekday, month_mode, month_nth, until,
-               rev, updated_by_person_id, created_at, updated_at)
+               repeat_count, rev, updated_by_person_id, created_at, updated_at)
            VALUES (:uid, :cal, :section_id, :title, :location, :start_date, :end_date,
                :start_time, :end_time, :freq, :interval, :by_weekday, :month_mode, :month_nth,
-               :until, 1, :person, :now, :now)""",
+               :until, :repeat_count, 1, :person, :now, :now)""",
         {
             **_params(clean),
             "uid": str(uuid.uuid4()),
@@ -244,6 +248,11 @@ def update_event(
     if unknown:
         raise ValidationFailed({k: "Unknown field" for k in sorted(unknown)})
     merged = {**event_to_form(current), **patch}
+    # Switching the end of a repeat: setting one of "until" / "count" clears the other.
+    if patch.get("count") not in (None, "") and "until" not in patch:
+        merged["until"] = None
+    if patch.get("until") not in (None, "") and "count" not in patch:
+        merged["count"] = None
     clean, errors = validate_event(merged)
     people_ids, owner = current.people, current.owner_id
     if "people_ids" in patch or "owner_id" in patch:
@@ -264,7 +273,8 @@ def update_event(
                start_date=:start_date, end_date=:end_date, start_time=:start_time,
                end_time=:end_time, freq=:freq, interval=:interval, by_weekday=:by_weekday,
                month_mode=:month_mode, month_nth=:month_nth, until=:until,
-               rev = rev + 1, updated_by_person_id=:person, updated_at=:now
+               repeat_count=:repeat_count, rev = rev + 1,
+               updated_by_person_id=:person, updated_at=:now
            WHERE id=:id AND rev=:rev AND deleted_at IS NULL""",
         {**_params(clean), "person": person_id, "now": _now(), "id": event_id, "rev": expected_rev},
     )

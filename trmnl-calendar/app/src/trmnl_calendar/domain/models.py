@@ -34,6 +34,7 @@ class Event:
     month_mode: str | None = None  # "date" | "weekday"
     month_nth: int | None = None  # 1..4 or -1
     until: date | None = None
+    count: int | None = None  # stop after this many occurrences (the first counts); None = no limit
     uid: str = ""
     rev: int = 1
     people: tuple[int, ...] = ()  # person ids, owner first; empty means everyone

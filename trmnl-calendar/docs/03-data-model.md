@@ -5,7 +5,7 @@ views, people, recurrence, multi-day events and the manage experience (`15`, `17
 SQLite file in WAL mode. Everything the user can configure lives here, so a restart or rebuild
 loses nothing. Secrets do not (ADR-0005 addendum).
 
-> **Built so far (migrations 0001-0005, slices 1-4):** `calendars`, `sections` (seeded), `events`, `event_exceptions`,
+> **Built so far (migrations 0001-0006, slices 1-4):** `calendars`, `sections` (seeded), `events`, `event_exceptions`,
 > `idempotency_keys`, `people`, `event_people`, `displays` (one seeded row: `og_plus`, 800 x 480, 2-bit), `views`
 > (two seeded: Week - lanes and Two weeks - list), `push_state` (one row: last hash, status, error, times, failures,
 > Terminus screen id).
@@ -66,6 +66,7 @@ erDiagram
     text month_mode
     int month_nth
     text until
+    int repeat_count
     int rev
     int updated_by_person_id FK
     text deleted_at
@@ -175,6 +176,7 @@ cookie (`15`, M-1); the server stores nothing about devices.
 | `month_mode` | monthly only: `date` (default) or `weekday` ("first Monday", "last Friday") |
 | `month_nth` | with `month_mode = weekday`: 1 to 4, or -1 for the last |
 | `until` | last date an occurrence may **start** on; NULL means forever |
+| `repeat_count` | alternative to `until`: stop after this many occurrences (2 to 999; the first counts, skipped dates still count); NULL means no limit. At most one of `until` and `repeat_count` is set (migration 0006). |
 | `rev` | integer, incremented on every save; used to warn about simultaneous edits (`15`, M-8) |
 | `updated_by_person_id` | the profile that last saved it, or NULL |
 | `deleted_at` | soft delete; set when removed, NULL otherwise (`15`, M-5) |

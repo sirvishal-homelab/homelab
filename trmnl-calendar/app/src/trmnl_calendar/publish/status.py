@@ -26,6 +26,7 @@ def screen_status(conn: sqlite3.Connection, settings: Settings, scheduler) -> di
         "failures": st.failures,
         "next_check_at": nxt.strftime("%Y-%m-%dT%H:%M:%SZ") if nxt else None,
         "interval_seconds": settings.push_interval_seconds,
+        "device_refresh_seconds": state_repo.device_refresh_seconds(conn),
         "model_name": settings.terminus_model_name,
         "terminus_url": settings.terminus_url or None,
         "public_base_url": settings.public_base_url or None,

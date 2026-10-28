@@ -11,6 +11,16 @@
     });
   }
 
+  // Event form: typing in an end date or a count picks that "Ends" choice.
+  [["until", "until"], ["count", "count"]].forEach(function (pair) {
+    var field = document.getElementById(pair[0]);
+    if (!field) return;
+    field.addEventListener("input", function () {
+      var radio = document.querySelector("input[name=ends][value=" + pair[1] + "]");
+      if (radio && field.value) radio.checked = true;
+    });
+  });
+
   var form = document.getElementById("view-form");
   if (!form) return;
 

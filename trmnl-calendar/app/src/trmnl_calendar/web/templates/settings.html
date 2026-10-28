@@ -56,7 +56,7 @@
     <strong>Sending…</strong> Reload in a moment.
   {% else %}
     <strong>On the screen: {{ screen.active_view.name }}.</strong>
-    <span class="meta">Sent {{ screen.pushed_when }}. The device picks it up at its next check-in, within about 15 minutes.</span><br>
+    <span class="meta">Sent {{ screen.pushed_when }}. The device picks it up at its next check-in{% if screen.device_minutes %}, which is set to every {{ screen.device_minutes }} minutes in Terminus{% endif %}.</span><br>
     <span class="meta">Checked every {{ screen.interval_minutes }} minutes{% if screen.next_when %}; next about {{ screen.next_when }}{% endif %}. It is only sent again when the picture changes.</span>
   {% endif %}
   </li>

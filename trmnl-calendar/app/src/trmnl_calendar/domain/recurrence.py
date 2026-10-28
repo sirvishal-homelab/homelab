@@ -90,6 +90,18 @@ def _starts(ev: Event, lo: date, hi: date, week_start: str) -> Iterator[date]:
             k += 1
 
 
+def _series_starts(ev: Event, lo: date, hi: date, week_start: str) -> Iterator[date]:
+    """Like _starts, but stops after ev.count occurrences (the first counts; skips still count)."""
+    if ev.count is None or ev.freq == "none":
+        yield from _starts(ev, lo, hi, week_start)
+        return
+    for index, start in enumerate(_starts(ev, ev.start_date, hi, week_start)):
+        if index >= ev.count:
+            return
+        if start >= lo:
+            yield start
+
+
 def occurrences(
     events: Iterable[Event],
     skips: dict[int, set[date]] | None,
@@ -106,7 +118,7 @@ def occurrences(
     out: list[Occurrence] = []
     for ev in events:
         dur = ev.duration_days
-        for start in _starts(ev, window_start - timedelta(days=dur), window_end, week_start):
+        for start in _series_starts(ev, window_start - timedelta(days=dur), window_end, week_start):
             if ev.until is not None and start > ev.until:
                 break
             if start in skips.get(ev.id, ()):
