@@ -3,6 +3,7 @@
 {% block body %}
 <div class="bar">
   <h1>Calendar</h1>
+  <nav class="seg" aria-label="Calendar view"><a class="on" href="/" aria-current="page">List</a><a href="/month">Month</a></nav>
   <a class="btn primary" href="/events/new">Add event</a>
 </div>
 {% if flash_deleted %}

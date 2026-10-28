@@ -3,12 +3,13 @@
 {% block body %}
 <div class="bar">
   <h1>{{ "Edit event" if event else "Add event" }}</h1>
-  <a class="btn" href="/">Cancel</a>
+  <a class="btn" href="{{ back or '/' }}">Cancel</a>
 </div>
 {% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
 {% if errors and not error_message %}<div class="notice error" role="alert">Please check the highlighted fields.</div>{% endif %}
 <form class="event" method="post" action="{{ '/events/%d/edit' % event.id if event else '/events/new' }}">
   {% if rev is not none %}<input type="hidden" name="rev" value="{{ rev }}">{% endif %}
+  {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
 
   <label for="start_date">Day</label>
   <input id="start_date" name="start_date" type="date" value="{{ values.start_date }}" required>
@@ -154,6 +155,7 @@
   <h2>Delete</h2>
   <form method="post" action="/events/{{ event.id }}/delete">
     <input type="hidden" name="rev" value="{{ event.rev }}">
+    {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
     <button class="danger" type="submit">Delete this event{{ " (all repeats)" if event.freq != "none" }}</button>
     <span class="meta">You can undo for 30 days.</span>
   </form>

@@ -61,3 +61,18 @@ Behaviours:
 - Is autosave right for the sections manager, or should edits be explicit?
 - Is a separate "layout preview" per view needed before saving?
 - Mobile: the v1 layout stacks the form above the preview; confirm that is the right order.
+
+## Month page (web only)
+
+`GET /month?y=&m=&day=&person=` shows one month as a grid of whole weeks (starting on the calendar's
+week start). The home page has a **List | Month** switch. Each day cell has the day number (selects the
+day), a **+** link that opens the add form on that date, up to three events (category symbol, time,
+title) and "+N more". Trips appear on every day they cover with ◂/▸ markers. The person chips filter
+like the list page; events with no people always show.
+
+On a phone (<640 px) cells show only a count; tapping the day number opens a list for that day below
+the grid with an "Add event on this day" button. Everything is plain links, so it works without JS.
+
+The forms opened from here carry a `back` field (same-site paths only, via `safe_next`), so saving,
+deleting or cancelling returns to the same month. There is deliberately no month layout for the e-ink
+screen: it would be too cramped at 800x480.

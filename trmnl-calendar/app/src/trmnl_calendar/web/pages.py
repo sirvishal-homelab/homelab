@@ -16,7 +16,14 @@ from trmnl_calendar.storage.repositories import calendar as cal
 from trmnl_calendar.storage.repositories import events as repo
 from trmnl_calendar.storage.repositories import views as views_repo
 from trmnl_calendar.web import forms, render_service, views
-from trmnl_calendar.web.deps import chrome, get_conn, now_utc, who_chosen, who_from_cookie
+from trmnl_calendar.web.deps import (
+    chrome,
+    get_conn,
+    now_utc,
+    safe_next,
+    who_chosen,
+    who_from_cookie,
+)
 
 router = APIRouter(include_in_schema=False)
 _HASH = re.compile(r"^[0-9a-f]{24}\.png$")
@@ -37,6 +44,19 @@ def _open(request: Request):
 
 def _quote(text: str) -> str:
     return quote(text)
+
+
+def _back(form: dict) -> str:
+    """Where to return after saving: a same-site path chosen by the page that opened the form."""
+    raw = (form.get("back") or [""])[0]
+    return safe_next(raw) if raw else ""
+
+
+def _return_to(back: str, **params: str) -> str:
+    """The home page (as before), or the page the form was opened from, with a flash message."""
+    if back and back != "/":
+        return views.add_query(back, **params)
+    return "/?" + "&".join(f"{k}={_quote(v)}" for k, v in params.items())
 
 
 def _rev(form: dict) -> int:
@@ -73,8 +93,40 @@ def home(
     )
 
 
+@router.get("/month")
+def month(
+    request: Request,
+    y: int | None = None,
+    m: int | None = None,
+    day: str | None = None,
+    person: int | None = None,
+    saved: str | None = None,
+    deleted: int | None = None,
+    conn=Depends(get_conn),
+):
+    flash_deleted = None
+    if deleted is not None:
+        try:
+            ev = repo.get_event(conn, deleted, include_deleted=True)
+            flash_deleted = {"id": ev.id, "title": ev.title}
+        except NotFound:
+            pass
+    ctx = views.month_context(conn, now_utc(request), y, m, person, day)
+    here = f"/month?y={ctx['year']}&m={ctx['month']}" + (f"&person={person}" if person else "")
+    return _html(
+        request,
+        "month.html",
+        flash=(saved or "")[:80],
+        flash_deleted=flash_deleted,
+        back=here,
+        **ctx,
+    )
+
+
 @router.get("/events/new")
-def new_form(request: Request, date: str | None = None, conn=Depends(get_conn)):
+def new_form(
+    request: Request, date: str | None = None, back: str | None = None, conn=Depends(get_conn)
+):
     calendar = cal.get_calendar(conn)
     today = render_service.today_for(calendar.timezone, now_utc(request))
     sections = cal.list_sections(conn, include_hidden=False)
@@ -85,12 +137,14 @@ def new_form(request: Request, date: str | None = None, conn=Depends(get_conn)):
         sections[0].id if sections else None,
         (me.id,) if me else (),
     )
-    return _html(request, "event_form.html", **views.form_context(conn, values))
+    ctx = views.form_context(conn, values)
+    return _html(request, "event_form.html", back=safe_next(back) if back else "", **ctx)
 
 
 @router.post("/events/new")
 async def create(request: Request):
     form = forms.parse_body(await request.body())
+    back = _back(form)
 
     def work() -> Response:
         with _open(request) as conn:
@@ -101,24 +155,25 @@ async def create(request: Request):
                 )
             except ValidationFailed as exc:
                 ctx = views.form_context(conn, forms.values_from_form(form), exc.fields)
-                return _html(request, "event_form.html", 422, **ctx)
-            return _see_other("/?saved=" + _quote(f"Added “{ev.title}”."))
+                return _html(request, "event_form.html", 422, back=back, **ctx)
+            return _see_other(_return_to(back, saved=f"Added “{ev.title}”."))
 
     return await run_in_threadpool(work)
 
 
 @router.get("/events/{event_id}/edit")
-def edit_form(event_id: int, request: Request, conn=Depends(get_conn)):
+def edit_form(event_id: int, request: Request, back: str | None = None, conn=Depends(get_conn)):
     ev = repo.get_event(conn, event_id)
     ctx = views.form_context(
         conn, forms.event_to_values(ev), event=ev, skips=repo.list_skips(conn, ev.id)
     )
-    return _html(request, "event_form.html", **ctx)
+    return _html(request, "event_form.html", back=safe_next(back) if back else "", **ctx)
 
 
 @router.post("/events/{event_id}/edit")
 async def edit(event_id: int, request: Request):
     form = forms.parse_body(await request.body())
+    back = _back(form)
 
     def work() -> Response:
         with _open(request) as conn:
@@ -140,7 +195,7 @@ async def edit(event_id: int, request: Request):
                     event=ev,
                     skips=repo.list_skips(conn, event_id),
                 )
-                return _html(request, "event_form.html", 422, **ctx)
+                return _html(request, "event_form.html", 422, back=back, **ctx)
             except EditConflict:
                 ev = repo.get_event(conn, event_id)
                 ctx = views.form_context(
@@ -151,8 +206,8 @@ async def edit(event_id: int, request: Request):
                     error_message="Someone else changed this event. "
                     "The latest version is shown; make your change again.",
                 )
-                return _html(request, "event_form.html", 409, **ctx)
-            return _see_other("/?saved=" + _quote(f"Saved “{ev.title}”."))
+                return _html(request, "event_form.html", 409, back=back, **ctx)
+            return _see_other(_return_to(back, saved=f"Saved “{ev.title}”."))
 
     return await run_in_threadpool(work)
 
@@ -160,6 +215,7 @@ async def edit(event_id: int, request: Request):
 @router.post("/events/{event_id}/delete")
 async def delete(event_id: int, request: Request):
     form = forms.parse_body(await request.body())
+    back = _back(form)
 
     def work() -> Response:
         with _open(request) as conn:
@@ -175,8 +231,8 @@ async def delete(event_id: int, request: Request):
                     error_message="Someone else changed this event, "
                     "so it was not deleted. Check it and try again.",
                 )
-                return _html(request, "event_form.html", 409, **ctx)
-            return _see_other(f"/?deleted={event_id}")
+                return _html(request, "event_form.html", 409, back=back, **ctx)
+            return _see_other(_return_to(back, deleted=str(event_id)))
 
     return await run_in_threadpool(work)
 
