@@ -217,7 +217,7 @@ def test_day_off_and_days_off_range_remove_shifts(client):
         data={"date": "2026-11-09", "last": "2026-11-15", "back": "/month"},
         follow_redirects=False,
     )
-    assert r.status_code == 303 and "Skipped%207%20days" in r.headers["location"]
+    assert r.status_code == 303 and "Skipped+7+days" in r.headers["location"]
     nov = client.get("/month?y=2026&m=11&day=2026-11-10").text
     assert "Nothing on this day" in nov
 
