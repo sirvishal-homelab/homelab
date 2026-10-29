@@ -121,3 +121,11 @@ home list and in the month page's selected-day panel. Tapping the active button 
 skips that day. The edit page's "Days off" box skips a single date or, with "Through", a whole stretch
 (vacation, sick days). An extra shift is an ordinary one-off event. A new schedule from a given date:
 end the old one with "ends on a date" and add the new one.
+
+## Badges on Two weeks - list
+
+Two weeks - list now has the **Show who it is for (initials)** option, on by default, same boxes as
+Week - lanes (grey = main person, white = others; up to three, main person first). The boxes sit at the
+right of an item's first line, so long titles wrap onto the next line rather than being cut; a time
+followed by a long first word may wrap to a second line. Existing views pick the option up as "on".
+Both layouts draw the boxes through one shared module, `render/layouts/badges.py`.
