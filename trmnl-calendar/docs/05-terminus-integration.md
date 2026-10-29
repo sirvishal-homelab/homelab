@@ -122,3 +122,18 @@ If chosen, the project gains a `plugin/` component: a Terminus extension definit
 `/api/upcoming`, schedule, Liquid template per layout) plus documentation of how to install
 it. Layout modules would then exist twice (Pillow and Liquid) unless the Pillow path is
 dropped. See `plugin/README.md`.
+
+## Battery and Wi-Fi readings (slice 5)
+
+Terminus's `GET /api/devices` record carries `battery_voltage`, `wifi_signal` (dBm), `refresh_rate` and
+the device's last check-in time (`synced_at`). The firmware reports these on every check-in. The app reads
+them (after a push, at the end of every scheduler check, and in "Check connection"), stores a reading in
+`device_samples`, and shows them in Settings: estimated percent, whether the voltage is rising (charging),
+steady near 4.2 V (probably USB power) or falling (with percent per day and days left), the Wi-Fi level, and a
+7-day graph. A warning appears when the device has not checked in for three refresh intervals.
+
+Caveats: Terminus gives a voltage, not a percentage. The percent is an estimate from a typical single-cell
+LiPo curve (`publish/battery.py`) and is rough in the middle of the range where the curve is flat; the trend
+is more reliable than the number. Terminus's own battery meter always reads "Charging" on the owner's device (cause not investigated:
+either it is on USB power, or Terminus's rule does not suit this panel). The `synced_at` field name is from the fake used in tests; if the
+real field is named differently the app still records readings but cannot dedupe by check-in.

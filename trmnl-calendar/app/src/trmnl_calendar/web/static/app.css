@@ -131,3 +131,5 @@ ul.check li + li { border-top: 1px solid var(--line); }
 .dayactions form { margin: 0; }
 .dayactions button { min-height: 44px; padding: 0 14px; }
 .dayactions button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+
+.spark { display: block; width: 100%; max-width: 420px; height: 60px; margin-top: 8px; color: var(--accent); border-bottom: 1px solid var(--line); }

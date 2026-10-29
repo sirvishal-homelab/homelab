@@ -184,3 +184,19 @@ def test_device_refresh_time_is_read_from_terminus(env):
     assert ctx["device_minutes"] == 10
     html = views.render_page("settings.html", **views.settings_context(conn, screen=ctx))
     assert "every 10 minutes in Terminus" in html
+
+
+def test_sample_device_takes_a_battery_reading_without_pushing(env):
+    fake, _, pub, conn, _ = env
+    pub.sample_device()
+    from trmnl_calendar.storage.repositories import device_samples
+
+    rows = device_samples.since(conn, datetime(2000, 1, 1, tzinfo=UTC))
+    assert [r["voltage"] for r in rows] == [4.2] and not fake.screens
+    assert fake.calls("POST", "/api/screens") == 0
+
+
+def test_sample_device_survives_terminus_being_down(env):
+    fake, _, pub, conn, _ = env
+    fake.stop()
+    pub.sample_device()  # must not raise

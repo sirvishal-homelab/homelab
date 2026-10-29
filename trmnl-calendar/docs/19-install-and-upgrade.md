@@ -177,6 +177,9 @@ Two checks the app can answer for you: `curl -s http://<server>:8080/healthz` re
 `last_backup_age_hours` (it should stay under about 26) and `scheduler` state. Settings → The screen shows
 when the last push worked.
 
+Upgrading to the battery readout applies migration 0008 (a `pre-migration` backup is written first). Settings
+then shows battery and Wi-Fi once the first reading arrives; no `.env` change is needed.
+
 ## Upgrade
 
 ```bash

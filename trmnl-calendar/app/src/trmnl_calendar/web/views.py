@@ -291,6 +291,23 @@ def local_when(iso: str | None, timezone: str, time_format: str) -> str:
     return f"{MONTH_ABBR[t.month - 1]} {t.day}, {fmt_time(t.strftime('%H:%M'), time_format)}"
 
 
+def _battery(
+    conn: sqlite3.Connection, refresh_seconds: int | None, tz: str, fmt: str
+) -> dict | None:
+    from datetime import UTC, timedelta
+
+    from trmnl_calendar.publish import battery
+    from trmnl_calendar.storage.repositories import device_samples
+
+    now = datetime.now(UTC)
+    samples = device_samples.since(conn, now - timedelta(days=7))
+    info = battery.describe(samples, now, refresh_seconds)
+    if info:
+        info["seen_when"] = local_when(info["seen_at"], tz, fmt)
+        info["since_when"] = local_when(info["first_at"], tz, fmt)
+    return info
+
+
 def screen_context(conn: sqlite3.Connection, settings, scheduler) -> dict:
     from trmnl_calendar.publish import check, status
 
@@ -299,6 +316,7 @@ def screen_context(conn: sqlite3.Connection, settings, scheduler) -> dict:
     when = lambda k: local_when(st[k], c.timezone, c.time_format)  # noqa: E731
     return {
         **st,
+        "battery": _battery(conn, st["device_refresh_seconds"], c.timezone, c.time_format),
         "missing": check.missing_settings(settings),
         "pushed_when": when("last_pushed_at"),
         "attempt_when": when("last_attempt_at"),
