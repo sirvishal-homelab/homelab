@@ -10,7 +10,7 @@
   <li class="row-item">
     <a href="/views/{{ v.id }}/edit">
       <strong>{{ v.name }}</strong>
-      <span class="meta">· {{ label }}{{ " · showing on the screen" if v.id == active_id }}</span>
+      <span class="meta">{{ "· " ~ label if label != v.name }}{{ " · showing on the screen" if v.id == active_id }}</span>
     </a>
     <span class="movers">
       {% if v.id != active_id %}

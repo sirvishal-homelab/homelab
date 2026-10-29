@@ -14,7 +14,8 @@ main { max-width: 40rem; margin: 0 auto; padding: 16px; }
 h1 { font-size: 1.35rem; margin: 0 0 12px; }
 h2 { font-size: 1rem; margin: 20px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 a { color: var(--accent); }
-.bar { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.bar { display: flex; gap: 8px 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 12px; }
+.bar .btn { white-space: nowrap; }
 .btn, button { font: inherit; min-height: 44px; padding: 8px 16px; border-radius: var(--radius);
   border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; justify-content: center; }
@@ -41,8 +42,8 @@ form.event select { width: 100%; min-height: 44px; padding: 8px 10px; font: inhe
 .err { color: var(--danger); font-size: .9rem; margin-top: 4px; }
 details { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 12px 12px; }
 summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
-.days { display: flex; flex-wrap: wrap; gap: 8px; }
-.days label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; min-height: 44px; }
+.days { display: flex; flex-wrap: wrap; gap: 0 14px; }
+.days label, form.event .days label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; min-height: 44px; }
 .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 .inline { display: inline; }
 .nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; padding: 6px 12px; background: var(--card);
@@ -56,10 +57,12 @@ summary { min-height: 44px; display: flex; align-items: center; cursor: pointer;
   border: 1px solid var(--line); background: var(--card); color: var(--ink); text-decoration: none; }
 .chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .row-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.row-item > a { flex: 1; }
+.row-item > a { flex: 1 1 11rem; }
+.row-item { flex-wrap: wrap; }
+.row-item .movers { margin-left: auto; }
 .movers { display: inline-flex; gap: 4px; padding-right: 8px; }
 .movers button { min-width: 44px; padding: 0; }
-label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; min-height: 44px; margin-top: 12px; }
+label.check, form.event label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; min-height: 44px; margin: 4px 0 0; }
 fieldset.who { border: 1px solid var(--line); border-radius: var(--radius); margin: 16px 0 0; padding: 4px 12px 12px; background: var(--card); }
 fieldset.who legend { font-weight: 600; padding: 0 6px; }
 button.linklike { border: 0; background: none; color: var(--accent); min-height: 0; padding: 0; text-decoration: underline; display: inline; }

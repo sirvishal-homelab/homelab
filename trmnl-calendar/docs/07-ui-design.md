@@ -90,6 +90,14 @@ screen: it would be too cramped at 800x480.
   edits (calendar, categories, people, events, repeats' skipped dates, display, views) as JSON. Push state,
   idempotency keys and app_meta are left out. Import is not built.
 
+## Phone pass (slice 5)
+
+Checked at 390 px wide in dark mode (home, month, add/edit event, categories, people, views, holidays;
+none scroll sideways). Fixed: "Add event" no longer wraps onto two lines in the page header (headers wrap
+instead); weekday checkboxes and "Ends" options sit close together instead of 60 px apart (a CSS
+specificity bug); the view list no longer repeats a layout name that equals the view's name, and its
+buttons wrap below the name when space is tight.
+
 ## Edit conflicts (slice 5)
 
 If someone saved an event after you opened it, your save is **not** applied and your typing is **not**
