@@ -111,6 +111,7 @@ def form_context(
     event: Event | None = None,
     skips: list[date] | None = None,
     error_message: str = "",
+    conflict: dict | None = None,
 ) -> dict:
     sections: list[Section] = cal.list_sections(conn, include_hidden=False)
     attached = {int(i) for i in values.get("people", []) if str(i).isdigit()}
@@ -121,6 +122,7 @@ def form_context(
         "values": values,
         "errors": errors or {},
         "error_message": error_message,
+        "conflict": conflict,
         "sections": sections,
         "event": event,
         "rev": event.rev if event else None,
@@ -212,6 +214,59 @@ def person_edit_context(
         "values": values or {"name": p.name, "label": p.label, "active": p.active},
         "errors": errors or {},
         "error_message": error_message,
+    }
+
+
+_CONFLICT_FIELDS = (
+    ("title", "Title"),
+    ("location", "Place"),
+    ("start_date", "Day"),
+    ("end_date", "Last day"),
+    ("start_time", "Starts"),
+    ("end_time", "Ends"),
+)
+
+
+def conflict_context(conn: sqlite3.Connection, event: Event, yours: dict) -> dict:
+    """Who changed an event since you opened it, when, and what now differs from your version.
+
+    `event` is the stored (newer) event; `yours` is the form values you were about to save.
+    """
+    c = cal.get_calendar(conn)
+    saved = forms.event_to_values(event)
+    info = repo.meta(conn, event.id)
+    who = None
+    if info.get("updated_by_person_id"):
+        try:
+            who = people_repo.get_person(conn, info["updated_by_person_id"]).name
+        except Exception:  # a removed person: say "someone"
+            who = None
+    diffs = [
+        {"label": label, "saved": saved[key] or "none", "yours": yours.get(key) or "none"}
+        for key, label in _CONFLICT_FIELDS
+        if (saved[key] or "") != (yours.get(key) or "")
+    ]
+    names = {str(sec.id): sec.name for sec in cal.list_sections(conn)}
+    if saved["section_id"] != yours.get("section_id"):
+        diffs.append(
+            {
+                "label": "Category",
+                "saved": names.get(saved["section_id"], "?"),
+                "yours": names.get(str(yours.get("section_id")), "?"),
+            }
+        )
+    keys = ("repeat", "custom_freq", "custom_interval", "until", "count", "month_mode")
+    if any(saved[k] != yours.get(k) for k in keys) or sorted(saved["by_weekday"]) != sorted(
+        yours.get("by_weekday", [])
+    ):
+        was = repeat_text(event) or "does not repeat"
+        diffs.append({"label": "Repeats", "saved": was, "yours": "changed"})
+    if sorted(saved["people"]) != sorted(yours.get("people", [])):
+        diffs.append({"label": "People", "saved": "changed", "yours": "changed"})
+    return {
+        "who": who,
+        "when": local_when(info.get("updated_at"), c.timezone, c.time_format),
+        "diffs": diffs,
     }
 
 
