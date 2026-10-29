@@ -1,0 +1,21 @@
+{% if groups %}
+<form class="event" method="post" action="/holidays/import">
+  {% for n, v in post_fields %}<input type="hidden" name="{{ n }}" value="{{ v }}">{% endfor %}
+  {% for g in groups %}
+  <fieldset class="who">
+    <legend>{{ g.label }}</legend>
+    {% for r in g.rows %}
+    <label class="check"><input type="checkbox" name="h" value="{{ r.token }}" {{ "checked" if r.checked }} {{ "disabled" if r.added }}> {{ r.name }} <span class="meta">· {{ r.when }}{{ " · already added" if r.added }}</span></label>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+
+  <label for="category_id">Add them to</label>
+  <select id="category_id" name="category_id">
+    <option value="" {{ "selected" if not category_id }}>{{ target_name }}{{ "" if target_exists else " (new banner category)" }}</option>
+    {% for s in sections %}{% if s.name | lower != target_name | lower %}<option value="{{ s.id }}" {{ "selected" if s.id == category_id }}>{{ s.name }}</option>{% endif %}{% endfor %}
+  </select>
+  <div class="meta">A banner category shows as a grey strip at the top of each day.</div>
+  <div class="actions"><button class="primary" type="submit">Add the ticked holidays</button></div>
+</form>
+{% endif %}

@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
 One file per decision. Status values: **Proposed**, **Accepted**, **Superseded**.
-Statuses are as of 2026-10-27. All ten ADRs are accepted (owner design sign-off 2026-10-27). ADR-0003 keeps review gate E-1;
+Statuses are as of 2026-10-29. ADRs 0001 to 0010 are accepted (owner design sign-off 2026-10-27). ADR-0003 keeps review gate E-1;
 ADR-0008 is accepted for stage 1 only.
 
 | ADR | Title | Status |
@@ -16,6 +16,7 @@ ADR-0008 is accepted for stage 1 only.
 | 0008 | Delivery pipeline: CI first, manual pull deploys | **Accepted** (stage 1) |
 | 0009 | Python 3.12, FastAPI, server-rendered pages, no build step | **Accepted** |
 | 0010 | Floating local time, clamped monthly repeats, skip exceptions | **Accepted** |
+| 0011 | Optional online holiday lookup (Nager.Date) | **Proposed** |
 
 Template:
 

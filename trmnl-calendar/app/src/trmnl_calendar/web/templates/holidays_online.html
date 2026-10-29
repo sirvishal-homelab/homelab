@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Look up holidays online{% endblock %}
+{% block body %}
+<div class="bar"><h1>Look up holidays online</h1><a href="/holidays">Built-in regions</a></div>
+<p class="meta">Fetch a country's public holidays from the Nager.Date service. Only the country code and the year are sent, and only when you press Look up. The holidays become ordinary events, the same as the built-in regions. Check the dates against an official source before relying on them.</p>
+{% if done %}<div class="notice" role="status">{{ done }} <a href="/">See the calendar</a></div>{% endif %}
+{% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
+
+<form class="event" method="get" action="/holidays/online">
+  <label for="country">Country</label>
+  {% if countries %}
+  <select id="country" name="country" required>
+    <option value="">Choose…</option>
+    {% for code, name in countries %}<option value="{{ code }}" {{ "selected" if code == country }}>{{ name }} ({{ code }})</option>{% endfor %}
+  </select>
+  {% else %}
+  <input id="country" name="country" value="{{ country }}" maxlength="2" placeholder="Two-letter code, such as CA" required>
+  {% endif %}
+  {% if subdivisions %}
+  <label for="subdivision">Province, state or region</label>
+  <select id="subdivision" name="subdivision">
+    <option value="">Whole country only</option>
+    {% for code, label in subdivisions %}<option value="{{ code }}" {{ "selected" if code == subdivision }}>{{ label }}</option>{% endfor %}
+  </select>
+  <div class="meta">Adds that area's own days to the national ones.</div>
+  {% endif %}
+  <fieldset class="who">
+    <legend>Years</legend>
+    <div class="days">
+      {% for y in year_choices %}<label><input type="checkbox" name="year" value="{{ y }}" {{ "checked" if y in years or (not years and loop.first) }}> {{ y }}</label>{% endfor %}
+    </div>
+  </fieldset>
+  <div class="actions"><button type="submit">Look up</button></div>
+</form>
+
+{% include "_holiday_picker.html" %}
+{% endblock %}

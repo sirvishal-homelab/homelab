@@ -26,6 +26,8 @@ class Settings:
     push_interval_seconds: int = 900
     push_debounce_seconds: float = 5.0
     push_startup_delay_seconds: float = 10.0
+    holiday_lookup: bool = True  # the optional online holiday lookup (ADR-0011)
+    holiday_api_url: str = "https://date.nager.at/api/v3"
 
     @property
     def terminus_configured(self) -> bool:
@@ -61,4 +63,8 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         push_interval_seconds=max(60, int(e.get("TERMINUS_PUSH_INTERVAL", "900"))),
         push_debounce_seconds=float(e.get("PUSH_DEBOUNCE_SECONDS", "5")),
         push_startup_delay_seconds=float(e.get("PUSH_STARTUP_DELAY_SECONDS", "10")),
+        holiday_lookup=e.get("HOLIDAY_LOOKUP", "on").strip().lower()
+        not in ("0", "off", "false", "no"),
+        holiday_api_url=e.get("HOLIDAY_API_URL", "").strip().rstrip("/")
+        or "https://date.nager.at/api/v3",
     )

@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from trmnl_calendar import __version__
 from trmnl_calendar.config import Settings, load_settings
+from trmnl_calendar.holiday_source import HolidaySource
 from trmnl_calendar.publish.publisher import Publisher
 from trmnl_calendar.publish.scheduler import Scheduler
 from trmnl_calendar.render.fontcheck import verify_fonts
@@ -96,6 +97,7 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.state.settings = settings
     app.state.clock = clock
     app.state.render_cache = RenderCache()
+    app.state.holiday_source = HolidaySource(settings.holiday_api_url)
     app.state.publisher = Publisher(settings, app.state.render_cache, clock)
     app.state.scheduler = (
         Scheduler(
