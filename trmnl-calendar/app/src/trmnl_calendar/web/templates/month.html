@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_day_actions.html" import day_actions %}
 {% block title %}{{ title }}{% endblock %}
 {% block body %}
 {% set q = '&person=%d' % filter_person if filter_person else '' %}
@@ -56,7 +57,8 @@
   <ul class="daylist">
     {% for it in selected_items %}
     <li><a href="/events/{{ it.event_id }}/edit?back={{ back | urlencode }}"><span class="sym" aria-hidden="true">{{ it.symbol }}</span> {{ it.mark }} {{ it.label }}</a>
-      <span class="meta">{{ it.category }}{{ ' · ' ~ it.location if it.location }}{{ ' · ' ~ it.people | join(', ') if it.people }}{{ ' · ' ~ it.trip if it.trip }}</span></li>
+      <span class="meta">{{ it.category }}{{ ' · ' ~ it.location if it.location }}{{ ' · ' ~ it.people | join(', ') if it.people }}{{ ' · ' ~ it.trip if it.trip }}</span>
+      {{ day_actions(it, back) }}</li>
     {% endfor %}
   </ul>
   {% else %}<p class="meta">Nothing on this day.</p>{% endif %}

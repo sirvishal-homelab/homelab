@@ -15,6 +15,7 @@ REPEAT_CHOICES = (
     ("monthly", "Every month"),
     ("yearly", "Every year"),
     ("custom", "Custom..."),
+    ("rotating", "Rotating weeks (work schedule)..."),
 )
 FREQ_CHOICES = (("daily", "days"), ("weekly", "weeks"), ("monthly", "months"), ("yearly", "years"))
 NTH_CHOICES = (("1", "first"), ("2", "second"), ("3", "third"), ("4", "fourth"), ("-1", "last"))
@@ -48,6 +49,7 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
         "month_nth": None,
         "until": None,
         "count": None,
+        "rotation": None,
         "people_ids": [int(v) for v in f.get("people", []) if v.isdigit()],
         "owner_id": int(_one(f, "owner_id")) if _one(f, "owner_id").isdigit() else None,
     }
@@ -62,6 +64,9 @@ def form_to_event_data(f: dict[str, list[str]]) -> dict:
         data["by_weekday"] = [c for c in f.get("by_weekday", []) if c]
         data["month_mode"] = _one(f, "month_mode") or None
         data["month_nth"] = _one(f, "month_nth") or None
+    elif choice == "rotating":
+        data["freq"] = "weekly"
+        data["rotation"] = [[c for c in f.get(key, []) if c] for key in ("rot_a", "rot_b")]
     if data["freq"] != "none":  # "Ends" applies to every repeat choice, not only custom
         ends = _one(f, "ends") or "never"
         data["until"] = (_one(f, "until") or None) if ends == "until" else None
@@ -94,6 +99,8 @@ def event_to_values(
             "until": "",
             "ends": "never",
             "count": "",
+            "rot_a": [],
+            "rot_b": [],
             "people": [str(i) for i in default_people],
             "owner_id": "",
         }
@@ -102,6 +109,8 @@ def event_to_values(
     simple = ev.month_mode in (None, "date")
     if ev.freq == "none":
         choice = "none"
+    elif ev.rotation:
+        choice = "rotating"
     elif simple and ev.interval == 1 and ev.freq in ("daily", "monthly", "yearly"):
         choice = ev.freq
     elif simple and plain_weekly and ev.interval == 1:
@@ -127,6 +136,8 @@ def event_to_values(
         "until": ev.until.isoformat() if ev.until else "",
         "ends": "until" if ev.until else ("count" if ev.count else "never"),
         "count": str(ev.count) if ev.count else "",
+        "rot_a": list(ev.rotation[0]) if ev.rotation else [],
+        "rot_b": list(ev.rotation[1]) if ev.rotation and len(ev.rotation) > 1 else [],
         "people": [str(i) for i in ev.people],
         "owner_id": str(ev.owner_id) if ev.owner_id else "",
     }
@@ -136,7 +147,7 @@ def values_from_form(f: dict[str, list[str]]) -> dict:
     """Echo submitted values back into the form after a validation error."""
     v = event_to_values(None)
     for k in v:
-        if k in ("by_weekday", "people"):
+        if k in ("by_weekday", "people", "rot_a", "rot_b"):
             v[k] = [c for c in f.get(k, []) if c]
         elif k in f:
             v[k] = _one(f, k)

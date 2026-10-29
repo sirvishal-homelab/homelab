@@ -35,6 +35,7 @@ class Event:
     month_nth: int | None = None  # 1..4 or -1
     until: date | None = None
     count: int | None = None  # stop after this many occurrences (the first counts); None = no limit
+    rotation: tuple[tuple[str, ...], ...] | None = None  # weeks of weekday codes, Monday-based
     uid: str = ""
     rev: int = 1
     people: tuple[int, ...] = ()  # person ids, owner first; empty means everyone
@@ -62,6 +63,8 @@ class Occurrence:
     series_start: date | None = None  # start date of the occurrence this day belongs to
     people: tuple[int, ...] = field(default_factory=tuple)  # owner first
     owner_id: int | None = None
+    note: str = ""  # "in" / "out" for this day only; already part of `title`
+    scheduled: bool = False  # belongs to a rotating-week schedule
 
     @property
     def is_first(self) -> bool:

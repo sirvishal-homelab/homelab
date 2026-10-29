@@ -247,11 +247,42 @@ def restore(event_id: int, conn=Depends(get_conn)):
 
 @router.post("/events/{event_id}/skip")
 async def skip(event_id: int, request: Request):
+    """Skip one date, or every date from `date` through `last`. Returns to `back` if given."""
     form = forms.parse_body(await request.body())
+    back = _back(form)
 
     def work() -> Response:
         with _open(request) as conn:
-            repo.add_skip(conn, event_id, (form.get("date") or [""])[0])
+            first = (form.get("date") or [""])[0]
+            last = (form.get("last") or [""])[0].strip()
+            if last:
+                n = repo.add_skip_range(conn, event_id, first, last)
+                msg = f"Skipped {n} day{'' if n == 1 else 's'}."
+            else:
+                repo.add_skip(conn, event_id, first)
+                msg = f"Day off on {first}."
+        if back:
+            return _see_other(_return_to(back, saved=msg))
+        return _see_other(f"/events/{event_id}/edit")
+
+    return await run_in_threadpool(work)
+
+
+@router.post("/events/{event_id}/day")
+async def day_note(event_id: int, request: Request):
+    """Set or clear the in/out note on one day of a schedule, then return to where you were."""
+    form = forms.parse_body(await request.body())
+    back = _back(form)
+
+    def work() -> Response:
+        with _open(request) as conn:
+            day = (form.get("date") or [""])[0]
+            note = (form.get("note") or [""])[0]
+            repo.set_day_note(conn, event_id, day, note or None)
+            ev = repo.get_event(conn, event_id)
+        msg = f"{ev.title} on {day}: {note}." if note else f"{ev.title} on {day}: not decided."
+        if back:
+            return _see_other(_return_to(back, saved=msg))
         return _see_other(f"/events/{event_id}/edit")
 
     return await run_in_threadpool(work)

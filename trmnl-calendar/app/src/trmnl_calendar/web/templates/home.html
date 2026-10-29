@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_day_actions.html" import day_actions %}
 {% block title %}Calendar{% endblock %}
 {% block body %}
 <div class="bar">
@@ -54,7 +55,8 @@
         {% if it.location %}· {{ it.location }}{% endif %}
         {% if it.people %}· {{ it.people | join(", ") }}{% endif %}
       </span>
-    </a></li>
+    </a>
+    {{ day_actions(it, "/") }}</li>
   {% endfor %}
   </ul>
 </section>

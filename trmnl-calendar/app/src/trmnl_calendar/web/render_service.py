@@ -37,8 +37,14 @@ def render_view(
     layout = LAYOUTS[view.layout]
     first, last = layout.window(today, calendar.week_start)
     events = repo.list_events(conn, first, last)
+    ids = [e.id for e in events]
     occ = occurrences(
-        events, repo.skips_for(conn, [e.id for e in events]), first, last, calendar.week_start
+        events,
+        repo.skips_for(conn, ids),
+        first,
+        last,
+        calendar.week_start,
+        repo.notes_for(conn, ids),
     )
     sections = tuple(s for s in cal.list_sections(conn, include_hidden=False))
     if view.categories_mode == "only":

@@ -118,3 +118,34 @@ def test_count_rules():
 def test_repeat_text_mentions_the_count():
     e = Event(id=1, title="x", section_id=1, start_date=date(2026, 3, 10), freq="weekly", count=6)
     assert repeat_text(e) == "Repeats every week on Tuesday, 6 times"
+
+
+# ---- rotating weeks
+
+
+def _base(**kw):
+    d = dict(title="Work", section_id=1, start_date="2026-10-26", freq="none")
+    d.update(kw)
+    return d
+
+
+def test_rotation_is_valid_and_forces_a_weekly_two_week_cycle():
+    clean, err = validate_event(
+        _base(rotation=[["SU", "MO", "FR"], ["WE", "TH", "WE"]], freq="monthly", interval=5)
+    )
+    assert err == {}
+    assert clean["rotation"] == (("MO", "FR", "SU"), ("WE", "TH"))
+    assert clean["freq"] == "weekly" and clean["interval"] == 2 and clean["by_weekday"] == ()
+
+
+def test_rotation_rejects_bad_input():
+    for bad in ([["MO"]], [["MO"], ["XX"]], [[], []], [["MO"]] * 5, "MO"):
+        _, err = validate_event(_base(rotation=bad))
+        assert "rotation" in err, bad
+
+
+def test_rotation_can_have_an_empty_week_and_is_dropped_when_not_repeating():
+    clean, err = validate_event(_base(rotation=[["MO"], []]))
+    assert err == {} and clean["rotation"] == (("MO",), ())
+    clean, err = validate_event(_base())
+    assert clean["rotation"] is None

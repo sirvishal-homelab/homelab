@@ -54,6 +54,15 @@ def _starts(ev: Event, lo: date, hi: date, week_start: str) -> Iterator[date]:
         while d <= hi:
             yield d
             d += timedelta(days=ev.interval)
+    elif ev.freq == "weekly" and ev.rotation:
+        # Rotating weeks always run Monday to Sunday, whatever the calendar's week start is.
+        base = week_floor(s, "mon")
+        d = lo
+        while d <= hi:
+            week = ((week_floor(d, "mon") - base).days // 7) % len(ev.rotation)
+            if WEEKDAY_CODES[d.weekday()] in ev.rotation[week]:
+                yield d
+            d += timedelta(days=1)
     elif ev.freq == "weekly":
         codes = ev.by_weekday or (WEEKDAY_CODES[s.weekday()],)
         wanted = {WEEKDAY_CODES.index(c) for c in codes}
@@ -108,13 +117,18 @@ def occurrences(
     window_start: date,
     window_end: date,
     week_start: str = "sun",
+    notes: dict[int, dict[date, str]] | None = None,
 ) -> list[Occurrence]:
-    """Per-day occurrences inside [window_start, window_end], in display order."""
+    """Per-day occurrences inside [window_start, window_end], in display order.
+
+    `notes` maps event id -> {occurrence start date: "in" | "out"}; the note is added to the title.
+    """
     if window_end < window_start:
         return []
     if (window_end - window_start).days > MAX_WINDOW_DAYS:
         raise ValueError(f"window longer than {MAX_WINDOW_DAYS} days")
     skips = skips or {}
+    notes = notes or {}
     out: list[Occurrence] = []
     for ev in events:
         dur = ev.duration_days
@@ -123,6 +137,8 @@ def occurrences(
                 break
             if start in skips.get(ev.id, ()):
                 continue
+            note = notes.get(ev.id, {}).get(start, "")
+            title = f"{ev.title} ({note})" if note else ev.title
             for i in range(dur + 1):
                 day = start + timedelta(days=i)
                 if not window_start <= day <= window_end:
@@ -131,7 +147,7 @@ def occurrences(
                 out.append(
                     Occurrence(
                         event_id=ev.id,
-                        title=ev.title,
+                        title=title,
                         location=ev.location,
                         section_id=ev.section_id,
                         date=day,
@@ -143,6 +159,8 @@ def occurrences(
                         series_start=start,
                         people=ev.people,
                         owner_id=ev.owner_id,
+                        note=note,
+                        scheduled=bool(ev.rotation),
                     )
                 )
     out.sort(key=sort_key)

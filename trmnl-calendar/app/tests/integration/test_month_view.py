@@ -68,3 +68,39 @@ def test_add_query_replaces_existing_param():
     out = views.add_query("/month?y=2026&m=3", saved="Hi there")
     assert out == "/month?y=2026&m=3&saved=Hi+there"
     assert views.add_query("/month?saved=old&m=3", saved="x") == "/month?m=3&saved=x"
+
+
+def test_schedule_days_carry_the_note_and_action_fields(conn):
+    rot = [["MO", "TU", "FR", "SA", "SU"], ["WE", "TH"]]
+    ev = add(conn, title="Work", start_date="2026-03-02", rotation=rot, start_time="08:00")
+    repo.set_day_note(conn, ev.id, "2026-03-06", "out")
+    c = cells(views.month_context(conn, NOW, 2026, 3, day="2026-03-06"))
+    fri = c["2026-03-06"]["events"][0]
+    assert fri["label"].endswith("Work (out)") and fri["note"] == "out" and fri["scheduled"]
+    assert fri["date"] == "2026-03-06"
+    assert c["2026-03-05"]["events"] == []  # Thursday of week A is not a work day
+    assert c["2026-03-11"]["events"][0]["note"] == ""  # Wednesday of week B, undecided
+    home = views.upcoming_groups(conn, NOW)
+    first = home["days"][0][2][0]
+    assert first["scheduled"] and first["date"] and first["title"].startswith("Work")
+
+
+def test_month_template_shows_day_buttons_only_for_schedules(conn):
+    rot = [["MO"], ["TU"]]
+    add(conn, title="Work", start_date="2026-03-16", rotation=rot)
+    add(conn, title="Dentist", start_date="2026-03-16")
+    ctx = views.month_context(conn, NOW, 2026, 3, day="2026-03-16")
+    html = views.render_page(
+        "month.html",
+        **{
+            **ctx,
+            "me": None,
+            "request_path": "/month",
+            "nav": "home",
+            "flash": "",
+            "flash_deleted": None,
+            "back": "/month?y=2026&m=3",
+        },
+    )
+    assert html.count('action="/events/1/day"') == 2  # Out and In for the schedule
+    assert 'action="/events/1/skip"' in html and "/events/2/day" not in html

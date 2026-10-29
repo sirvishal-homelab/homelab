@@ -58,8 +58,14 @@ def upcoming_groups(
     today = today_for(calendar.timezone, now_utc)
     end = today + timedelta(days=UPCOMING_DAYS - 1)
     events = repo.list_events(conn, today, end)
+    ids = [e.id for e in events]
     occ = occurrences(
-        events, repo.skips_for(conn, [e.id for e in events]), today, end, calendar.week_start
+        events,
+        repo.skips_for(conn, ids),
+        today,
+        end,
+        calendar.week_start,
+        repo.notes_for(conn, ids),
     )
     names = {s.id: s.name for s in cal.list_sections(conn)}
     everyone = people_repo.list_people(conn)
@@ -89,6 +95,9 @@ def upcoming_groups(
                 "trip": trip,
                 "category": names.get(o.section_id, ""),
                 "repeats": repeating.get(o.event_id, False),
+                "date": o.date.isoformat(),
+                "scheduled": o.scheduled,
+                "note": o.note,
                 "location": o.location,
                 "people": [person_names[i] for i in o.people if i in person_names],
             }
@@ -143,6 +152,7 @@ def form_context(
                     "month_mode",
                     "until",
                     "count",
+                    "rotation",
                     "freq",
                     "owner_id",
                 )
@@ -512,8 +522,15 @@ def month_context(
     grid_end = grid_start + timedelta(days=weeks * 7 - 1)
 
     events = repo.list_events(conn, grid_start, grid_end)
-    skips = repo.skips_for(conn, [e.id for e in events])
-    occ = occurrences(events, skips, grid_start, grid_end, calendar.week_start)
+    ids = [e.id for e in events]
+    occ = occurrences(
+        events,
+        repo.skips_for(conn, ids),
+        grid_start,
+        grid_end,
+        calendar.week_start,
+        repo.notes_for(conn, ids),
+    )
     sections = cal.list_sections(conn)
     symbol = {s.id: SYMBOLS[i % len(SYMBOLS)] for i, s in enumerate(sections)}
     names = {s.id: s.name for s in sections}
@@ -534,6 +551,9 @@ def month_context(
             {
                 "event_id": o.event_id,
                 "title": o.title,
+                "date": o.date.isoformat(),
+                "scheduled": o.scheduled,
+                "note": o.note,
                 "label": label,
                 "mark": mark.strip(),
                 "symbol": symbol.get(o.section_id, ""),

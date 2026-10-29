@@ -16,6 +16,7 @@ TABLES = (
     "events",
     "event_people",
     "event_exceptions",
+    "event_day_notes",
     "displays",
     "views",
 )

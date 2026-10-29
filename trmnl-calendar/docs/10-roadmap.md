@@ -36,6 +36,9 @@ the verified spike. The UI is built a little in each slice; slice 5 hardens it. 
 as templates (Day rows, Agenda, Two weeks - lanes, Overview, Month), ICS import, "this and following" edits,
 several displays, **more holiday regions** (see below).
 
+**Owner additions 2026-10-29:** a work schedule as rotating weeks with per-day in/out and days off,
+instead of ICS import for her shifts.
+
 **Owner additions 2026-10-28 (built between slices 4 and 5):** a repeat count ("repeat N times"), the
 screen's refresh interval read from Terminus instead of hard-coded, and a web-only month page with
 click-to-add (not an e-ink layout: too cramped at 800x480).
