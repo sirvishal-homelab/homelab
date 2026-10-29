@@ -56,6 +56,10 @@ settings screen. Candidates: other Canadian provinces and the federal list, and 
 the owner names them. Each region needs its dates checked against the official source and tests for two
 years, as Nova Scotia has. Whether a region can be added from the UI instead (owner types names and
 date rules) is left open; the code route is simplest and keeps the rules testable.
+**Built 2026-10-29 (ADR-0011):** an optional online lookup (Nager.Date) for other countries, so
+others who reuse the project need no code change. The owner does not plan to use it; the built-in Nova
+Scotia list stays the checked one. Still to do: confirm against the live service and move to its v4
+before v3 ends on 2027-01-31.
 
 **Owner decision 2026-10-28:** the slice plan above stays as it is. ICS import is a **later phase, after
 slice 5**, and its real-data testing waits until then. Notes for when it is picked up:

@@ -87,6 +87,8 @@ Prototype configuration (environment variables; none are stored in the database)
 | `TERMINUS_PREPROCESSED` | **Default true**; the app renders the model's exact depth. |
 | `TERMINUS_VERIFY_TLS` | Default true. |
 | `TERMINUS_PUSH_INTERVAL` | Seconds between scheduled pushes, minimum 60, default 900. |
+| `HOLIDAY_LOOKUP` | Default `on`. `off` hides the online holiday lookup (ADR-0011). |
+| `HOLIDAY_API_URL` | Default `https://date.nager.at/api/v3`. Address of the holiday service. |
 
 ## Built in slice 4
 

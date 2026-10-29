@@ -107,7 +107,7 @@ Upgrading applies migration 0005. The four settings in `.env` (`TERMINUS_URL`, `
 4. From then on every edit is sent a few seconds after you save it, and only when the picture changed.
 
 If a push fails the reason is shown on the same page and the screen keeps its old picture; the app retries at the next
-15-minute check. **Switch pushing off** stops all sending. Bulk holiday import is on **Categories → Add holidays**.
+15-minute check. **Switch pushing off** stops all sending. Bulk holiday import is on **Categories → Add holidays**; **Look up holidays online** on that page adds other countries from the Nager.Date service (needs internet, only when you press Look up; `HOLIDAY_LOOKUP=off` hides it).
 
 ## Backups and the restore drill
 

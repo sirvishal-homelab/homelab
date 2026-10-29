@@ -194,3 +194,102 @@ def test_holiday_form_import_and_home_banner(settings):
         assert empty.status_code == 422
         events = c.get(f"{API}/events", params={"from": "2026-12-01", "to": "2026-12-31"}).json()
         assert {e["title"] for e in events} >= {"Christmas Day", "Boxing Day"}
+
+
+# ---- online holiday lookup (a fake service; the real one is never called)
+
+
+def _online_app(settings, **env):
+    from trmnl_calendar import holiday_source as S
+
+    calls = []
+    data = {
+        "AvailableCountries": [{"countryCode": "CA", "name": "Canada"}],
+        "PublicHolidays/2026/CA": [
+            {"date": "2026-12-25", "name": "Christmas Day", "types": ["Public"]},
+            {
+                "date": "2026-02-16",
+                "name": "Heritage Day",
+                "counties": ["CA-NS"],
+                "types": ["Public"],
+            },
+        ],
+    }
+
+    def transport(url, timeout):
+        import json as _json
+
+        calls.append(url)
+        key = url.split("/api/v3/")[-1]
+        if key not in data:
+            return 404, b""
+        return 200, _json.dumps(data[key]).encode()
+
+    app = create_app(settings, clock=lambda: NOW)
+    app.state.holiday_source = S.HolidaySource("https://x.test/api/v3", transport=transport)
+    return app, calls
+
+
+def test_online_lookup_page_and_form_import(settings):
+    app, calls = _online_app(settings)
+    with TestClient(app) as c:
+        assert "Look up holidays online" in c.get("/holidays").text
+        assert calls == []  # opening a page never calls the service on its own
+        page = c.get(
+            "/holidays/online", params={"country": "ca", "subdivision": "CA-NS", "year": "2026"}
+        )
+        assert page.status_code == 200
+        assert "Christmas Day" in page.text and "Heritage Day" in page.text
+        assert 'name="country" value="CA"' in page.text and "Nova Scotia, Canada" in page.text
+        r = c.post(
+            "/holidays/import",
+            data={
+                "country": "CA",
+                "subdivision": "CA-NS",
+                "h": ["christmas_day:2026", "heritage_day:2026"],
+            },
+            follow_redirects=False,
+        )
+        assert r.status_code == 303 and r.headers["location"].startswith("/holidays/online?done=")
+        events = c.get(f"{API}/events", params={"from": "2026-02-01", "to": "2026-12-31"}).json()
+        assert {e["title"] for e in events} >= {"Christmas Day", "Heritage Day"}
+        empty = c.post("/holidays/import", data={"country": "CA", "subdivision": ""})
+        assert empty.status_code == 422
+        down = c.get("/holidays/online", params={"country": "FR", "year": "2026"})
+        assert down.status_code == 200 and "no list for that country" in down.text
+
+
+def test_online_lookup_api(settings):
+    app, _ = _online_app(settings)
+    with TestClient(app) as c:
+        assert c.get(f"{API}/holidays/online/countries").json() == [
+            {"code": "CA", "name": "Canada"}
+        ]
+        listing = c.get(f"{API}/holidays/online", params={"country": "CA", "years": "2026"}).json()
+        assert listing["subdivisions"] == ["CA-NS"]
+        assert [i["name"] for i in listing["items"]] == ["Christmas Day"]
+        r = c.post(
+            f"{API}/holidays/import",
+            json={"country": "CA", "subdivision": "CA-NS", "years": [2026]},
+        )
+        assert r.status_code == 201 and r.json()["added"] == 2
+        both = c.post(
+            f"{API}/holidays/import", json={"region": "CA", "country": "CA", "years": [2026]}
+        )
+        assert both.status_code == 422
+        fail = c.get(f"{API}/holidays/online", params={"country": "FR", "years": "2026"})
+        assert fail.status_code == 502 and fail.json()["error"]["code"] == "holiday_lookup_failed"
+        assert (
+            c.get(f"{API}/holidays/online", params={"country": "C", "years": "2026"}).status_code
+            == 422
+        )
+
+
+def test_online_lookup_can_be_switched_off(tmp_path):
+    from trmnl_calendar.config import load_settings
+
+    s = load_settings({"DATA_DIR": str(tmp_path), "HOLIDAY_LOOKUP": "off"})
+    with TestClient(create_app(s, clock=lambda: NOW)) as c:
+        assert "Look up holidays online" not in c.get("/holidays").text
+        assert c.get("/holidays/online").status_code == 404
+        assert c.get(f"{API}/holidays/online/countries").status_code == 404

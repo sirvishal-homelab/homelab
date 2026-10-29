@@ -12,7 +12,7 @@ check (`18`).
 > views (`GET /layouts`, `GET /templates`, list, create from a template, read, patch, delete, `PUT /views/order`,
 > `POST /views/{id}/activate`, `POST /views/preview`), `GET /display`, `PATCH /display` (`enabled` only), `GET /display/status`, `POST /display/push` (502
 > `push_failed` with Terminus's reason), `POST /display/check` (the connection check), holidays (`GET /holidays/regions`,
-> `GET /holidays?region=&years=`, `POST /holidays/import`), `/healthz`, `/render/current.png` (the
+> `GET /holidays?region=&years=`, `POST /holidays/import`; online lookup: `GET /holidays/online/countries`, `GET /holidays/online?country=&subdivision=&years=` (502 `holiday_lookup_failed` when the service fails), and `POST /holidays/import` with `country` and optional `subdivision` instead of `region`; 404 when `HOLIDAY_LOOKUP=off`), `/healthz`, `/render/current.png` (the
 > active view), `/render/{hash}.png`, and the single error shape. A view's `weekdays` are codes (`MO`..`SU`),
 > `categories` and `people` are `{mode: all|only, ids}`, and `options` are booleans the layout understands. Handlers take plain JSON
 > bodies, so the generated OpenAPI description does not yet describe request fields; typed models and OpenAPI

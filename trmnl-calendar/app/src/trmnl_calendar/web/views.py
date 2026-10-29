@@ -439,6 +439,91 @@ def view_editor_context(
     }
 
 
+def _holiday_groups(conn: sqlite3.Connection, items: list, target) -> list[dict]:
+    """The picker's rows grouped by kind, each marked if already added to the target category."""
+    from trmnl_calendar.domain import holidays as H
+    from trmnl_calendar.storage.repositories import calendar as cal_repo
+
+    groups = []
+    for gid, label in H.GROUPS:
+        rows = []
+        for h in items:
+            if h.group != gid:
+                continue
+            added = bool(
+                target
+                and conn.execute(
+                    "SELECT 1 FROM events WHERE calendar_id = ? AND section_id = ? "
+                    "AND deleted_at IS NULL AND start_date = ? AND title = ? COLLATE NOCASE",
+                    (cal_repo.CALENDAR_ID, target.id, h.date.isoformat(), h.name),
+                ).fetchone()
+            )
+            rows.append(
+                {
+                    "token": f"{h.key}:{h.date.year}",
+                    "name": h.name,
+                    "when": (
+                        f"{DAY_ABBR[h.date.weekday()]} {MONTH_ABBR[h.date.month - 1]} "
+                        f"{h.date.day}, {h.date.year}"
+                    ),
+                    "checked": gid in H.CHECKED_BY_DEFAULT and not added,
+                    "added": added,
+                }
+            )
+        if rows:
+            groups.append({"id": gid, "label": label, "rows": rows})
+    return groups
+
+
+def _holiday_target(sections: list, category_id: int | None):
+    return next((s for s in sections if s.id == category_id), None) or next(
+        (s for s in sections if s.name.lower() == "holidays"), None
+    )
+
+
+def _holiday_common(sections, target, category_id, done, error_message) -> dict:
+    return {
+        "sections": sections,
+        "category_id": category_id,
+        "target_name": target.name if target else "Holidays",
+        "target_exists": target is not None,
+        "done": done,
+        "error_message": error_message,
+    }
+
+
+def holidays_online_context(
+    conn: sqlite3.Connection,
+    *,
+    countries: list,
+    country: str,
+    subdivision: str,
+    subdivisions: list[tuple[str, str]],
+    items: list,
+    years: list[int],
+    this_year: int,
+    category_id: int | None = None,
+    done: str = "",
+    error_message: str = "",
+) -> dict:
+    """The online lookup page: country, optional province or state, years, then the list."""
+    from trmnl_calendar.storage.repositories import calendar as cal_repo
+
+    sections = cal_repo.list_sections(conn)
+    target = _holiday_target(sections, category_id)
+    return {
+        **_holiday_common(sections, target, category_id, done, error_message),
+        "countries": [(c.code, c.name) for c in countries],
+        "country": country,
+        "subdivision": subdivision,
+        "subdivisions": subdivisions,
+        "year_choices": [this_year, this_year + 1, this_year + 2],
+        "years": years,
+        "groups": _holiday_groups(conn, items, target),
+        "post_fields": [("country", country), ("subdivision", subdivision)],
+    }
+
+
 def holidays_context(
     conn: sqlite3.Connection,
     region: str,
@@ -447,58 +532,29 @@ def holidays_context(
     category_id: int | None = None,
     done: str = "",
     error_message: str = "",
+    online_enabled: bool = False,
 ) -> dict:
     """The holiday picker: regions, years, and (once chosen) the list with what is already added."""
     from trmnl_calendar.domain import holidays as H
     from trmnl_calendar.storage.repositories import calendar as cal_repo
 
     sections = cal_repo.list_sections(conn)
-    target = next((s for s in sections if s.id == category_id), None) or next(
-        (s for s in sections if s.name.lower() == "holidays"), None
-    )
+    target = _holiday_target(sections, category_id)
     groups = []
     if region in H.REGIONS and years:
-        items = [h for y in years for h in H.holidays_for(region, y)]
-        for gid, label in H.GROUPS:
-            rows = []
-            for h in items:
-                if h.group != gid:
-                    continue
-                added = bool(
-                    target
-                    and conn.execute(
-                        "SELECT 1 FROM events WHERE calendar_id = ? AND section_id = ? "
-                        "AND deleted_at IS NULL AND start_date = ? AND title = ? COLLATE NOCASE",
-                        (cal_repo.CALENDAR_ID, target.id, h.date.isoformat(), h.name),
-                    ).fetchone()
-                )
-                rows.append(
-                    {
-                        "token": f"{h.key}:{h.date.year}",
-                        "name": h.name,
-                        "when": (
-                            f"{DAY_ABBR[h.date.weekday()]} {MONTH_ABBR[h.date.month - 1]} "
-                            f"{h.date.day}, {h.date.year}"
-                        ),
-                        "checked": gid in H.CHECKED_BY_DEFAULT and not added,
-                        "added": added,
-                    }
-                )
-            if rows:
-                groups.append({"id": gid, "label": label, "rows": rows})
+        groups = _holiday_groups(
+            conn, [h for y in years for h in H.holidays_for(region, y)], target
+        )
     return {
+        **_holiday_common(sections, target, category_id, done, error_message),
         "regions": H.region_choices(),
         "region": region if region in H.REGIONS else "",
         "region_note": H.REGIONS[region]["note"] if region in H.REGIONS else "",
         "year_choices": [this_year, this_year + 1, this_year + 2],
         "years": years,
         "groups": groups,
-        "sections": sections,
-        "category_id": category_id,
-        "target_name": target.name if target else "Holidays",
-        "target_exists": target is not None,
-        "done": done,
-        "error_message": error_message,
+        "post_fields": [("region", region)],
+        "online_enabled": online_enabled,
     }
 
 

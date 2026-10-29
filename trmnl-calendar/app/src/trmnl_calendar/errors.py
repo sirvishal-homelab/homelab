@@ -55,3 +55,7 @@ class BadGateway(AppError):
 
 class NotConfigured(AppError):
     status, code = 409, "not_configured"
+
+
+class LookupFailed(AppError):
+    status, code = 502, "holiday_lookup_failed"
