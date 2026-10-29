@@ -109,6 +109,74 @@ Upgrading applies migration 0005. The four settings in `.env` (`TERMINUS_URL`, `
 If a push fails the reason is shown on the same page and the screen keeps its old picture; the app retries at the next
 15-minute check. **Switch pushing off** stops all sending. Bulk holiday import is on **Categories → Add holidays**.
 
+## Backups and the restore drill
+
+The app writes a backup of the database to the volume (`/data/backups`) every `BACKUP_INTERVAL_HOURS`
+(default 24), keeps the newest `BACKUP_KEEP` (default 14) automatic ones, and never deletes manual or
+pre-migration or pre-restore ones. **These live in the same Docker volume as the database**, so they
+do not help if the volume or disk is lost. Copy them off the server (see below).
+
+**Copy backups off the server** (run from cron on the server, then sync that folder to another
+machine; the destination is yours to choose):
+
+```bash
+mkdir -p /root/calendar-backups
+docker run --rm -v calendar-data:/data:ro -v /root/calendar-backups:/out alpine \
+    sh -c 'cp -n /data/backups/*.db /out/'
+```
+
+You can also download a JSON copy of your data any time from **Settings → Download all my data**.
+That is a readable safety net, not a substitute for the database backups (it cannot be re-imported yet).
+
+**Restore drill.** Do this once now, on the real server, and after any big change. It takes five
+minutes and leaves your data as it was.
+
+```bash
+cd /root/homelab/trmnl-calendar/app/deploy
+
+# 1. Make a fresh backup and look at the list
+docker compose exec calendar python -m trmnl_calendar.storage.backup --now
+docker compose exec calendar python -m trmnl_calendar.storage.restore --list
+#    Expect lines like: calendar-...-manual.db  2026-10-29 13:05 UTC  42 events, 3 people, schema 6
+
+# 2. Note what the calendar shows right now (how many events in the list, one event's title)
+
+# 3. Stop the app and restore that backup
+docker compose stop calendar
+docker compose run --rm --no-deps calendar python -m trmnl_calendar.storage.restore <backup-file-name>
+#    Expect: "Restored <file>: N events, M people. The previous database was saved as ...-pre-restore.db."
+
+# 4. Start again and check
+docker compose up -d
+curl -s http://localhost:8080/healthz          # "status":"ok"
+```
+
+Open the calendar: it should match step 2 (if you changed nothing in between). Restoring is safe to
+repeat: every restore first saves the database it replaces as a `pre-restore` backup, so you can undo
+it the same way. The tool refuses a file that is damaged, is not a calendar database, or comes from a
+newer app version, and refuses to run while the app is still using the database.
+
+To restore onto a **new server or an empty volume**: install as in "First-time install" but do not start
+the app, copy a backup into the volume (`docker cp` or the `docker run` pattern above), then run step 3.
+
+The screen's push state is not part of the restore. After restoring, press **Push now** in Settings.
+
+## Alerts (Beszel)
+
+The calendar container has a Docker health check (`/healthz`, every 30 s) and `docker compose ps`
+shows `healthy` or `unhealthy`. In the Beszel hub, add alerts for the host running the calendar
+(**not verified against your hub; menu names vary by Beszel version**):
+
+1. **Status**: alert when the host goes down.
+2. **Disk**: alert when disk use is over about 80% (backups and Docker images grow the volume).
+3. **Containers**: Beszel shows each container's health on the host's page; check that `calendar`
+   shows as healthy there. If your Beszel version can alert on container status, enable it for
+   `calendar`.
+
+Two checks the app can answer for you: `curl -s http://<server>:8080/healthz` reports
+`last_backup_age_hours` (it should stay under about 26) and `scheduler` state. Settings → The screen shows
+when the last push worked.
+
 ## Upgrade
 
 ```bash
