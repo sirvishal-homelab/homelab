@@ -97,3 +97,12 @@ none scroll sideways). Fixed: "Add event" no longer wraps onto two lines in the 
 instead); weekday checkboxes and "Ends" options sit close together instead of 60 px apart (a CSS
 specificity bug); the view list no longer repeats a layout name that equals the view's name, and its
 buttons wrap below the name when space is tight.
+
+## Edit conflicts (slice 5)
+
+If someone saved an event after you opened it, your save is **not** applied and your typing is **not**
+thrown away. The form comes back with your values, a warning saying who changed it and when, and a list
+of the fields that now differ ("Title: saved now ‘Dentist 2’, yours ‘Orthodontist’"). The form carries the
+newer `rev`, so pressing **Save changes** knowingly replaces their version; "discard yours and see theirs"
+reloads the saved event. Deleting a changed event is still refused with a message. The JSON API is
+unchanged (409 with `current_rev`).

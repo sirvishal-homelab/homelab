@@ -62,8 +62,15 @@ def test_edit_changes_the_event_and_stale_edit_is_refused(client):
     )
     assert ok.status_code == 303
     stale = client.post("/events/1/edit", data={**FORM, "title": "Other", "rev": "1"})
-    assert stale.status_code == 409 and "Someone else changed this event" in stale.text
-    assert "Dentist 2" in stale.text
+    assert stale.status_code == 409 and "changed this event" in stale.text
+    assert "not saved yet" in stale.text
+    # their typing is kept, the difference is listed, and the form now carries the new rev
+    assert 'value="Other"' in stale.text and "saved now “Dentist 2”" in stale.text
+    assert 'name="rev" value="2"' in stale.text
+    again = client.post(
+        "/events/1/edit", data={**FORM, "title": "Other", "rev": "2"}, follow_redirects=False
+    )
+    assert again.status_code == 303 and "Other" in client.get("/").text
 
 
 def test_delete_shows_undo_and_restore_brings_it_back(client):
