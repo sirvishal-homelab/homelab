@@ -177,3 +177,67 @@ def test_home_screen_icon_and_manifest_are_served(client):
     for path in ("/static/manifest.webmanifest", "/static/icon-180.png", "/static/icon-512.png"):
         assert client.get(path).status_code == 200
     assert client.get("/static/icon-192.png").content.startswith(b"\x89PNG")
+
+
+ROTA = dict(
+    repeat="rotating",
+    start_date="2026-10-26",
+    title="Work",
+    start_time="08:00",
+    end_time="20:00",
+    rot_a=["MO", "TU", "FR", "SA", "SU"],
+    rot_b=["WE", "TH"],
+)
+
+
+def test_add_a_rotating_schedule_and_set_days(client):
+    add(client, **ROTA)
+    month = client.get("/month?y=2026&m=11").text
+    assert "Work" in month and "Rotating" not in month
+    edit = client.get("/events/1/edit").text
+    assert "Rotating weeks: Mon Tue Fri Sat Sun; then Wed Thu" in edit
+    back = "/month?y=2026&m=10&day=2026-10-30"
+    r = client.post(
+        "/events/1/day",
+        data={"date": "2026-10-30", "note": "out", "back": back},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303 and r.headers["location"].startswith(back.split("&day")[0])
+    page = client.get("/month?y=2026&m=10&day=2026-10-30").text
+    assert "Work (out)" in page
+    client.post("/events/1/day", data={"date": "2026-10-30", "note": ""})
+    assert "Work (out)" not in client.get("/month?y=2026&m=10&day=2026-10-30").text
+
+
+def test_day_off_and_days_off_range_remove_shifts(client):
+    add(client, **ROTA)
+    client.post("/events/1/skip", data={"date": "2026-10-31", "back": "/"})
+    r = client.post(
+        "/events/1/skip",
+        data={"date": "2026-11-09", "last": "2026-11-15", "back": "/month"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303 and "Skipped+7+days" in r.headers["location"]
+    nov = client.get("/month?y=2026&m=11&day=2026-11-10").text
+    assert "Nothing on this day" in nov
+
+
+def test_rotation_and_day_notes_through_the_api(client):
+    r = client.post(
+        "/api/v1/events",
+        json={
+            "title": "Work",
+            "category_id": 1,
+            "start_date": "2026-10-26",
+            "repeat": {"rotation": [["MO", "FR"], ["WE"]]},
+        },
+        headers={"Idempotency-Key": "k1"},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["repeat"]["rotation"] == [["MO", "FR"], ["WE"]]
+    ok = client.put("/api/v1/events/1/days/2026-10-30", json={"note": "in"})
+    assert ok.status_code == 200 and ok.json()["note"] == "in"
+    occ = client.get("/api/v1/occurrences?from=2026-10-26&to=2026-11-01").json()
+    assert [o["title"] for o in occ if o["date"] == "2026-10-30"] == ["Work (in)"]
+    bad = client.put("/api/v1/events/1/days/2026-10-30", json={"note": "maybe"})
+    assert bad.status_code == 422

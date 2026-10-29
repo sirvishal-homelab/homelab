@@ -129,6 +129,20 @@
     </fieldset>
 
     <fieldset class="who">
+      <legend>Rotating weeks</legend>
+      <div class="meta">Used when “Rotating weeks…” is chosen. Week A is the week that contains the Day above; week B is the next week, then it repeats. Weeks run Monday to Sunday. Set a day to “in” or “out” later by tapping it in the list or month view.</div>
+      {% for key, label in (("rot_a", "Week A"), ("rot_b", "Week B")) %}
+      <label>{{ label }}</label>
+      <div class="days">
+        {% for code, name in weekdays %}
+        <label><input type="checkbox" name="{{ key }}" value="{{ code }}" {{ "checked" if code in values[key] }}> {{ name[:3] }}</label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      {% if errors.rotation %}<div class="err">{{ errors.rotation }}</div>{% endif %}
+    </fieldset>
+
+    <fieldset class="who">
       <legend>Ends (for repeating events)</legend>
       <label class="check"><input type="radio" name="ends" value="never" {{ "checked" if values.ends == "never" }}> Never</label>
       <label class="check"><input type="radio" name="ends" value="until" {{ "checked" if values.ends == "until" }}> On a date</label>
@@ -148,13 +162,21 @@
 
 {% if event %}
   {% if event.freq != "none" %}
-  <h2>Skip one date</h2>
+  <h2>Days off</h2>
   <form method="post" action="/events/{{ event.id }}/skip" class="event">
-    <label for="skip_date">Not on this date</label>
+    {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
     <div class="row">
-      <input id="skip_date" name="date" type="date" value="{{ values.start_date }}" required style="width:100%;min-height:44px;font:inherit">
-      <button type="submit">Skip</button>
+      <div>
+        <label for="skip_date">Not on this date</label>
+        <input id="skip_date" name="date" type="date" value="{{ values.start_date }}" required style="width:100%;min-height:44px;font:inherit">
+      </div>
+      <div>
+        <label for="skip_last">Through (optional)</label>
+        <input id="skip_last" name="last" type="date" style="width:100%;min-height:44px;font:inherit">
+      </div>
     </div>
+    <div class="meta">Leave “Through” empty to skip just one day, or fill it in for a holiday or leave.</div>
+    <div class="actions"><button type="submit">Skip</button></div>
   </form>
   {% for d in skips %}
     <form method="post" action="/events/{{ event.id }}/unskip" class="inline">

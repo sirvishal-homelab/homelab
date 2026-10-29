@@ -125,3 +125,9 @@ ul.check li + li { border-top: 1px solid var(--line); }
   .madd { display: none; }
   .mcount { display: block; position: absolute; right: 4px; bottom: 2px; font-size: .75rem; opacity: .8; }
 }
+
+/* Day actions (rotating-week schedules) */
+.dayactions { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
+.dayactions form { margin: 0; }
+.dayactions button { min-height: 44px; padding: 0 14px; }
+.dayactions button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }

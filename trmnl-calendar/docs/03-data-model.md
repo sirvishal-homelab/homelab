@@ -67,6 +67,7 @@ erDiagram
     int month_nth
     text until
     int repeat_count
+    text rotation
     int rev
     int updated_by_person_id FK
     text deleted_at
@@ -176,6 +177,7 @@ cookie (`15`, M-1); the server stores nothing about devices.
 | `month_mode` | monthly only: `date` (default) or `weekday` ("first Monday", "last Friday") |
 | `month_nth` | with `month_mode = weekday`: 1 to 4, or -1 for the last |
 | `until` | last date an occurrence may **start** on; NULL means forever |
+| `rotation` | optional JSON list of weeks of weekday codes, for example `[["MO","TU","FR","SA","SU"],["WE","TH"]]` (migration 0007). Set means a rotating-week schedule: `freq` is `weekly`, `interval` is the number of weeks, `by_weekday` is empty. Week A is the Monday-to-Sunday week containing `start_date`; weeks always run Monday to Sunday whatever the calendar's week start is. 2 to 4 weeks; a week may be empty. |
 | `repeat_count` | alternative to `until`: stop after this many occurrences (2 to 999; the first counts, skipped dates still count); NULL means no limit. At most one of `until` and `repeat_count` is set (migration 0006). |
 | `rev` | integer, incremented on every save; used to warn about simultaneous edits (`15`, M-8) |
 | `updated_by_person_id` | the profile that last saved it, or NULL |
@@ -276,3 +278,10 @@ window is a convenience, not a backup.
 Multiple calendars in the UI, event notes, per-category icons, attendees, reminders, attachments,
 per-occurrence overrides and "this and following" edits, time zones per event, an audit history, and
 accounts or passwords. Each can be added later without reshaping the tables above.
+
+
+### event_day_notes (migration 0007)
+
+`(event_id, day, note)`, primary key `(event_id, day)`; `note` is `in` or `out`; deleted with the event.
+`day` is the occurrence's start date. The note is shown as a suffix on that day's title ("Work (out)")
+and no row means "not decided". Days off use the existing `event_exceptions` skips.

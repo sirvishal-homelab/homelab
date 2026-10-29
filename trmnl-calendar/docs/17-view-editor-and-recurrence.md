@@ -96,3 +96,11 @@ Rules for layouts (to be carried into `04`):
 | R-1 | Nth-weekday repeats | **Decided 2026-10-25:** included, hidden under "More options..." (owner). |
 | R-2 | "This and following" edits | **Decided 2026-10-27:** not in v1; edit the whole series or skip one date. |
 | R-3 | Times on multi-day events | **Decided 2026-10-27:** optional start time on the first day and end time on the last day. |
+
+
+## 6. Rotating weeks (owner request 2026-10-29)
+
+A repeat rule can be a rotation: a list of 2 to 4 weeks, each a set of weekdays, repeating in order from
+the week containing the start date (Monday-to-Sunday weeks, independent of the calendar's week start).
+Skips, `until`, `count`, people and categories behave as for any repeat. Per-day "in/out" notes are stored
+apart from the rule (`event_day_notes`) so the rule never changes when a status does. See `03`, `06`, `07`.

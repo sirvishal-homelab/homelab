@@ -106,3 +106,18 @@ of the fields that now differ ("Title: saved now ‘Dentist 2’, yours ‘Ortho
 newer `rev`, so pressing **Save changes** knowingly replaces their version; "discard yours and see theirs"
 reloads the saved event. Deleting a changed event is still refused with a message. The JSON API is
 unchanged (409 with `current_rev`).
+
+## Work schedule (rotating weeks)
+
+For a repeating shift pattern such as "week A: Mon Tue Fri Sat Sun, week B: Wed Thu". In Add event,
+**Repeats → Rotating weeks (work schedule)...** shows two rows of weekday boxes. The **Day** field decides
+which week is week A (the week containing that day; weeks run Monday to Sunday). Everything else
+(category, people, times, end date or count) is the same as any event, and it is one event, so it
+shows on the screen and the month page like any other.
+
+Each day can be set to **Out** (away from home, for example at the clinic), **In**, or left undecided
+(plain title) with one tap, without opening the event: the buttons appear under a schedule's days on the
+home list and in the month page's selected-day panel. Tapping the active button clears it. **Day off**
+skips that day. The edit page's "Days off" box skips a single date or, with "Through", a whole stretch
+(vacation, sick days). An extra shift is an ordinary one-off event. A new schedule from a given date:
+end the old one with "ends on a date" and add the new one.

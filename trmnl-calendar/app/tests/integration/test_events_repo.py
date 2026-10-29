@@ -149,3 +149,49 @@ def test_repeat_count_is_stored_cleared_and_switched(conn):
         repo.update_event(conn, ev.id, {"count": 1}, ev.rev)
     ev = repo.update_event(conn, ev.id, {"freq": "none"}, ev.rev)
     assert ev.count is None
+
+
+# ---- work schedule: rotation storage, day notes, skipping a stretch
+
+ROT = [["MO", "TU", "FR", "SA", "SU"], ["WE", "TH"]]
+
+
+def test_rotation_is_stored_and_a_plain_rule_replaces_it(conn):
+    ev = new(conn, start_date="2026-10-26", rotation=ROT)
+    got = repo.get_event(conn, ev.id)
+    assert got.rotation == (("MO", "TU", "FR", "SA", "SU"), ("WE", "TH"))
+    assert got.freq == "weekly" and got.interval == 2
+    ev = repo.update_event(conn, ev.id, {"freq": "daily"}, ev.rev)
+    assert ev.rotation is None and ev.freq == "daily"
+
+
+def test_day_notes_set_change_and_clear(conn):
+    ev = new(conn, start_date="2026-10-26", rotation=ROT)
+    repo.set_day_note(conn, ev.id, "2026-10-30", "out")
+    repo.set_day_note(conn, ev.id, "2026-10-30", "in")
+    assert repo.notes_for(conn, [ev.id]) == {ev.id: {date(2026, 10, 30): "in"}}
+    repo.set_day_note(conn, ev.id, "2026-10-30", None)
+    assert repo.notes_for(conn, [ev.id]) == {}
+    with pytest.raises(ValidationFailed):
+        repo.set_day_note(conn, ev.id, "2026-10-30", "maybe")
+    with pytest.raises(ValidationFailed):
+        repo.set_day_note(conn, ev.id, "not-a-date", "in")
+
+
+def test_day_notes_go_away_with_the_event(conn):
+    ev = new(conn, start_date="2026-10-26", rotation=ROT)
+    repo.set_day_note(conn, ev.id, "2026-10-30", "out")
+    conn.execute("DELETE FROM events WHERE id = ?", (ev.id,))
+    conn.commit()
+    assert conn.execute("SELECT COUNT(*) FROM event_day_notes").fetchone()[0] == 0
+
+
+def test_skip_a_stretch_of_days(conn):
+    ev = new(conn, start_date="2026-10-26", rotation=ROT)
+    assert repo.add_skip_range(conn, ev.id, "2026-11-02", "2026-11-08") == 7
+    assert len(repo.list_skips(conn, ev.id)) == 7
+    repo.add_skip_range(conn, ev.id, "2026-11-08", "2026-11-09")  # overlap is fine
+    assert len(repo.list_skips(conn, ev.id)) == 8
+    for bad in (("2026-11-09", "2026-11-01"), ("2026-01-01", "2027-06-01"), ("x", "y")):
+        with pytest.raises(ValidationFailed):
+            repo.add_skip_range(conn, ev.id, *bad)

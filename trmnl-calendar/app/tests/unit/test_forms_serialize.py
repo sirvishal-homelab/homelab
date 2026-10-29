@@ -147,3 +147,48 @@ def test_ends_applies_to_preset_repeats_too():
     assert d["until"] == "2027-01-01"
     d = data(repeat="none", ends="count", count="5")
     assert d["count"] is None
+
+
+# ---- rotating weeks
+
+
+def test_rotating_choice_maps_the_two_weeks():
+    d = data(repeat="rotating", rot_a=["MO", "TU"], rot_b=["WE"])
+    assert d["freq"] == "weekly" and d["rotation"] == [["MO", "TU"], ["WE"]]
+    clean, err = validate_event(d)
+    assert err == {} and clean["rotation"] == (("MO", "TU"), ("WE",)) and clean["interval"] == 2
+
+
+def test_other_choices_do_not_send_a_rotation():
+    d = data(repeat="weekly", rot_a=["MO"], rot_b=["WE"])
+    assert d["rotation"] is None
+
+
+def test_rotation_form_values_round_trip():
+    e = Event(
+        id=1,
+        title="Work",
+        section_id=1,
+        start_date=date(2026, 10, 26),
+        freq="weekly",
+        interval=2,
+        rotation=(("MO", "FR"), ("WE", "TH")),
+    )
+    v = event_to_values(e)
+    assert v["repeat"] == "rotating" and v["rot_a"] == ["MO", "FR"] and v["rot_b"] == ["WE", "TH"]
+    assert forms.values_from_form(f(rot_a=["TU"]))["rot_a"] == ["TU"]
+
+
+def test_repeat_text_for_a_rotation():
+    from trmnl_calendar.domain.repeat_text import repeat_text
+
+    e = Event(
+        id=1,
+        title="W",
+        section_id=1,
+        start_date=date(2026, 10, 26),
+        freq="weekly",
+        interval=2,
+        rotation=(("MO", "TU"), ("WE", "TH")),
+    )
+    assert repeat_text(e) == "Rotating weeks: Mon Tue; then Wed Thu"

@@ -40,7 +40,11 @@ several displays, **more holiday regions** (see below).
 home-screen icon, restore tool and drill, alert steps, honest `/healthz`. **Owner decision: no shared
 password** (LAN only stays as designed; `02` section 9 keeps the hook for later). The "glance view" is
 the month page. Still the owner's to run: the restore drill on the server and the Beszel alerts. Open
-after slice 5: slice 4b (optional), more holiday regions, ICS import of the wife's calendar.
+after slice 5: slice 4b (optional) and more holiday regions. ICS import is no longer needed for her
+shifts (see the work schedule below); it stays a possible later item for other events.
+
+**Owner additions 2026-10-29:** a work schedule as rotating weeks with per-day in/out and days off,
+instead of ICS import for her shifts.
 
 **Owner additions 2026-10-28 (built between slices 4 and 5):** a repeat count ("repeat N times"), the
 screen's refresh interval read from Terminus instead of hard-coded, and a web-only month page with

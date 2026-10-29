@@ -1,0 +1,20 @@
+{# One-tap buttons for a day of a rotating-week schedule: Out / In (tap again to clear) / Day off #}
+{% macro day_actions(it, back) %}
+{% if it.scheduled %}
+<div class="dayactions" role="group" aria-label="{{ it.title }} on {{ it.date }}">
+  {% for val, label in (("out", "Out"), ("in", "In")) %}
+  <form method="post" action="/events/{{ it.event_id }}/day">
+    <input type="hidden" name="date" value="{{ it.date }}">
+    <input type="hidden" name="note" value="{{ '' if it.note == val else val }}">
+    <input type="hidden" name="back" value="{{ back }}">
+    <button type="submit" class="{{ 'on' if it.note == val }}" aria-pressed="{{ 'true' if it.note == val else 'false' }}">{{ label }}</button>
+  </form>
+  {% endfor %}
+  <form method="post" action="/events/{{ it.event_id }}/skip">
+    <input type="hidden" name="date" value="{{ it.date }}">
+    <input type="hidden" name="back" value="{{ back }}">
+    <button type="submit">Day off</button>
+  </form>
+</div>
+{% endif %}
+{% endmacro %}

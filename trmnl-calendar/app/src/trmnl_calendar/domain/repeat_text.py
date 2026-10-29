@@ -22,6 +22,17 @@ def _long_date(d: date) -> str:
 def repeat_text(ev: Event) -> str:
     if ev.freq == "none":
         return "Does not repeat"
+    if ev.rotation:
+        weeks = [
+            " ".join(WEEKDAY_NAMES[WEEKDAY_CODES.index(c)][:3] for c in week) or "no days"
+            for week in ev.rotation
+        ]
+        text = "Rotating weeks: " + "; then ".join(weeks)
+        if ev.until:
+            text += f", until {_long_date(ev.until)}"
+        elif ev.count:
+            text += f", {ev.count} times"
+        return text
     one, many = _UNIT[ev.freq]
     text = f"Repeats every {one}" if ev.interval == 1 else f"Repeats every {ev.interval} {many}"
     if ev.freq == "weekly":

@@ -172,3 +172,17 @@ OQ-10 (UI-only but versioned; PATCH not PUT) and prototype defects 3 and 5 in `0
 `GET /month` (HTML only, no JSON equivalent; the JSON API already lists events by date range).
 `GET /events/new` and `GET /events/{id}/edit` accept `back=<same-site path>`; the create, edit and
 delete form posts accept a hidden `back` and redirect there with `saved=` / `deleted=` added.
+
+
+## Work schedule additions (rotating weeks)
+
+- Event `repeat` gains `rotation` (list of weeks of weekday codes, or `null`). Sending it makes the event
+  weekly with `interval` = number of weeks; a later patch of `freq`, `interval`, `weekdays` or
+  `month_mode` without `rotation` removes it.
+- `PUT /api/v1/events/{id}/days/{YYYY-MM-DD}` with `{"note": "in" | "out" | null}` sets or clears the
+  note for one day (422 for any other value). `GET /occurrences` returns `note` per day and puts it in
+  `title`.
+- `POST /api/v1/events/{id}/skips` accepts an optional `last` date to skip every day from `date`
+  through `last` (at most a year).
+- Pages: `POST /events/{id}/day` (`date`, `note`, `back`) and `POST /events/{id}/skip` (now also `last`
+  and `back`).

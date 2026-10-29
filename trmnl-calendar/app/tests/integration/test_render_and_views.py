@@ -83,9 +83,7 @@ def test_form_pages_render_prefilled_and_with_errors(conn):
     values = forms.event_to_values(ev)
     html = views.render_page("event_form.html", **views.form_context(conn, values, event=ev))
     assert 'value="Dentist"' in html and "Repeats every 2 weeks" in html
-    assert (
-        'name="rev" value="1"' in html and "Skip one date" in html and "Delete this event" in html
-    )
+    assert 'name="rev" value="1"' in html and "Days off" in html and "Delete this event" in html
     bad = forms.event_to_values(None, "2026-10-28", 1)
     html = views.render_page(
         "event_form.html", **views.form_context(conn, bad, {"title": "Enter a short description"})

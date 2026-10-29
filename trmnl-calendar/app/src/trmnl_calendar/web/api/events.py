@@ -115,7 +115,10 @@ def restore_event(event_id: int, conn: sqlite3.Connection = Depends(get_conn)) -
 def add_skip(
     event_id: int, body: dict[str, Any] = Body(...), conn: sqlite3.Connection = Depends(get_conn)
 ) -> dict:
-    repo.add_skip(conn, event_id, str(body.get("date", "")))
+    if body.get("last"):
+        repo.add_skip_range(conn, event_id, str(body.get("date", "")), str(body["last"]))
+    else:
+        repo.add_skip(conn, event_id, str(body.get("date", "")))
     return {
         "event_id": event_id,
         "skipped": [d.isoformat() for d in repo.list_skips(conn, event_id)],
@@ -132,6 +135,18 @@ def remove_skip(event_id: int, day: str, conn: sqlite3.Connection = Depends(get_
     }
 
 
+@router.put("/events/{event_id}/days/{day}")
+def set_day_note(
+    event_id: int,
+    day: str,
+    body: dict[str, Any] = Body(...),
+    conn: sqlite3.Connection = Depends(get_conn),
+) -> dict:
+    """Body {"note": "in" | "out" | null}: the status of one day of a repeating event."""
+    repo.set_day_note(conn, event_id, day, body.get("note"))
+    return {"event_id": event_id, "day": day, "note": body.get("note") or None}
+
+
 @router.get("/occurrences")
 def list_occurrences(
     from_: str | None = Query(None, alias="from"),
@@ -141,7 +156,10 @@ def list_occurrences(
     a, b = _window(from_, to)
     calendar = cal.get_calendar(conn)
     evs = repo.list_events(conn, a - timedelta(days=0), b)
-    occ = occurrences(evs, repo.skips_for(conn, [e.id for e in evs]), a, b, calendar.week_start)
+    ids = [e.id for e in evs]
+    occ = occurrences(
+        evs, repo.skips_for(conn, ids), a, b, calendar.week_start, repo.notes_for(conn, ids)
+    )
     return [
         {
             "event_id": o.event_id,
@@ -154,6 +172,7 @@ def list_occurrences(
             "location": o.location,
             "day_number": o.day_number,
             "day_count": o.day_count,
+            "note": o.note or None,
         }
         for o in occ
     ]

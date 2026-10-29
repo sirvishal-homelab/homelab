@@ -269,3 +269,62 @@ def test_count_monthly_clamp_and_yearly_and_trips():
 def test_count_on_a_non_repeating_event_is_ignored():
     e = ev(start_date=date(2026, 3, 2), count=3)
     assert len(days([e], date(2026, 3, 1), date(2026, 3, 31))) == 1
+
+
+# ---- rotating weeks (work schedule)
+
+A_WEEK = ("MO", "TU", "FR", "SA", "SU")
+B_WEEK = ("WE", "TH")
+
+
+def rota(**kw):
+    base = dict(
+        start_date=date(2026, 10, 26),  # a Monday: week A is the week of Oct 26
+        freq="weekly",
+        interval=2,
+        rotation=(A_WEEK, B_WEEK),
+    )
+    base.update(kw)
+    return ev(**base)
+
+
+def test_rotation_alternates_two_different_weeks():
+    got = days([rota()], date(2026, 10, 26), date(2026, 11, 22))
+    want = [(10, 26), (10, 27), (10, 30), (10, 31), (11, 1), (11, 4), (11, 5)]
+    want += [(11, 9), (11, 10), (11, 13), (11, 14), (11, 15), (11, 18), (11, 19)]
+    assert got == [date(2026, m, d) for m, d in want]
+
+
+def test_rotation_ignores_the_calendars_week_start():
+    e = rota()
+    a = days([e], date(2026, 10, 20), date(2026, 12, 31), week_start="sun")
+    b = days([e], date(2026, 10, 20), date(2026, 12, 31), week_start="mon")
+    assert a == b
+
+
+def test_rotation_starting_mid_week_skips_earlier_days():
+    e = rota(start_date=date(2026, 10, 30))  # Friday of week A
+    got = days([e], date(2026, 10, 1), date(2026, 11, 8))
+    assert got[0] == date(2026, 10, 30) and date(2026, 10, 27) not in got
+
+
+def test_rotation_window_can_start_late_and_skips_apply():
+    e = rota()
+    skips = {1: {date(2026, 11, 14)}}  # the Saturday off
+    got = days([e], date(2026, 11, 9), date(2026, 11, 15), skips)
+    assert got == [date(2026, 11, d) for d in (9, 10, 13, 15)]
+
+
+def test_rotation_count_and_until():
+    assert len(days([rota(count=3)], date(2026, 10, 1), date(2026, 12, 31))) == 3
+    e = rota(until=date(2026, 11, 1))
+    assert days([e], date(2026, 10, 1), date(2026, 12, 31))[-1] == date(2026, 11, 1)
+
+
+def test_day_note_goes_into_the_title():
+    e = rota(title="Work")
+    notes = {1: {date(2026, 10, 30): "out"}}
+    occ = occurrences([e], None, date(2026, 10, 26), date(2026, 11, 1), "sun", notes)
+    titles = {o.date.day: o.title for o in occ}
+    assert titles[30] == "Work (out)" and titles[27] == "Work"
+    assert all(o.scheduled for o in occ) and next(o for o in occ if o.date.day == 30).note == "out"

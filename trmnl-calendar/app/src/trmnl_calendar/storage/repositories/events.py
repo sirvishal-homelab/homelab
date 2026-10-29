@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import sqlite3
 import uuid
 from datetime import UTC, date, datetime, timedelta
@@ -28,6 +29,7 @@ _FIELDS = (
     "month_nth",
     "until",
     "count",
+    "rotation",
 )
 
 
@@ -53,8 +55,15 @@ def row_to_event(r: sqlite3.Row) -> Event:
         month_nth=r["month_nth"],
         until=date.fromisoformat(r["until"]) if r["until"] else None,
         count=r["repeat_count"],
+        rotation=_load_rotation(r["rotation"]),
         rev=r["rev"],
     )
+
+
+def _load_rotation(text: str | None) -> tuple[tuple[str, ...], ...] | None:
+    if not text:
+        return None
+    return tuple(tuple(week) for week in json.loads(text))
 
 
 def event_to_form(ev: Event) -> dict:
@@ -74,6 +83,7 @@ def event_to_form(ev: Event) -> dict:
         "month_nth": ev.month_nth,
         "until": ev.until.isoformat() if ev.until else None,
         "count": ev.count,
+        "rotation": [list(w) for w in ev.rotation] if ev.rotation else None,
     }
 
 
@@ -91,6 +101,8 @@ def _params(clean: dict) -> dict:
         p[k] = p[k].isoformat() if p[k] else None
     p["by_weekday"] = ",".join(p["by_weekday"])
     p["repeat_count"] = p.pop("count", None)
+    rot = p.get("rotation")
+    p["rotation"] = json.dumps([list(w) for w in rot]) if rot else None
     return p
 
 
@@ -163,10 +175,10 @@ def create_event(conn: sqlite3.Connection, data: dict, *, person_id: int | None 
     cur = conn.execute(
         """INSERT INTO events (uid, calendar_id, section_id, title, location, start_date, end_date,
                start_time, end_time, freq, interval, by_weekday, month_mode, month_nth, until,
-               repeat_count, rev, updated_by_person_id, created_at, updated_at)
+               repeat_count, rotation, rev, updated_by_person_id, created_at, updated_at)
            VALUES (:uid, :cal, :section_id, :title, :location, :start_date, :end_date,
                :start_time, :end_time, :freq, :interval, :by_weekday, :month_mode, :month_nth,
-               :until, :repeat_count, 1, :person, :now, :now)""",
+               :until, :repeat_count, :rotation, 1, :person, :now, :now)""",
         {
             **_params(clean),
             "uid": str(uuid.uuid4()),
@@ -248,6 +260,8 @@ def update_event(
     if unknown:
         raise ValidationFailed({k: "Unknown field" for k in sorted(unknown)})
     merged = {**event_to_form(current), **patch}
+    if "rotation" not in patch and {"freq", "interval", "by_weekday", "month_mode"} & set(patch):
+        merged["rotation"] = None  # a plain repeat rule replaces a rotation
     # Switching the end of a repeat: setting one of "until" / "count" clears the other.
     if patch.get("count") not in (None, "") and "until" not in patch:
         merged["until"] = None
@@ -273,7 +287,7 @@ def update_event(
                start_date=:start_date, end_date=:end_date, start_time=:start_time,
                end_time=:end_time, freq=:freq, interval=:interval, by_weekday=:by_weekday,
                month_mode=:month_mode, month_nth=:month_nth, until=:until,
-               repeat_count=:repeat_count, rev = rev + 1,
+               repeat_count=:repeat_count, rotation=:rotation, rev = rev + 1,
                updated_by_person_id=:person, updated_at=:now
            WHERE id=:id AND rev=:rev AND deleted_at IS NULL""",
         {**_params(clean), "person": person_id, "now": _now(), "id": event_id, "rev": expected_rev},
@@ -373,3 +387,61 @@ def list_skips(conn: sqlite3.Connection, event_id: int) -> list[date]:
         (event_id,),
     ).fetchall()
     return [date.fromisoformat(r["occurrence_date"]) for r in rows]
+
+
+# ---- single-day notes ("in" / "out") and skipping several days at once
+
+NOTES = ("in", "out")
+MAX_SKIP_RANGE_DAYS = 366
+
+
+def set_day_note(conn: sqlite3.Connection, event_id: int, day: str, note: str | None) -> None:
+    """Set (or clear, with None or "") the note on one occurrence of a repeating event."""
+    get_event(conn, event_id)
+    d = parse_date(day)
+    if d is None:
+        raise ValidationFailed({"date": "Choose a valid date"})
+    if note in (None, ""):
+        conn.execute(
+            "DELETE FROM event_day_notes WHERE event_id = ? AND day = ?", (event_id, d.isoformat())
+        )
+    elif note in NOTES:
+        conn.execute(
+            "INSERT INTO event_day_notes (event_id, day, note) VALUES (?, ?, ?) "
+            "ON CONFLICT (event_id, day) DO UPDATE SET note = excluded.note",
+            (event_id, d.isoformat(), note),
+        )
+    else:
+        raise ValidationFailed({"note": "Choose in, out, or clear it"})
+    conn.commit()
+
+
+def notes_for(conn: sqlite3.Connection, event_ids: list[int]) -> dict[int, dict[date, str]]:
+    if not event_ids:
+        return {}
+    marks = ",".join("?" * len(event_ids))
+    out: dict[int, dict[date, str]] = {}
+    for r in conn.execute(
+        f"SELECT event_id, day, note FROM event_day_notes WHERE event_id IN ({marks})", event_ids
+    ):
+        out.setdefault(r["event_id"], {})[date.fromisoformat(r["day"])] = r["note"]
+    return out
+
+
+def add_skip_range(conn: sqlite3.Connection, event_id: int, first: str, last: str) -> int:
+    """Skip every occurrence from `first` to `last` (inclusive); returns the number of days."""
+    get_event(conn, event_id)
+    a, b = parse_date(first), parse_date(last)
+    if a is None or b is None:
+        raise ValidationFailed({"date": "Choose both dates"})
+    if b < a:
+        raise ValidationFailed({"date": "The last day can't be before the first day"})
+    if (b - a).days >= MAX_SKIP_RANGE_DAYS:
+        raise ValidationFailed({"date": "Choose a stretch of a year or less"})
+    days = [(a + timedelta(days=i)).isoformat() for i in range((b - a).days + 1)]
+    conn.executemany(
+        "INSERT OR IGNORE INTO event_exceptions (event_id, occurrence_date) VALUES (?, ?)",
+        [(event_id, d) for d in days],
+    )
+    conn.commit()
+    return len(days)

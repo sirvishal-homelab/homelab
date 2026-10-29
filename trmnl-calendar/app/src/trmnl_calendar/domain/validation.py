@@ -118,8 +118,13 @@ def validate_event(data: dict) -> tuple[dict, dict[str, str]]:
         by_weekday = ()
     by_weekday = tuple(sorted(set(by_weekday), key=WEEKDAY_CODES.index)) if not bad_days else ()
 
+    rotation, rot_err = _rotation(data.get("rotation"))
+    if rot_err:
+        err["rotation"] = rot_err
+    if rotation:
+        freq, interval, by_weekday, month_mode, month_nth = "weekly", len(rotation), (), None, None
     if freq == "none":
-        interval, by_weekday, month_mode, month_nth = 1, (), None, None
+        interval, by_weekday, month_mode, month_nth, rotation = 1, (), None, None, None
     else:
         if not _blank(data.get("until")):
             until = parse_date(data.get("until"))
@@ -170,8 +175,25 @@ def validate_event(data: dict) -> tuple[dict, dict[str, str]]:
         month_nth=month_nth,
         until=until,
         count=count,
+        rotation=rotation,
     )
     return clean, err
+
+
+def _rotation(raw: object) -> tuple[tuple[tuple[str, ...], ...] | None, str]:
+    """Weeks of weekday codes, like [["WE","TH"], ["MO","FR"]]. Returns (None, "") when unused."""
+    if raw in (None, "", [], ()):
+        return None, ""
+    if not isinstance(raw, list | tuple) or not 2 <= len(raw) <= 4:
+        return None, "A rotation needs 2 to 4 weeks"
+    weeks = []
+    for week in raw:
+        if not isinstance(week, list | tuple) or any(c not in WEEKDAY_CODES for c in week):
+            return None, "Choose weekdays from the list"
+        weeks.append(tuple(sorted(set(week), key=WEEKDAY_CODES.index)))
+    if not any(weeks):
+        return None, "Choose at least one working day"
+    return tuple(weeks), ""
 
 
 def normalize_people(
