@@ -89,3 +89,12 @@ screen: it would be too cramped at 800x480.
 - **Export.** Settings has "Download all my data": `GET /api/v1/export` returns every table the owner
   edits (calendar, categories, people, events, repeats' skipped dates, display, views) as JSON. Push state,
   idempotency keys and app_meta are left out. Import is not built.
+
+## Edit conflicts (slice 5)
+
+If someone saved an event after you opened it, your save is **not** applied and your typing is **not**
+thrown away. The form comes back with your values, a warning saying who changed it and when, and a list
+of the fields that now differ ("Title: saved now ‘Dentist 2’, yours ‘Orthodontist’"). The form carries the
+newer `rev`, so pressing **Save changes** knowingly replaces their version; "discard yours and see theirs"
+reloads the saved event. Deleting a changed event is still refused with a message. The JSON API is
+unchanged (409 with `current_rev`).

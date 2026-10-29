@@ -6,7 +6,17 @@
   <a class="btn" href="{{ back or '/' }}">Cancel</a>
 </div>
 {% if error_message %}<div class="notice error" role="alert">{{ error_message }}</div>{% endif %}
-{% if errors and not error_message %}<div class="notice error" role="alert">Please check the highlighted fields.</div>{% endif %}
+{% if conflict %}
+<div class="notice error" role="alert">
+  <strong>{{ conflict.who or "Someone" }} changed this event{{ " at " ~ conflict.when if conflict.when }} while you were editing.</strong>
+  Your changes are <strong>not saved yet</strong> and are shown below.
+  {% if conflict.diffs %}
+  <ul>{% for d in conflict.diffs %}<li>{{ d.label }}: saved now “{{ d.saved }}”{% if d.yours != "changed" %}, yours “{{ d.yours }}”{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  Press <em>Save changes</em> to replace their version with yours, or <a href="/events/{{ event.id }}/edit{{ '?back=' ~ (back | urlencode) if back }}">discard yours and see theirs</a>.
+</div>
+{% endif %}
+{% if errors and not error_message and not conflict %}<div class="notice error" role="alert">Please check the highlighted fields.</div>{% endif %}
 <form class="event" method="post" action="{{ '/events/%d/edit' % event.id if event else '/events/new' }}">
   {% if rev is not none %}<input type="hidden" name="rev" value="{{ rev }}">{% endif %}
   {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}

@@ -197,14 +197,16 @@ async def edit(event_id: int, request: Request):
                 )
                 return _html(request, "event_form.html", 422, back=back, **ctx)
             except EditConflict:
+                # Keep what the person typed; the form now carries the newer rev, so pressing
+                # Save again knowingly replaces the other change.
                 ev = repo.get_event(conn, event_id)
+                yours = forms.values_from_form(form)
                 ctx = views.form_context(
                     conn,
-                    forms.event_to_values(ev),
+                    yours,
                     event=ev,
                     skips=repo.list_skips(conn, event_id),
-                    error_message="Someone else changed this event. "
-                    "The latest version is shown; make your change again.",
+                    conflict=views.conflict_context(conn, ev, yours),
                 )
                 return _html(request, "event_form.html", 409, back=back, **ctx)
             return _see_other(_return_to(back, saved=f"Saved “{ev.title}”."))
