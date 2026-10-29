@@ -153,3 +153,20 @@ def test_preset_weekly_with_a_count_really_stops(client):
     page = client.get("/month?y=2026&m=12").text
     assert "Dentist" not in page  # Oct 31, Nov 7, Nov 14 only
     assert "Dentist" in client.get("/month?y=2026&m=11").text
+
+
+def test_export_downloads_json_with_events(client):
+    add(client, title="Dentist")
+    r = client.get("/api/v1/export")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/json")
+    assert 'filename="calendar-export-2026-10-28.json"' in r.headers["content-disposition"]
+    assert [e["title"] for e in r.json()["tables"]["events"]] == ["Dentist"]
+    assert "/api/v1/export" in client.get("/settings").text
+
+
+def test_home_screen_icon_and_manifest_are_served(client):
+    page = client.get("/").text
+    assert "/static/manifest.webmanifest" in page and "apple-touch-icon" in page
+    for path in ("/static/manifest.webmanifest", "/static/icon-180.png", "/static/icon-512.png"):
+        assert client.get(path).status_code == 200
+    assert client.get("/static/icon-192.png").content.startswith(b"\x89PNG")

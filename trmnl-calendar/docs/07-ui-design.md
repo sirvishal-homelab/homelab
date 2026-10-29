@@ -76,3 +76,16 @@ the grid with an "Add event on this day" button. Everything is plain links, so i
 The forms opened from here carry a `back` field (same-site paths only, via `safe_next`), so saving,
 deleting or cancelling returns to the same month. There is deliberately no month layout for the e-ink
 screen: it would be too cramped at 800x480.
+
+## Drafts, icon and export (slice 5)
+
+- **Drafts.** The add/edit event form keeps what you type in the browser's local storage on that device
+  only (nothing is sent to the server). Reopen the form after a failed save, a lost connection or a
+  closed tab and a bar offers **Restore** or **Discard**. A draft is dropped once a save succeeds (the
+  next normal page you reach clears submitted drafts) and after 7 days. If the browser blocks storage,
+  the form works as before.
+- **Home-screen icon.** `static/manifest.webmanifest`, 180/192/512 px icons and an Apple touch icon,
+  so "Add to Home Screen" gives a calendar icon and opens full-screen.
+- **Export.** Settings has "Download all my data": `GET /api/v1/export` returns every table the owner
+  edits (calendar, categories, people, events, repeats' skipped dates, display, views) as JSON. Push state,
+  idempotency keys and app_meta are left out. Import is not built.

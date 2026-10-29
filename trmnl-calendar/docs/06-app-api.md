@@ -16,7 +16,7 @@ check (`18`).
 > active view), `/render/{hash}.png`, and the single error shape. A view's `weekdays` are codes (`MO`..`SU`),
 > `categories` and `people` are `{mode: all|only, ids}`, and `options` are booleans the layout understands. Handlers take plain JSON
 > bodies, so the generated OpenAPI description does not yet describe request fields; typed models and OpenAPI
-> contract tests are still to do (tracked for slice 5). Not yet built: `GET /export`, `GET /version`, `PATCH /display` profile overrides.
+> contract tests are still to do (tracked for slice 5). Built in slice 5: `GET /export`. Not yet built: `GET /version`, `PATCH /display` profile overrides.
 
 ## 1. Conventions
 
