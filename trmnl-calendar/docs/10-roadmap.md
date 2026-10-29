@@ -36,6 +36,12 @@ the verified spike. The UI is built a little in each slice; slice 5 hardens it. 
 as templates (Day rows, Agenda, Two weeks - lanes, Overview, Month), ICS import, "this and following" edits,
 several displays, **more holiday regions** (see below).
 
+**Slice 5 status 2026-10-29: built.** Phone pass, edit-conflict warnings, saved form drafts, data export,
+home-screen icon, restore tool and drill, alert steps, honest `/healthz`. **Owner decision: no shared
+password** (LAN only stays as designed; `02` section 9 keeps the hook for later). The "glance view" is
+the month page. Still the owner's to run: the restore drill on the server and the Beszel alerts. Open
+after slice 5: slice 4b (optional), more holiday regions, ICS import of the wife's calendar.
+
 **Owner additions 2026-10-28 (built between slices 4 and 5):** a repeat count ("repeat N times"), the
 screen's refresh interval read from Terminus instead of hard-coded, and a web-only month page with
 click-to-add (not an e-ink layout: too cramped at 800x480).
