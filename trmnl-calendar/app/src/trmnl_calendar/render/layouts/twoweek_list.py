@@ -10,6 +10,7 @@ from datetime import date, timedelta
 from trmnl_calendar.domain.models import Occurrence
 from trmnl_calendar.domain.recurrence import week_floor
 from trmnl_calendar.render import text as T
+from trmnl_calendar.render.layouts.badges import badge_spec, badge_width, draw_badges
 from trmnl_calendar.render.layouts.base import (
     ALL_DAYS,
     DAY_ABBR,
@@ -24,7 +25,7 @@ from trmnl_calendar.render.scene import FitReport, Glyph, Line, Rect, Scene, Tex
 
 LAYOUT_ID = "twoweek_list"
 LABEL = "Two weeks - list"
-OPTIONS = ("show_times", "show_locations", "show_banners", "show_hidden_marker")
+OPTIONS = ("show_times", "show_badges", "show_locations", "show_banners", "show_hidden_marker")
 
 MARGIN = 12
 GREY = 170
@@ -45,6 +46,35 @@ def window(today: date, week_start: str = "sun") -> tuple[date, date]:
 def _visible(first: date, mask: int) -> list[date]:
     days = [first + timedelta(days=i) for i in range(7)]
     return [d for d in days if mask >> d.weekday() & 1] or days
+
+
+def _wrap_with_badges(
+    label: str, width: float, badge_w: float, max_lines: int
+) -> tuple[list[str], bool]:
+    """Wrap a label whose first line shares its row with the badges; later lines use the full width.
+
+    Returns (lines, truncated). With no badges this is a plain wrap.
+    """
+    if not badge_w:
+        return T.wrap(label, 11, False, width, max_lines)
+    first_width = width - badge_w
+    words = label.split()
+    cur = ""
+    used = 0
+    for w in words:
+        trial = f"{cur} {w}".strip()
+        if T.measure(trial, 11, False) > first_width:
+            break
+        cur = trial
+        used += 1
+    if not cur:  # even the first word is too wide for the shared line: keep it all narrow
+        return T.wrap(label, 11, False, first_width, max_lines)
+    if used == len(words):
+        return [cur], False
+    if max_lines == 1:
+        return T.wrap(label, 11, False, first_width, 1)
+    rest, cut = T.wrap(" ".join(words[used:]), 11, False, width, max_lines - 1)
+    return [cur, *rest], cut
 
 
 def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
@@ -187,7 +217,9 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                     label = f"{label} @ {o.location}"
                 if o.start_time and ctx.opt("show_times"):
                     label = f"{fmt_time(o.start_time, ctx.time_format)} {label}"
-                lines, cut = T.wrap(label, 11, False, cw - 18, 3)
+                badges = badge_spec(ctx, o)
+                badge_w = badge_width(badges) + (3 if badges else 0)
+                lines, cut = _wrap_with_badges(label, cw - 18, badge_w, 3)
                 need = LINE_H * len(lines)
                 last_item = o is items[-1]
                 if (yy + need > bottom - LINE_H and not last_item) or yy + need > bottom:
@@ -199,6 +231,7 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                 add(Glyph(x + 5, yy + 3, shape_of[o.section_id], 7))
                 for k, line in enumerate(lines):
                     add(Text(x + 15, yy + 10 + k * LINE_H, line, 11))
+                draw_badges(add, badges, x + cw - 4, yy + 1)
                 yy += need + 2
                 shown += 1
 
