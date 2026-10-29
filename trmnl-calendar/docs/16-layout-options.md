@@ -4,7 +4,7 @@ Status: **Design exploration, 2026-10-25.** Mock-ups drawn with a throwaway scri
 (`assets/options/make_mockups.py.txt`, saved as text so it is not mistaken for app code), not the
 real renderer. They show the 800x480, 2-bit (four grey) output with crisp text, using sample data:
 Sunday 25 October 2026 as today, four categories (Events, Work, Lunch, Dinner), two placeholder
-people **A** and **B** shown as boxed initials (grey box = owner), a multi-day event
+people **A** and **B** shown as boxed initials (the main person first), a multi-day event
 (Conference), and holiday banners (Halloween, clocks go back).
 
 Owner direction so far: 7 days is preferred over 5 (`15`).
