@@ -134,6 +134,6 @@ steady near 4.2 V (probably USB power) or falling (with percent per day and days
 
 Caveats: Terminus gives a voltage, not a percentage. The percent is an estimate from a typical single-cell
 LiPo curve (`publish/battery.py`) and is rough in the middle of the range where the curve is flat; the trend
-is more reliable than the number. Terminus's own battery meter reads "charging" whenever the voltage is
-high, which is why it can look stuck. The `synced_at` field name is from the fake used in tests; if the
+is more reliable than the number. Terminus's own battery meter always reads "Charging" on the owner's device (cause not investigated:
+either it is on USB power, or Terminus's rule does not suit this panel). The `synced_at` field name is from the fake used in tests; if the
 real field is named differently the app still records readings but cannot dedupe by check-in.
