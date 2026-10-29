@@ -147,7 +147,8 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
             response.status_code = 503
             return {"status": "error", "version": __version__, "detail": type(exc).__name__}
         body["last_backup_age_hours"] = backup.latest_age_hours(settings.backup_dir)
-        body["scheduler"] = "not_started"  # slice 4
+        sched = app.state.scheduler
+        body["scheduler"] = "off" if sched is None else ("running" if sched.alive else "stopped")
         return body
 
     return app
