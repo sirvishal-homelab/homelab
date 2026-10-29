@@ -68,7 +68,7 @@
     {% if errors.end_date %}<div class="err">{{ errors.end_date }}</div>{% endif %}
 
     {% if people|length > 1 %}
-    <label for="owner_id">Main person <span class="meta">(shown first, in a grey box)</span></label>
+    <label for="owner_id">Main person <span class="meta">(shown first on the screen)</span></label>
     <select id="owner_id" name="owner_id">
       <option value="">No main person</option>
       {% for p in people %}<option value="{{ p.id }}" {{ "selected" if values.owner_id == p.id|string }}>{{ p.name }}</option>{% endfor %}

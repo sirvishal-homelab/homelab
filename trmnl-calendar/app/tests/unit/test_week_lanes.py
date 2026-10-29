@@ -190,11 +190,11 @@ def boxes(scene):
     return [i for i in scene.items if isinstance(i, Rect) and i.h == 12 and i.outline == 0]
 
 
-def test_badges_show_owner_first_and_grey():
+def test_badges_show_owner_first_and_all_white():
     ev = E(1, "Skating", people=(2, 1), owner_id=2)
     scene, _ = week_lanes.plan(pctx([ev]))
     bx = boxes(scene)
-    assert [b.fill for b in bx] == [170, 255]  # owner grey, then the other
+    assert [b.fill for b in bx] == [255, 255]  # all white; the owner is simply first
     assert bx[0].x < bx[1].x
     labels = [t.text for t in texts(scene) if t.bold and t.size == 10]
     assert labels == ["B", "A"]

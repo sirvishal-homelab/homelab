@@ -125,7 +125,7 @@ end the old one with "ends on a date" and add the new one.
 ## Badges on Two weeks - list
 
 Two weeks - list now has the **Show who it is for (initials)** option, on by default, same boxes as
-Week - lanes (grey = main person, white = others; up to three, main person first). The boxes sit at the
+Week - lanes (all white; up to three, main person first). The boxes sit at the
 right of an item's first line, so long titles wrap onto the next line rather than being cut; a time
 followed by a long first word may wrap to a second line. Existing views pick the option up as "on".
 Both layouts draw the boxes through one shared module, `render/layouts/badges.py`.

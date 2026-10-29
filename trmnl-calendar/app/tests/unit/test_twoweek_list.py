@@ -132,10 +132,10 @@ def boxes(scene):
     return [i for i in scene.items if isinstance(i, Rect) and i.h == 12 and i.outline == 0]
 
 
-def test_badges_are_on_by_default_owner_first_and_grey():
+def test_badges_are_on_by_default_owner_first_and_all_white():
     scene, _ = twoweek_list.plan(pctx([E(1, "Skating", people=(2, 1), owner_id=2)]))
     bx = boxes(scene)
-    assert [b.fill for b in bx] == [170, 255] and bx[0].x < bx[1].x
+    assert [b.fill for b in bx] == [255, 255] and bx[0].x < bx[1].x
     assert [t.text for t in tx(scene) if t.bold and t.size == 10] == ["B", "A"]
 
 

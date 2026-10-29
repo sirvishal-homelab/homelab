@@ -1,6 +1,7 @@
 """Boxed initials for the people on an occurrence, shared by the layouts (docs/04 section 3).
 
-The main person's box is grey; others are white with an outline. Owner first, at most three.
+Every box is white with an outline (grey was hard to read). The main person comes first, then the
+others, at most three.
 """
 
 from __future__ import annotations
@@ -9,7 +10,6 @@ from trmnl_calendar.domain.models import Occurrence
 from trmnl_calendar.render.layouts.base import PlanContext
 from trmnl_calendar.render.scene import Rect, Text
 
-GREY = 170
 BADGE_H = 12
 MAX_BADGES = 3
 
@@ -32,9 +32,9 @@ def badge_width(spec: list[tuple[str, int, bool]]) -> int:
 
 
 def draw_badges(add, spec: list[tuple[str, int, bool]], right: int, y: int) -> None:
-    """Boxed initials, right-aligned at x=right; the owner's box is grey (docs/04 section 3)."""
+    """Boxed initials, right-aligned at x=right; all boxes are white; the main person is first."""
     x = right - badge_width(spec)
-    for label, width, is_owner in spec:
-        add(Rect(x, y, width, BADGE_H, fill=GREY if is_owner else 255, outline=0))
+    for label, width, _is_owner in spec:
+        add(Rect(x, y, width, BADGE_H, fill=255, outline=0))
         add(Text(x + width // 2, y + 10, label, 10, True, anchor="m"))
         x += width + 1

@@ -48,7 +48,7 @@ flowchart LR
 | Levels (2-bit) | 0 black, 85 dark grey, 170 light grey, 255 white |
 | Levels (1-bit) | 0 and 255 only. Layouts replace grey fills with hatching or an outline |
 | Text | Always black on white or light grey. **Never light text on a dark fill** (lesson 1) |
-| Greys are for fills | Today's highlight, trip bars, banners, owner badges. Never for text or for the only cue |
+| Greys are for fills | Today's highlight, trip bars, banners. Never for text or for the only cue |
 | Lines | 1 px black; dotted rules drawn pixel by pixel; titles' rule 2 px |
 | Anti-aliasing | Text below 14 px is drawn crisp (no anti-aliasing). Larger headings may anti-alias; not yet judged on the panel |
 | Display setting | The device's **Display Compatibility** setting stays on (`14`, S-5) |
@@ -111,7 +111,7 @@ This was missed in the first architecture draft, whose heartbeat would have push
 | Today | Highlighted with a light-grey fill, not inverted. If today is hidden, the **next visible day** is highlighted; if none is in the window, nothing is. |
 | Hidden-day events | With the hidden-day marker on (default, Q-7 proposed), a small "+N on hidden days" appears in the footer area. |
 | Categories | `all` (new ones appear automatically) or `only` the chosen ones. Banner categories draw as a grey strip at the top of the day. |
-| People filter | An event is shown if it includes a chosen person **or has no people** (everyone). Owner first, then the others, as boxed initials; owner in a grey box. |
+| People filter | An event is shown if it includes a chosen person **or has no people** (everyone). Owner first, then the others, as boxed initials; all boxes white (grey was hard to read), the owner is simply first. |
 | Order inside a day | **Proposed:** the categories' configured order, then all-day before timed, then time, then title. Categories are the user's "parts of a day", so a day reads Events, Work, Lunch, Dinner. Unconfirmed (open question). |
 | Order inside a lane | All-day first, then by time, then title. |
 | Times | `9a`, `9:30a`, `12:30p` in 12-hour; `17:30` in 24-hour. On a trip, the start time on the first day, the end time on the last. |
