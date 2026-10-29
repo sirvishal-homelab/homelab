@@ -28,6 +28,7 @@ from trmnl_calendar.web import (
 )
 from trmnl_calendar.web.api import display as display_api
 from trmnl_calendar.web.api import events as events_api
+from trmnl_calendar.web.api import export as export_api
 from trmnl_calendar.web.api import holidays as holidays_api
 from trmnl_calendar.web.api import manage as manage_api
 from trmnl_calendar.web.api import views as views_api
@@ -125,6 +126,7 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.include_router(manage_api.router)
     app.include_router(views_api.router)
     app.include_router(display_api.router)
+    app.include_router(export_api.router)
     app.include_router(holidays_api.router)
     app.include_router(pages_manage.router)
     app.include_router(pages_views.router)

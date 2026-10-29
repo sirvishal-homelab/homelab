@@ -21,6 +21,87 @@
     });
   });
 
+  // Event form drafts: what you type is kept in this browser, so a failed save, a dropped
+  // connection or an accidental close does not lose it. Stored only on this device.
+  (function drafts() {
+    var DAY = 7 * 24 * 3600 * 1000;
+    function store() {
+      try { return window.localStorage; } catch (e) { return null; }
+    }
+    var ls = store();
+    var evForm = document.querySelector("form.event[action^='/events/']");
+    // Any other page: forget drafts that were submitted (we got somewhere, so the save worked).
+    function sweep() {
+      if (!ls) return;
+      try {
+        Object.keys(ls).forEach(function (k) {
+          if (k.indexOf("draft:") !== 0) return;
+          var d = JSON.parse(ls.getItem(k));
+          if (!d || Date.now() - d.t > DAY || (d.sent && !evForm)) ls.removeItem(k);
+        });
+      } catch (e) { /* storage unavailable: nothing to do */ }
+    }
+    sweep();
+    if (!ls || !evForm || evForm.getAttribute("action").indexOf("/delete") > -1) return;
+    var key = "draft:" + evForm.getAttribute("action");
+    function read() {
+      try { return JSON.parse(ls.getItem(key)); } catch (e) { return null; }
+    }
+    function snapshot() {
+      var out = [];
+      Array.prototype.forEach.call(evForm.elements, function (el) {
+        if (!el.name || el.type === "hidden" || el.type === "submit" || el.type === "button") return;
+        if ((el.type === "checkbox" || el.type === "radio") && !el.checked) return;
+        out.push([el.name, el.value]);
+      });
+      return out;
+    }
+    var initial = JSON.stringify(snapshot());
+    function save(sent) {
+      try {
+        var now = JSON.stringify(snapshot());
+        if (now === initial) { ls.removeItem(key); return; }
+        ls.setItem(key, JSON.stringify({ t: Date.now(), sent: !!sent, f: snapshot() }));
+      } catch (e) { /* full or blocked: carry on without a draft */ }
+    }
+    evForm.addEventListener("input", function () { save(false); });
+    evForm.addEventListener("change", function () { save(false); });
+    evForm.addEventListener("submit", function () { save(true); });
+    var d = read();
+    if (!d || !d.f || document.querySelector(".notice.error")) return;
+    var box = document.createElement("div");
+    box.className = "notice";
+    box.setAttribute("role", "status");
+    var when = new Date(d.t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    box.appendChild(document.createTextNode("You have unsaved changes from " + when + ". "));
+    function button(label, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      box.appendChild(b);
+      box.appendChild(document.createTextNode(" "));
+    }
+    button("Restore", function () {
+      Array.prototype.forEach.call(evForm.elements, function (el) {
+        if (!el.name || el.type === "hidden" || el.type === "submit" || el.type === "button") return;
+        if (el.type === "checkbox" || el.type === "radio") el.checked = false;
+      });
+      d.f.forEach(function (p) {
+        var els = evForm.querySelectorAll("[name='" + p[0] + "']");
+        Array.prototype.forEach.call(els, function (el) {
+          if (el.type === "checkbox" || el.type === "radio") { if (el.value === p[1]) el.checked = true; }
+          else el.value = p[1];
+        });
+      });
+      Array.prototype.forEach.call(evForm.querySelectorAll("details"), function (x) { x.open = true; });
+      box.remove();
+      save(false);
+    });
+    button("Discard", function () { ls.removeItem(key); box.remove(); });
+    evForm.parentNode.insertBefore(box, evForm);
+  })();
+
   var form = document.getElementById("view-form");
   if (!form) return;
 
