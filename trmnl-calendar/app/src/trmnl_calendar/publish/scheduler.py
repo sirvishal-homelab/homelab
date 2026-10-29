@@ -70,3 +70,7 @@ class Scheduler:
                 await asyncio.to_thread(self.publisher.run)
             except Exception:  # keep the loop alive; the status panel shows the last error
                 log.exception("scheduled push failed")
+            try:
+                await asyncio.to_thread(self.publisher.sample_device)
+            except Exception:  # a missing battery reading must never stop pushes
+                log.exception("device reading failed")

@@ -241,3 +241,8 @@ def test_rotation_and_day_notes_through_the_api(client):
     assert [o["title"] for o in occ if o["date"] == "2026-10-30"] == ["Work (in)"]
     bad = client.put("/api/v1/events/1/days/2026-10-30", json={"note": "maybe"})
     assert bad.status_code == 422
+
+
+def test_battery_api_with_and_without_readings(client):
+    r = client.get("/api/v1/display/device")
+    assert r.status_code == 200 and r.json() == {"latest": None, "samples": []}

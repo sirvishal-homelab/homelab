@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 
+from trmnl_calendar.storage.repositories import device_samples
 from trmnl_calendar.storage.repositories.views import DISPLAY_ID
 
 
@@ -56,7 +57,8 @@ def save(conn: sqlite3.Connection, **fields) -> None:
 
 
 def remember_device(conn: sqlite3.Connection, devices: list[dict], model_id: int | None) -> None:
-    """Keep the device refresh time (seconds), so the status text can quote Terminus's setting."""
+    """Keep the device refresh time (seconds) and a battery reading from Terminus's device list."""
+    device_samples.record(conn, devices, model_id)
     mine = [d for d in devices if model_id is not None and d.get("model_id") == model_id]
     device = (mine or devices or [None])[0]
     seconds = device.get("refresh_rate") if device else None

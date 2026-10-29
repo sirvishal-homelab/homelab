@@ -186,3 +186,9 @@ delete form posts accept a hidden `back` and redirect there with `saved=` / `del
   through `last` (at most a year).
 - Pages: `POST /events/{id}/day` (`date`, `note`, `back`) and `POST /events/{id}/skip` (now also `last`
   and `back`).
+
+## Device readings
+
+`GET /api/v1/display/device?days=7` (1 to 90): `{"latest": {...} | null, "samples": [{at, voltage, wifi,
+seen_at}]}`. `latest` has `voltage`, `percent` (estimate), `state` (`charging`, `full`, `draining`,
+`unknown`), `per_day`, `days_left`, `wifi`, `wifi_label`, `seen_at`, `silent_minutes`, `stale`.

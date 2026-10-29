@@ -61,6 +61,27 @@
   {% endif %}
   </li>
   {% if screen.configured %}
+  <li class="status-line" id="battery">
+  {% if screen.battery %}
+    {% set b = screen.battery %}
+    <strong>Battery about {{ b.percent }}%</strong> <span class="meta">({{ b.voltage }} V, an estimate from the voltage)</span><br>
+    <span class="meta">
+    {% if b.state == "charging" %}Charging: the voltage is rising.
+    {% elif b.state == "full" %}Full and steady, so it is probably on USB power.
+    {% elif b.state == "draining" %}Running on battery{% if b.per_day %}, using about {{ b.per_day }}% a day{% if b.days_left %}, roughly {{ b.days_left }} days left at this rate{% endif %}{% endif %}.
+    {% else %}Not enough readings yet to say whether it is charging or draining.{% endif %}
+    {% if b.wifi is not none %} Wi-Fi {{ b.wifi }} dBm{% if b.wifi_label %} ({{ b.wifi_label }}){% endif %}.{% endif %}
+    Last check-in {{ b.seen_when }}.
+    </span>
+    {% if b.stale %}<br><span class="err"><strong>The screen hasn't checked in for {{ b.silent_minutes }} minutes.</strong> Check that it has power and Wi-Fi.</span>{% endif %}
+    {% if b.points and b.readings > 2 %}
+    <svg class="spark" viewBox="0 0 300 60" role="img" aria-label="Battery voltage, last 7 days (scale 3.2 to 4.3 volts)" preserveAspectRatio="none"><polyline points="{{ b.points }}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+    <div class="meta">Voltage over the last 7 days, readings since {{ b.since_when }} ({{ b.readings }} so far).</div>
+    {% endif %}
+  {% else %}
+    <strong>Battery:</strong> <span class="meta">no readings yet. They are taken from Terminus at each check, so one should appear within about 15 minutes of the app starting, or press Check connection.</span>
+  {% endif %}
+  </li>
   <li class="status-line meta">Terminus: {{ screen.terminus_url }} · model {{ screen.model_name }} · the picture is fetched from {{ screen.public_base_url }}</li>
   {% endif %}
 </ul></section>

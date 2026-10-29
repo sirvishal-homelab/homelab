@@ -129,3 +129,11 @@ Week - lanes (all white; up to three, main person first). The boxes sit at the
 right of an item's first line, so long titles wrap onto the next line rather than being cut; a time
 followed by a long first word may wrap to a second line. Existing views pick the option up as "on".
 Both layouts draw the boxes through one shared module, `render/layouts/badges.py`.
+
+## Battery readout (Settings, The screen)
+
+Shows "Battery about 50% (3.84 V, an estimate from the voltage)", whether it is charging, full on USB
+power, or draining (with percent per day and roughly how many days are left at that rate), the Wi-Fi
+level, the device's last check-in, a red warning if it has not checked in for three refresh intervals, and a
+7-day voltage graph once there are three readings. Readings begin when the app next checks Terminus
+(within 15 minutes of starting, or at once with Check connection).

@@ -117,6 +117,21 @@ class Publisher:
         log.info("pushed %s to Terminus screen %s", result.hash, screen_id)
         return PushOutcome("ok", "Sent to the screen.", result.hash, screen_id)
 
+    def sample_device(self) -> None:
+        """Take a battery reading without sending anything (the scheduler calls this each check)."""
+        if not self.settings.terminus_configured:
+            return
+        try:
+            devices = self.client.devices()
+            try:
+                model_id = self.client.find_model(self.settings.terminus_model_name)["id"]
+            except TerminusError:
+                model_id = None
+            with closing(db.connect(self.settings.db_path)) as conn:
+                state_repo.remember_device(conn, devices, model_id)
+        except TerminusError:
+            log.info("could not read the device battery from Terminus")
+
     def _remember_device(self, conn, model_id: int) -> None:
         try:  # best effort: the push already worked
             state_repo.remember_device(conn, self.client.devices(), model_id)

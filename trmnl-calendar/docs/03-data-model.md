@@ -285,3 +285,9 @@ accounts or passwords. Each can be added later without reshaping the tables abov
 `(event_id, day, note)`, primary key `(event_id, day)`; `note` is `in` or `out`; deleted with the event.
 `day` is the occurrence's start date. The note is shown as a suffix on that day's title ("Work (out)")
 and no row means "not decided". Days off use the existing `event_exceptions` skips.
+
+### device_samples (migration 0008)
+
+`(at, voltage, wifi, seen_at)`, primary key `at` (UTC text). One reading of the screen's battery voltage
+and Wi-Fi signal, copied from Terminus's device record at most once per device check-in and at least five
+minutes apart; rows older than 90 days are deleted. Not part of `GET /export` (derived data, kept by backups).

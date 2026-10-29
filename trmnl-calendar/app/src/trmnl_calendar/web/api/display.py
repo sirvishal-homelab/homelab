@@ -61,3 +61,20 @@ def connection_check(request: Request, conn: sqlite3.Connection = Depends(get_co
         "ok": not any(s.status == "fail" for s in steps),
         "steps": [s.__dict__ for s in steps],
     }
+
+
+@router.get("/display/device")
+def device_readings(days: int = 7, conn: sqlite3.Connection = Depends(get_conn)) -> dict:
+    """Battery and Wi-Fi readings taken from Terminus (docs/05). Percent is an estimate."""
+    from datetime import UTC, datetime, timedelta
+
+    from trmnl_calendar.publish import battery
+    from trmnl_calendar.storage.repositories import device_samples
+
+    days = min(max(days, 1), 90)
+    now = datetime.now(UTC)
+    samples = device_samples.since(conn, now - timedelta(days=days))
+    info = battery.describe(samples, now, state_repo.device_refresh_seconds(conn))
+    if info:
+        info.pop("points")
+    return {"latest": info, "samples": samples}
