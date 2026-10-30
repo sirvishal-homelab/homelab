@@ -1,0 +1,33 @@
+<section id="principles" data-transition="fade" style="background:#F3F0E8;color:#1A1A18;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#B83A0B">Design principles</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Six rules we agreed before coding</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:24px">
+<div style="background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Design first</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A4842">Docs and decisions signed off before production code. The prototype stayed reference only.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">The app owns the picture</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A4842">We draw the image. The display server is only the delivery channel.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Boring, local tech</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A4842">SQLite, one process, no build step. It runs on a spare home server.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Settings live in data</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A4842">What users edit is stored in the database. Environment variables hold only secrets and addresses.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">A pure core</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A4842">Calendar rules and drawing never touch the web, database or network. A test enforces it.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Send only what changed</h3>
+<p style="font-size:28px;line-height:1.4;color:#4A4842">The screen updates only when the picture differs. That saves battery and avoids flicker.</p>
+</div>
+</div>
+<aside>Every rule here has a written decision record (ADR) in the repository. Two are worth dwelling on for a technical audience: the pure core (an automated test fails the build if the drawing code imports anything from the web or storage layers) and "send only what changed" (the app hashes the rendered image and skips the network call when the hash matches).</aside>
+</section>

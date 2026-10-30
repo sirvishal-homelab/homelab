@@ -1,0 +1,19 @@
+{
+  "v": 4,
+  "createdOnFiles": { "v": 1, "at": "2026-10-29T22:30:00Z" },
+  "lists": "css",
+  "title": "A Calendar for an E-Paper Display",
+  "order": ["cover", "problem", "device", "principles", "architecture", "flow", "week", "twoweek", "phone", "rotation", "decisions", "slices", "quality", "surprises", "next"],
+  "sections": {
+    "s1": { "description": "The problem: a glanceable household plan on a screen that is slow, grey and small.", "start": "cover" },
+    "s2": { "description": "The design principles and the architecture they led to.", "start": "principles" },
+    "s3": { "description": "What the finished product looks like on the display and on a phone.", "start": "week" },
+    "s4": { "description": "How it was built: decisions, delivery in slices, testing and surprises.", "start": "decisions" },
+    "s5": { "description": "What is next and questions.", "start": "next" }
+  },
+  "faces": {
+    "ibm-plex-sans": { "family": "IBM Plex Sans", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" },
+    "ibm-plex-mono": { "family": "IBM Plex Mono", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" }
+  },
+  "designSystems": []
+}

@@ -1,0 +1,42 @@
+<section id="flow" data-transition="fade" style="background:#EAE6DB;color:#1A1A18;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#B83A0B">How an update travels</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">From a tap on a phone to the wall</h2>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:0">
+<div style="flex:1;background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">01</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Edit</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Someone saves an event on a phone.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:30px;background:#B83A0B"></x-shape>
+<div style="flex:1;background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">02</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Wait 5 s</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Edits are batched into one update.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:30px;background:#B83A0B"></x-shape>
+<div style="flex:1;background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">03</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Render</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Draw a 2-bit PNG and fingerprint it.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:30px;background:#B83A0B"></x-shape>
+<div style="flex:1;background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">04</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Changed?</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Same fingerprint: stop. New one: tell Terminus.</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:30px;background:#B83A0B"></x-shape>
+<div style="flex:1;background:#1A1A18;color:#F3F0E8;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#F2A66F">05</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Deliver</h3>
+<p style="font-size:26px;line-height:1.4;color:#CFCABD">Terminus fetches it; the display collects it at its next check-in.</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:30px;line-height:1.4"><b>Safety nets:</b> a 15-minute timer re-checks even when nobody edited anything, and a failed push is shown on the Settings page with the reason.</p>
+<p style="font-size:30px;line-height:1.4;color:#4A4842">Terminus downloads the image <i>during</i> our request, so the app serves pictures under a fingerprint in the file name and never changes an image in place.</p>
+</div>
+<aside>This is the part of the design that surprised us most. We first assumed the display server would fetch the picture later. In practice it fetches it while we are still talking to it, so the picture must already be available at a stable address. Naming each image after its own hash solves that and gives us the "only push if changed" check for free.</aside>
+</section>

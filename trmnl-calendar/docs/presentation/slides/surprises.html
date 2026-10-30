@@ -1,0 +1,25 @@
+<section id="surprises" data-transition="fade" style="background:#EAE6DB;color:#1A1A18;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#B83A0B">Lessons</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">What the real world taught us</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:24px">
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-size:40px;font-weight:600;line-height:1.2">Spike before you design</h3>
+<p style="font-size:30px;line-height:1.4;color:#4A4842">A short experiment showed the display server fetches the image during our request. That reshaped the whole push design.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-size:40px;font-weight:600;line-height:1.2">Errors lie a little</h3>
+<p style="font-size:30px;line-height:1.4;color:#4A4842">A deleted screen came back as a 422, not a 404. The app now treats it as missing and recreates the screen.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-size:40px;font-weight:600;line-height:1.2">Label estimates as estimates</h3>
+<p style="font-size:30px;line-height:1.4;color:#4A4842">The device reports battery voltage, not a percentage. We estimate the percentage and say so, with a history graph.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-size:40px;font-weight:600;line-height:1.2">Judge on the real panel</h3>
+<p style="font-size:30px;line-height:1.4;color:#4A4842">Grey badges that looked fine on a monitor were hard to read on e-paper. Final tuning happened on the device.</p>
+</div>
+</div>
+<aside>These four are the most transferable points for a technical audience: verify an integration cheaply before committing to a design, do not trust error codes to mean what the documentation implies, be honest in the UI about what is measured and what is estimated, and test on the real target.</aside>
+</section>
