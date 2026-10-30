@@ -1,0 +1,40 @@
+<section id="slices" data-transition="fade" style="background:#EAE6DB;color:#1A1A18;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#B83A0B">Implementation strategy</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Thin slices, each one demoable</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:24px">
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">Slice 0</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Foundations</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Container builds in CI, health check is green, a backup file appears.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">Slice 1</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Events and first image</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Add a repeating event and see it drawn in the week image.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">Slice 2</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Categories and people</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Create a category, assign an owner, see initials on the picture.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">Slice 3</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Views and editor</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Build a view and watch a live preview at the panel&#8217;s real size.</p>
+</div>
+<div style="background:#1A1A18;color:#F3F0E8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#F2A66F">Slice 4</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Push to Terminus</h3>
+<p style="font-size:26px;line-height:1.4;color:#CFCABD">Edit on a phone; the display changes within one check-in.</p>
+</div>
+<div style="background:#FBFAF6;border:1px solid #D2CCBC;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;color:#B83A0B">Slice 5</p>
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Polish and operate</h3>
+<p style="font-size:26px;line-height:1.4;color:#4A4842">Export, conflict warnings, restore drill, honest health check.</p>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.4"><b>Slices 0 to 3 needed no hardware,</b> so they were fully testable before the display was involved. Every slice ended with a trial on a phone or the real panel.</p>
+<aside>The order matters: we pushed the risky external dependency (the display server) to slice 4, after a short spike to verify how it really behaves, and kept everything before it testable on a laptop. After slice 5 the owner kept adding small requests as separate pull requests: a repeat count, a month page, the work schedule, a battery readout.</aside>
+</section>

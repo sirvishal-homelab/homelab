@@ -1,0 +1,38 @@
+<section id="architecture" data-transition="fade" style="background:#F3F0E8;color:#1A1A18;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#B83A0B">Architecture</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Four boxes on the home network</h2>
+</div>
+<div style="display:flex;flex-direction:row;align-items:center;gap:0">
+<div style="width:250px;background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Browser</h3>
+<p style="font-size:24px;line-height:1.4;color:#4A4842">Phone or laptop on the home network</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:36px;background:#B83A0B"></x-shape>
+<div style="flex:1;background:#FBFAF6;border:3px solid #B83A0B;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:20px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Calendar app <span style="color:#4A4842">(one container)</span></h3>
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:16px">
+<p style="background:#EAE6DB;border-radius:10px;padding:16px 20px;font-size:28px;line-height:1.3">Web UI and API</p>
+<p style="background:#EAE6DB;border-radius:10px;padding:16px 20px;font-size:28px;line-height:1.3">SQLite database</p>
+<p style="background:#EAE6DB;border-radius:10px;padding:16px 20px;font-size:28px;line-height:1.3">Image renderer</p>
+<p style="background:#EAE6DB;border-radius:10px;padding:16px 20px;font-size:28px;line-height:1.3">Publisher and scheduler</p>
+</div>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:36px;background:#B83A0B"></x-shape>
+<div style="width:250px;background:#FBFAF6;border:1px solid #D9D4C7;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Terminus</h3>
+<p style="font-size:24px;line-height:1.4;color:#4A4842">Self-hosted TRMNL server</p>
+</div>
+<x-shape kind="arrow-right" style="width:64px;height:36px;background:#B83A0B"></x-shape>
+<div style="width:250px;background:#1A1A18;color:#F3F0E8;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:36px;font-weight:600;line-height:1.2">Display</h3>
+<p style="font-size:24px;line-height:1.4;color:#CFCABD">TRMNL OG, e-paper</p>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px">
+<p style="font-size:30px;line-height:1.4;border-top:3px solid #1A1A18;padding-top:16px"><b>The app owns the data and the drawing.</b></p>
+<p style="font-size:30px;line-height:1.4;border-top:3px solid #1A1A18;padding-top:16px"><b>Terminus is swappable:</b> it only delivers a PNG.</p>
+<p style="font-size:30px;line-height:1.4;border-top:3px solid #1A1A18;padding-top:16px"><b>Nothing leaves the home network.</b></p>
+</div>
+<aside>Walk left to right. The app is one container: web pages and a JSON API, a SQLite file, a renderer that produces the image, and a publisher that tells Terminus when there is a new picture. Terminus keeps the picture and the display collects it on its own schedule. If Terminus were replaced, only the publisher module would change.</aside>
+</section>

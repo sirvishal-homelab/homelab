@@ -1,0 +1,15 @@
+<section id="decisions" data-transition="fade" style="background:#F3F0E8;color:#1A1A18;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:#B83A0B">Decisions and trade-offs</p>
+<h2 style="font-size:64px;font-weight:600;line-height:1.15">Choices we wrote down</h2>
+</div>
+<table style="font-size:24px;color:#1A1A18">
+<tr><th style="width:28%">Decision</th><th style="width:42%">Why</th><th style="width:30%">Trade-off</th></tr>
+<tr style="background:#FBFAF6"><td>Floating local time</td><td>One household, one timezone. No daylight-saving bugs in stored data.</td><td>Several timezones would need rework.</td></tr>
+<tr><td>Day 31 clamps to month end</td><td>A monthly repeat on the 31st lands on the 30th, as people expect.</td><td>Differs from the calendar-file standard.</td></tr>
+<tr style="background:#FBFAF6"><td>Images named by hash</td><td>Cache-friendly, and a free &#8220;did it change?&#8221; check.</td><td>Old images need clearing out.</td></tr>
+<tr><td>Soft delete with undo</td><td>A slip on a phone is cheap to fix.</td><td>Deleted items stay in the database.</td></tr>
+<tr style="background:#FBFAF6"><td>One process, SQLite</td><td>Simple backups and no locking surprises.</td><td>Does not scale out; we do not need it to.</td></tr>
+</table>
+<aside>Each row is a recorded decision. The point for this audience: we chose the constraint that fit one household and wrote down what it costs, so a future change of context (several timezones, several displays) is a deliberate step rather than a surprise.</aside>
+</section>
