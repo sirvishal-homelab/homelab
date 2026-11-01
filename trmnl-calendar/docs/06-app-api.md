@@ -83,6 +83,7 @@ the rule in words.
 | `DELETE /people/{id}` | Only if no event uses the person (409 otherwise; retire instead). |
 | `GET/PATCH /calendar` | Name, timezone, `week_start`, `time_format`. |
 | `GET /me`, `PUT /me` | Read or set "who am I" (`{person_id}`); stored in a cookie. |
+| `POST /settings/theme` | Page form, not part of the JSON API: sets the `theme` cookie (`auto`, `light` or `dark`) for this device and redirects to Settings. |
 
 ### Views, layouts, templates
 

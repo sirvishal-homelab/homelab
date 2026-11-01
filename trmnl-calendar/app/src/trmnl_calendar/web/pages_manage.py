@@ -14,7 +14,15 @@ from trmnl_calendar.storage.repositories import calendar as cal
 from trmnl_calendar.storage.repositories import people as ppl
 from trmnl_calendar.storage.repositories import sections as sec
 from trmnl_calendar.web import forms, views
-from trmnl_calendar.web.deps import WHO_COOKIE, chrome, get_conn, safe_next, who_from_cookie
+from trmnl_calendar.web.deps import (
+    THEME_COOKIE,
+    THEMES,
+    WHO_COOKIE,
+    chrome,
+    get_conn,
+    safe_next,
+    who_from_cookie,
+)
 
 router = APIRouter(include_in_schema=False)
 
@@ -211,6 +219,19 @@ def settings(request: Request, saved: int = 0, screen: str = "", conn=Depends(ge
         conn, saved=bool(saved), screen=_screen(request, conn), screen_flash=flash
     )
     return _page(request, "settings.html", nav="settings", **ctx)
+
+
+@router.post("/settings/theme")
+async def theme_set(request: Request):
+    """Remember this device's look (auto, light or dark). A cookie, not a household setting."""
+    form = forms.parse_body(await request.body())
+    choice = _one(form, "theme")
+    resp = _go("/settings#look")
+    if choice in THEMES:
+        resp.set_cookie(
+            THEME_COOKIE, choice, max_age=365 * 24 * 3600, samesite="lax", httponly=True
+        )
+    return resp
 
 
 @router.post("/settings/screen/check")

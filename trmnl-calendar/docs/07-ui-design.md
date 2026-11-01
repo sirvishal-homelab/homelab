@@ -90,6 +90,18 @@ screen: it would be too cramped at 800x480.
   edits (calendar, categories, people, events, repeats' skipped dates, display, views) as JSON. Push state,
   idempotency keys and app_meta are left out. Import is not built.
 
+## Look: auto, light or dark
+
+Settings has a **Look** control with three choices. **Auto** follows the device's own light or dark
+setting (the default). **Light** and **Dark** override it. The choice is remembered per device in a
+`theme` cookie, not in the database: a phone can be dark while a laptop stays light, and it never
+changes the picture on the e-paper screen. The server writes `data-theme` on the `<html>` element, so
+there is no flash of the wrong colours on load. The colours are CSS variables in `app.css`; the dark set
+is defined twice (once for Auto under `prefers-color-scheme`, once for an explicit Dark) and the two
+blocks must be kept in step. Design mockups of the modern look, light and dark, are in the design canvas
+the owner reviewed; the colours of this change are the existing palette, and the wider restyle is a
+separate slice.
+
 ## Phone pass (slice 5)
 
 Checked at 390 px wide in dark mode (home, month, add/edit event, categories, people, views, holidays;

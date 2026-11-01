@@ -66,9 +66,23 @@ def safe_next(url: str | None) -> str:
     return "/"
 
 
+THEME_COOKIE = "theme"
+THEMES = ("auto", "light", "dark")
+
+
+def theme_from_cookie(request: Request) -> str:
+    """This device's look: 'auto' (follow the phone), 'light' or 'dark'. Anything else is 'auto'."""
+    raw = request.cookies.get(THEME_COOKIE, "auto")
+    return raw if raw in THEMES else "auto"
+
+
 def chrome(request: Request) -> dict:
-    """Values every page needs for the top bar: who this device is, and the current path."""
+    """Values every page needs: who this device is, the current path and the chosen look."""
     from contextlib import closing
 
     with closing(db.connect(request.app.state.settings.db_path)) as conn:
-        return {"me": who_from_cookie(request, conn), "request_path": request.url.path}
+        return {
+            "me": who_from_cookie(request, conn),
+            "request_path": request.url.path,
+            "theme": theme_from_cookie(request),
+        }

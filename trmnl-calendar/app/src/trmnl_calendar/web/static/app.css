@@ -4,9 +4,12 @@
   --radius: 10px;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #14171b; --ink: #eceff3; --muted: #9aa4b1; --line: #2d333b; --card: #1c2128;
+  :root:not([data-theme=light]) { --bg: #14171b; --ink: #eceff3; --muted: #9aa4b1; --line: #2d333b; --card: #1c2128;
           --accent: #6ea0ff; --accent-ink: #0b1220; --danger: #ff8a80; --ok-bg: #1d2f21; --warn-bg: #3a3118; }
 }
+/* The same dark colours, for a device that chose Dark in Settings. Keep in step with the block above. */
+:root[data-theme=dark] { --bg: #14171b; --ink: #eceff3; --muted: #9aa4b1; --line: #2d333b; --card: #1c2128;
+          --accent: #6ea0ff; --accent-ink: #0b1220; --danger: #ff8a80; --ok-bg: #1d2f21; --warn-bg: #3a3118; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink);
   font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -94,7 +97,9 @@ ul.check li + li { border-top: 1px solid var(--line); }
 /* Month view */
 .seg { display: inline-flex; border: 1px solid var(--line, #888); border-radius: 999px; overflow: hidden; }
 .seg a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; text-decoration: none; color: inherit; }
-.seg a.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg a.on, .seg .seg-btn.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg .seg-btn { border: 0; border-radius: 0; background: transparent; min-height: 44px; padding: 0 18px; }
+.seg .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
 .monthbar { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
 .monthbar h2 { margin: 0; flex: 1; text-align: center; }
 .month { border: 1px solid var(--line, #888); border-radius: 8px; overflow: hidden; }
