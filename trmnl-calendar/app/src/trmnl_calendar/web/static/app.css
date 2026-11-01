@@ -174,3 +174,24 @@ main.wide { max-width: 72rem; }
   .nav a.only-narrow { display: flex; }
   .only-wide { display: none !important; }
 }
+
+/* Shifts: a day is a circle (filled when working, dashed on a day off) with a word under it */
+.shiftbody { padding: 10px 14px 14px; }
+.shiftweek { margin: 10px 0 4px; }
+.shiftgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.shifthead div { text-align: center; font-size: .8rem; font-weight: 600; color: var(--muted); padding: 4px 0; }
+.shiftmonth { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 8px; box-shadow: var(--shadow); }
+.shiftmonth .shiftgrid + .shiftgrid { margin-top: 2px; }
+.sday { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 60px; padding: 4px 0;
+  border-radius: var(--radius); color: var(--ink); text-decoration: none; }
+.sday .dow { font-size: .75rem; color: var(--muted); }
+.sday .num { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+  border-radius: 50%; border: 1px solid var(--line); }
+.sday .word { font-size: .75rem; line-height: 1; min-height: .75rem; font-weight: 600; }
+.sday.working .num, .sday.in .num, .sday.out .num { background: var(--accent); border-color: var(--accent);
+  color: var(--accent-ink); font-weight: 700; }
+.sday.off .num { border: 2px dashed var(--accent); }
+.sday.today .num { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
+.sday.sel { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sday.outm { opacity: .5; }

@@ -185,8 +185,9 @@ delete form posts accept a hidden `back` and redirect there with `saved=` / `del
   `title`.
 - `POST /api/v1/events/{id}/skips` accepts an optional `last` date to skip every day from `date`
   through `last` (at most a year).
-- Pages: `POST /events/{id}/day` (`date`, `note`, `back`) and `POST /events/{id}/skip` (now also `last`
-  and `back`).
+- Pages: `POST /events/{id}/day` (`date`, `note`, `back`), `POST /events/{id}/skip` (now also `last`
+  and `back`) and `POST /events/{id}/unskip` (`date`, optional `back`). The Shifts pages are `GET /shifts`
+  and `GET /shifts/month` (`e`, `y`, `m`, `day`); they change nothing themselves (ADR-0014).
 
 ## Device readings
 

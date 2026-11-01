@@ -24,6 +24,7 @@ from trmnl_calendar.web import (
     pages,
     pages_holidays,
     pages_manage,
+    pages_shifts,
     pages_views,
     render_service,
 )
@@ -133,6 +134,7 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.include_router(holidays_api.router)
     app.include_router(pages_manage.router)
     app.include_router(pages_views.router)
+    app.include_router(pages_shifts.router)
     app.include_router(pages_holidays.router)
     app.include_router(pages.router)
     app.mount(

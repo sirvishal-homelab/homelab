@@ -93,12 +93,12 @@ screen: it would be too cramped at 800x480.
 ## Look and navigation (ADR-0012)
 
 Cards, pill buttons and chips, DM Sans (bundled in `static/fonts`, no font service). Under 800 px wide the
-main links are a bar along the bottom: Calendar, Month, **Screen** and **More**; More opens a page listing
+main links are a bar along the bottom: Calendar, Month, **Shifts**, **Screen** and **More**; More opens a page listing
 Views, Categories, People, Settings, Who are you, Recently deleted and the data download. From 800 px up, the top
 bar has every link. On a wide screen (1000 px and up) Home puts the screen picture beside "Coming up".
 The **Screen** page (`/screen`, ADR-0013) holds the picture, last push, battery, the connection check, Push now
-and the pushing switch; Settings keeps only the household settings and the Look control. Still to come, as a
-separate slice: a Shifts page.
+and the pushing switch; Settings keeps only the household settings and the Look control. The **Shifts** tab (`/shifts`, `/shifts/month`, ADR-0014,
+`20-shifts-page.md`) shows rotating work schedules by week and by month and changes a day with one tap.
 
 ## Look: auto, light or dark
 
