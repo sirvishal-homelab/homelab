@@ -200,6 +200,14 @@ async def person_delete(person_id: int, request: Request):
     return await run_in_threadpool(work)
 
 
+# ---- more (the phone's list of everything that has no tab of its own)
+
+
+@router.get("/more")
+def more(request: Request):
+    return _page(request, "more.html", nav="more")
+
+
 # ---- settings
 
 

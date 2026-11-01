@@ -204,3 +204,32 @@ def test_css_and_js_urls_carry_a_version_so_browsers_do_not_keep_old_files(clien
     assert re.search(r'/static/app\.css\?v=[0-9a-f]{10}"', html)
     assert re.search(r'/static/app\.js\?v=[0-9a-f]{10}"', html)
     assert client.get("/static/app.css?v=anything").status_code == 200
+
+
+# ---- restyle: bottom bar on phones, More page, bundled font
+
+
+def test_more_page_lists_everything_without_a_tab(client):
+    r = client.get("/more")
+    assert r.status_code == 200
+    for target in ("/categories", "/people", "/settings", "/who", "/deleted", "/api/v1/export"):
+        assert f'href="{target}' in r.text, target
+
+
+def test_nav_has_phone_and_wide_links_and_marks_the_current_page(client):
+    html = client.get("/more").text
+    assert 'class="only-narrow" href="/more" aria-current=page' in html
+    assert 'class="only-wide" href="/settings"' in html
+    # Categories, People and Settings belong under More on a phone
+    assert 'href="/more" aria-current=page' in client.get("/settings").text
+    assert 'href="/month" aria-current=page' in client.get("/month").text
+
+
+def test_font_is_served_by_the_app_not_a_third_party(client):
+    css = client.get("/static/app.css").text
+    assert "@font-face" in css and "/static/fonts/DMSans-Regular.woff" in css
+    assert "fonts.googleapis.com" not in css
+    for name in ("Regular", "Medium", "Bold"):
+        r = client.get(f"/static/fonts/DMSans-{name}.woff")
+        assert r.status_code == 200 and len(r.content) > 5000, name
+    assert client.get("/static/fonts/OFL.txt").status_code == 200

@@ -90,6 +90,14 @@ screen: it would be too cramped at 800x480.
   edits (calendar, categories, people, events, repeats' skipped dates, display, views) as JSON. Push state,
   idempotency keys and app_meta are left out. Import is not built.
 
+## Look and navigation (ADR-0012)
+
+Cards, pill buttons and chips, DM Sans (bundled in `static/fonts`, no font service). Under 800 px wide the
+main links are a bar along the bottom: Calendar, Month, Views and **More**; More opens a page listing
+Categories, People, Settings, Who are you, Recently deleted and the data download. From 800 px up, the top
+bar has every link. On a wide screen (1000 px and up) Home puts the screen picture beside "Coming up".
+Still to come, as a separate slice: Shifts and Screen as pages of their own.
+
 ## Look: auto, light or dark
 
 Settings has a **Look** control with three choices. **Auto** follows the device's own light or dark
@@ -98,9 +106,7 @@ setting (the default). **Light** and **Dark** override it. The choice is remembe
 changes the picture on the e-paper screen. The server writes `data-theme` on the `<html>` element, so
 there is no flash of the wrong colours on load. The colours are CSS variables in `app.css`; the dark set
 is defined twice (once for Auto under `prefers-color-scheme`, once for an explicit Dark) and the two
-blocks must be kept in step. Design mockups of the modern look, light and dark, are in the design canvas
-the owner reviewed; the colours of this change are the existing palette, and the wider restyle is a
-separate slice.
+blocks must be kept in step. See ADR-0012 for the restyle that followed.
 
 The CSS and JS links carry a short content hash (`app.css?v=...`), so a browser that cached an older
 file fetches the new one at once. Without it a desktop browser can keep the old CSS and ignore a new

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_day_actions.html" import day_actions %}
 {% block title %}Calendar{% endblock %}
+{% block main_class %}wide{% endblock %}
 {% block body %}
 <div class="bar">
   <h1>Calendar</h1>
@@ -26,10 +27,14 @@
   </span>
 </div>
 {% endif %}
+<div class="home-grid">
+<div class="home-preview">
 <div class="preview" id="preview">
   <div class="scroll"><img id="preview-img" src="/render/current.png" width="800" height="480" alt="The week as shown on the screen"></div>
   <small>This is the picture for the screen{% if active_view %}: {{ active_view.name }} (<a href="/views">change view</a>){% endif %}. <button type="button" class="linklike" id="zoom-toggle">Enlarge</button> <a href="/settings#screen">Screen status</a></small>
 </div>
+</div>
+<div class="home-list">
 <h2>Coming up</h2>
 {% if people_list %}
 <p class="chips" aria-label="Show events for">
@@ -62,4 +67,6 @@
 </section>
 {% endfor %}
 <p class="meta"><a href="/deleted">Recently deleted</a></p>
+</div>
+</div>
 {% endblock %}

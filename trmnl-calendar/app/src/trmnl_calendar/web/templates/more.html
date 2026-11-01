@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}More{% endblock %}
+{% block body %}
+<div class="bar"><h1>More</h1></div>
+<section class="day" aria-label="Manage"><ul class="morelist">
+  <li><a href="/categories"><strong>Categories</strong><span class="meta">Events, Work, Lunch and more</span></a></li>
+  <li><a href="/people"><strong>People</strong><span class="meta">Who is in the household</span></a></li>
+  <li><a href="/settings"><strong>Settings</strong><span class="meta">Name, timezone, week start, look, the screen</span></a></li>
+  <li><a href="/who?next=/more"><strong>Who are you</strong><span class="meta">{{ me.name if me else "Nobody in particular" }} · this device</span></a></li>
+</ul></section>
+<section class="day" aria-label="Your data"><ul class="morelist">
+  <li><a href="/deleted"><strong>Recently deleted</strong><span class="meta">Bring an event back</span></a></li>
+  <li><a href="/api/v1/export" download><strong>Download all my data</strong><span class="meta">Everything you have entered, as one file</span></a></li>
+</ul></section>
+{% endblock %}
