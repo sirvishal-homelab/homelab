@@ -273,7 +273,8 @@ def test_shifts_in_out_day_off_and_restore_return_to_the_month(client):
     add(client, **ROTA)
     back = "/shifts/month?e=1&y=2026&m=11&day=2026-11-04"
     r = client.post(
-        "/events/1/day", data={"date": "2026-11-04", "note": "out", "back": back},
+        "/events/1/day",
+        data={"date": "2026-11-04", "note": "out", "back": back},
         follow_redirects=False,
     )
     assert r.status_code == 303 and r.headers["location"].startswith(back)
