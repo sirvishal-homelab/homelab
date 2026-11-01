@@ -19,7 +19,7 @@ ADR-0008 is accepted for stage 1 only.
 | 0011 | Optional online holiday lookup (Nager.Date) | **Proposed** |
 | 0012 | Modern look, bottom bar on phones, bundled font | **Accepted** |
 | 0013 | A Screen page of its own | **Accepted** |
-| 0014 | A Shifts page for rotating schedules | **Proposed** |
+| 0014 | Shifts pages for rotating schedules | **Accepted** |
 
 Template:
 

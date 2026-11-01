@@ -290,12 +290,17 @@ async def day_note(event_id: int, request: Request):
 
 @router.post("/events/{event_id}/unskip")
 async def unskip(event_id: int, request: Request):
+    """Bring a skipped date back. Returns to `back` if given, else to the event."""
     form = forms.parse_body(await request.body())
+    back = _back(form)
 
     def work() -> Response:
         with _open(request) as conn:
             repo.get_event(conn, event_id)
-            repo.remove_skip(conn, event_id, (form.get("date") or [""])[0])
+            day = (form.get("date") or [""])[0]
+            repo.remove_skip(conn, event_id, day)
+        if back:
+            return _see_other(_return_to(back, saved=f"Restored {day}."))
         return _see_other(f"/events/{event_id}/edit")
 
     return await run_in_threadpool(work)

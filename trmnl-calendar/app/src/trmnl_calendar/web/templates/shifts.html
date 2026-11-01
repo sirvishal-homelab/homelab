@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_shift_cell.html" import cell %}
+{% block title %}Shifts{% endblock %}
+{% block body %}
+<div class="bar">
+  <h1>Shifts</h1>
+  <nav class="seg" aria-label="Shifts view"><a class="on" href="/shifts" aria-current="page">Weeks</a><a href="/shifts/month">Month</a></nav>
+</div>
+{% if flash %}<div class="notice" role="status">{{ flash }}</div>{% endif %}
+{% if not cards %}
+<p class="meta">No work schedule yet. To add one, create an event and choose Repeat, then Rotating weeks.</p>
+<p><a class="btn primary" href="/events/new?back=/shifts">Add a schedule</a></p>
+{% endif %}
+{% for c in cards %}
+<section class="day" aria-label="{{ c.label }}">
+  <h3>{{ c.label }} <span class="meta">· Week {{ c.this_week }} this week</span></h3>
+  <div class="shiftbody">
+    {% for w in c.weeks %}
+    <p class="meta shiftweek">Week {{ w.name }} · {{ w.title }}</p>
+    <div class="shiftgrid">{% for d in w.days %}{{ cell(d, True) }}{% endfor %}</div>
+    {% endfor %}
+    <p class="meta">Filled circle: working. Dashed circle: day off. Tap a day to change it.</p>
+    <p class="actions"><a class="btn" href="/shifts/month?e={{ c.event_id }}">Month view</a> <a class="btn" href="/events/{{ c.event_id }}/edit">Edit pattern</a></p>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

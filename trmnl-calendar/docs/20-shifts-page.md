@@ -1,80 +1,63 @@
-# 20. Shifts page (design note, for the owner's review)
+# 20. Shifts pages (design note)
 
-Status: **proposed 2026-11-01**. No code yet. Decision record: ADR-0014.
+Status: **agreed 2026-11-01** (owner), built in the same pull request. Decision record: ADR-0014.
 
 ## 1. What this is for
 
 A household with shift work (a rotating Week A / Week B pattern) wants to see, in one place, who is
-working on which days for the next few weeks, and to mark a day **In**, **Out** or **Day off** in one tap.
-Today that is possible, but only by finding the "Work" event or scrolling the home list. The mockups gave
-this its own **Shifts** page.
+working on which days, and to mark a day **In**, **Out** or **Day off** in one tap. Her partner wants a
+view of **just the work schedule, a month at a glance**. Both are the new **Shifts** tab.
 
-## 2. What exists already (no change needed)
+## 2. What exists already (not changed)
 
 - A rotation is a repeat rule on one event (`03`, `17` section 6): 2 to 4 weeks, each a set of weekdays,
   Monday-to-Sunday weeks, Week A being the week that contains the start date.
 - Per-day notes **In** / **Out** are `event_day_notes`; a **day off** is a skip in `event_exceptions`.
 - `POST /events/{id}/day` sets or clears a note, `POST /events/{id}/skip` and `/unskip` handle days off.
-- The home list already shows the three buttons under a scheduled day.
 
-## 3. Proposal
+## 3. What was built
 
-`GET /shifts`: a read-and-quick-edit overview. **No new tables, no migration, no API change.**
+**No new tables, no migration, no JSON API change.** Two pages:
 
-```
-Shifts                         [ Everyone | Alex | Sam ]
+- `GET /shifts` (**Weeks**): one card per rotating schedule, titled with its people and event title and
+  saying which week of the pattern this week is ("Week B this week"). Each card has a strip as many weeks
+  long as the rotation (2 to 4, named A to D) starting with this Monday. Tapping a day opens it in the
+  month view. Links: Month view, Edit pattern.
+- `GET /shifts/month?e=<event>&y=&m=&day=` (**Month**): the work month of **one schedule**, nothing else
+  from the calendar. Chips switch between schedules when there are several; the default is the schedule
+  of the person this device chose in "Who are you", else the first. Previous and next month, and Today.
+  Below the grid, the chosen day shows its state in words and the buttons: In, Out, Day off for a working
+  day, **Restore this day** for a day off, an explanation for a day that is not on the pattern.
+  Edit pattern links to the event form.
 
-Sam: Work        Week B this week          [Edit pattern]
-  Week of Mon 26 Oct
-   M   T   W   T   F   S   S
-  26  27  28  29  30  31   1
-           out  in
-  Week of Mon 2 Nov
-   2   3   4   5   6   7   8
-  [w]  off
-  Tap a working day for In / Out / Day off.
-```
+How a day is drawn (words and shapes, never colour alone, because the e-paper has no colour and colour is
+unreliable in any case): a **filled circle** is a working day, a **dashed circle** a day off, a plain circle
+a day that is not on the pattern; **in**, **out** and **off** are written under the date; today has a ring.
+Each day has a spoken label ("Wed Nov 4, working, out").
 
-- One card per rotating schedule (a non-deleted event with a rotation), titled with its people and title.
-  Filter chips by person, like the home list.
-- A strip of **as many weeks as the rotation has** (2 to 4), starting with the Monday of this week, so the
-  whole pattern is visible. Each day shows its date and one of: not a working day (blank), working and not
-  decided, **in**, **out**, **day off**. The state is shown with text, not colour alone, because colour is
-  not available on the e-paper and is hard to rely on in any case.
-- Tapping a working day opens the same In / Out / Day off buttons the home list uses (reused, posting
-  back to `/shifts`). A day off shows **Restore** (the existing unskip).
-- The card header says which week of the pattern this week is ("Week B this week"), named A, B, C, D.
-- **Edit pattern** and **Add a schedule** link to the existing event form. The pattern editor stays there
-  in this slice (see open question 2).
+A day off wins over an In/Out note on the same day. `unskip` now returns to the page that sent it when it
+is given `back` (the Month page and the Shifts pages do); without `back` it still goes to the event.
 
-## 4. How it is built
+Navigation: **Shifts** is always a tab (owner's choice): Calendar, Month, Shifts, Screen, More on a phone;
+in the top bar on a wide screen.
 
-- `domain/recurrence.py` gets one pure function, `rotation_week(event, day) -> int | None` (which week of
-  the pattern a date falls in), refactored out of the code `occurrences()` already uses. Unit-tested,
-  including a three-week rotation and a week that is empty.
-- `views.shifts_context(conn, now, person)` builds the cards: events with a rotation, their skips and
-  notes for the window, and a cell state per day. It needs the pattern days **and** the skips, because a
-  day off is a scheduled day that was skipped.
-- `web/pages_shifts.py` with `GET /shifts`; the existing day and skip routes accept `back=/shifts`.
-  `template shifts.html`; a little CSS beside the existing `.dayactions` rules.
-- Navigation: **Shifts** appears in the phone bar as a fifth tab only when at least one rotating schedule
-  exists (one cheap query in `chrome()`); otherwise it is a row on the More page. On a wide screen it is in
-  the top bar. See open question 1.
-- Tests: unit (week index, cell states, empty week, skipped day), integration (page with and without a
-  schedule, tapping In / Out / Day off / Restore returns to `/shifts`, person filter, the tab appears only
-  when a schedule exists).
-- No effect on the e-paper picture beyond what a status change already does (it already changes it).
+## 4. Decisions
 
-## 5. Open questions for the owner
+| # | Question | Decision |
+|---|----------|----------|
+| S-1 | Shifts as a phone tab: always, or only when a schedule exists? | **Always** (owner, 2026-11-01). |
+| S-2 | Edit the Week A / Week B pattern on the Shifts pages? | Not in this slice; the event form does it. Linked as "Edit pattern". |
+| S-3 | Show the whole rotation or two weeks? | The whole rotation (2 to 4 weeks). |
+| S-4 | A free-text note on a date, besides In / Out / Day off? | **Not now** (owner, 2026-11-01). It would need one small table (`event_day_memos`) and a text box on the day; the first slice does not stand in its way. |
 
-| # | Question | Recommendation |
-|---|----------|----------------|
-| S-1 | A fifth phone tab for Shifts, always, or only when a schedule exists? | Only when one exists; always on More. Keeps the bar to four tabs for households without shifts. |
-| S-2 | Edit the Week A / Week B pattern on the Shifts page itself? | Not in the first slice. It needs a new save route and conflict handling; the event form already does it. Add later if the extra tap bothers you. |
-| S-3 | Show the whole rotation length, or always two weeks? | Whole rotation (2 to 4 weeks), so a three-week pattern is not hidden. |
-| S-4 | Should In / Out / Day off also be offered from the Month page's day list? | They already are for scheduled days; leave as is. |
+## 5. Tests
+
+`tests/integration/test_shifts_view.py` (states, strip length, day off beats a note, empty week, no
+schedules, month grid and panel, schedule chosen by "Who are you", week start does not move the pattern)
+and page tests in `test_pages.py` (tab always present, empty pages, In / Out / Day off / Restore return to
+the month view, `unskip` without `back`).
 
 ## 6. Not in scope
 
-Pattern editing on this page, swapping shifts between people, hours or times per shift, reminders,
-and anything that changes how rotations are stored.
+A free-text note per date, pattern editing on these pages, swapping shifts between people, hours or times
+per shift, reminders.

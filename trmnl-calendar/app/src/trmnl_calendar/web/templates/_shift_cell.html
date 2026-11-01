@@ -1,0 +1,8 @@
+{# One day of a schedule. State is shown in words and shapes, never by colour alone. #}
+{% macro cell(c, show_dow=False) %}
+<a class="sday {{ c.state }}{{ ' today' if c.today }}{{ ' sel' if c.selected }}{{ ' outm' if c.in_month is defined and not c.in_month }}" href="{{ c.href }}" aria-label="{{ c.label }}"{{ ' aria-current=date' if c.today }}>
+  {% if show_dow %}<span class="dow" aria-hidden="true">{{ c.dow }}</span>{% endif %}
+  <span class="num" aria-hidden="true">{{ c.day }}</span>
+  <span class="word" aria-hidden="true">{{ c.word }}</span>
+</a>
+{% endmacro %}

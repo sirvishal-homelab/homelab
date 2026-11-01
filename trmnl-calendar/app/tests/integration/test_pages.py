@@ -246,3 +246,55 @@ def test_rotation_and_day_notes_through_the_api(client):
 def test_battery_api_with_and_without_readings(client):
     r = client.get("/api/v1/display/device")
     assert r.status_code == 200 and r.json() == {"latest": None, "samples": []}
+
+
+# ---- Shifts pages (docs/20, ADR-0014)
+
+
+def test_shifts_tab_is_always_there_and_empty_pages_explain_themselves(client):
+    assert 'href="/shifts"' in client.get("/").text
+    weeks = client.get("/shifts")
+    assert weeks.status_code == 200 and "No work schedule yet" in weeks.text
+    assert 'href="/shifts" aria-current=page' in weeks.text
+    month = client.get("/shifts/month")
+    assert month.status_code == 200 and "No work schedule" in month.text
+
+
+def test_shifts_overview_and_month_show_the_schedule(client):
+    add(client, **ROTA)
+    weeks = client.get("/shifts").text
+    assert "this week" in weeks and "/shifts/month?e=1" in weeks and "Edit pattern" in weeks
+    month = client.get("/shifts/month?e=1&y=2026&m=11&day=2026-11-04").text
+    assert "November 2026" in month and "Wed Nov 4" in month and "Working, not decided" in month
+    assert "Day off</button>" in month and ">Out</button>" in month
+
+
+def test_shifts_in_out_day_off_and_restore_return_to_the_month(client):
+    add(client, **ROTA)
+    back = "/shifts/month?e=1&y=2026&m=11&day=2026-11-04"
+    r = client.post(
+        "/events/1/day", data={"date": "2026-11-04", "note": "out", "back": back},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303 and r.headers["location"].startswith(back)
+    assert "Working, out" in client.get(r.headers["location"]).text
+
+    back = "/shifts/month?e=1&y=2026&m=11&day=2026-11-05"
+    r = client.post(
+        "/events/1/skip", data={"date": "2026-11-05", "back": back}, follow_redirects=False
+    )
+    assert r.status_code == 303 and r.headers["location"].startswith(back)
+    assert "Restore this day" in client.get(back).text
+
+    r = client.post(
+        "/events/1/unskip", data={"date": "2026-11-05", "back": back}, follow_redirects=False
+    )
+    assert r.status_code == 303 and r.headers["location"].startswith(back)
+    assert "Restore this day" not in client.get(back).text
+
+
+def test_unskip_without_back_still_returns_to_the_event(client):
+    add(client, **ROTA)
+    client.post("/events/1/skip", data={"date": "2026-11-05"})
+    r = client.post("/events/1/unskip", data={"date": "2026-11-05"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/events/1/edit"

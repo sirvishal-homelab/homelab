@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_shift_cell.html" import cell %}
+{% from "_day_actions.html" import day_actions %}
+{% block title %}Shifts, {{ title }}{% endblock %}
+{% block body %}
+{% set q = '&e=%d' % chosen.id if chosen else '' %}
+<div class="bar">
+  <h1>Shifts</h1>
+  <nav class="seg" aria-label="Shifts view"><a href="/shifts">Weeks</a><a class="on" href="/shifts/month{{ '?e=%d' % chosen.id if chosen }}" aria-current="page">Month</a></nav>
+</div>
+{% if flash %}<div class="notice" role="status">{{ flash }}</div>{% endif %}
+{% if not chosen %}
+<p class="meta">No work schedule in this month. To add one, create an event and choose Repeat, then Rotating weeks.</p>
+<p><a class="btn primary" href="/events/new?back=/shifts">Add a schedule</a></p>
+{% else %}
+{% if schedules | length > 1 %}
+<p class="chips" aria-label="Schedule">
+  {% for s in schedules %}<a class="chip {{ 'on' if s.on }}" href="/shifts/month?e={{ s.event_id }}&y={{ year }}&m={{ month }}">{{ s.label }}</a>{% endfor %}
+</p>
+{% else %}
+<p class="meta">{{ schedules[0].label }}</p>
+{% endif %}
+<div class="monthbar">
+  <a class="btn" href="/shifts/month?y={{ prev[0] }}&m={{ prev[1] }}{{ q }}" aria-label="Previous month">‹</a>
+  <h2>{{ title }}</h2>
+  <a class="btn" href="/shifts/month?y={{ next[0] }}&m={{ next[1] }}{{ q }}" aria-label="Next month">›</a>
+  {% if not is_current %}<a class="btn" href="/shifts/month?{{ q[1:] }}">Today</a>{% endif %}
+</div>
+<div class="shiftmonth" role="group" aria-label="{{ title }}">
+  <div class="shiftgrid shifthead" aria-hidden="true">{% for n in weekday_names %}<div>{{ n }}</div>{% endfor %}</div>
+  {% for row in rows %}
+  <div class="shiftgrid">{% for c in row %}{{ cell(c) }}{% endfor %}</div>
+  {% endfor %}
+</div>
+<p class="meta">Filled circle: working. Dashed circle: day off. Words under a date: in, out or off.</p>
+<section id="day" class="day" aria-label="Selected day">
+  {% if panel %}
+  <h3>{{ panel.heading }} <span class="meta">· {{ panel.words }}</span></h3>
+  <div class="shiftbody">
+    {% if panel.state == "off" %}
+    <form method="post" action="/events/{{ panel.event_id }}/unskip">
+      <input type="hidden" name="date" value="{{ panel.date }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      <button class="primary" type="submit">Restore this day</button>
+    </form>
+    {% elif panel.scheduled %}
+    {{ day_actions(panel, back) }}
+    {% else %}
+    <p class="meta">Not a working day in this pattern. To change the pattern, edit the schedule.</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="shiftbody"><p class="meta">Tap a day to mark it In, Out or Day off.</p></div>
+  {% endif %}
+</section>
+<p class="actions"><a class="btn" href="/events/{{ chosen.id }}/edit">Edit pattern</a></p>
+{% endif %}
+{% endblock %}
