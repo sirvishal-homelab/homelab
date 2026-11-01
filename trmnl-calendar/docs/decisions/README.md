@@ -18,6 +18,7 @@ ADR-0008 is accepted for stage 1 only.
 | 0010 | Floating local time, clamped monthly repeats, skip exceptions | **Accepted** |
 | 0011 | Optional online holiday lookup (Nager.Date) | **Proposed** |
 | 0012 | Modern look, bottom bar on phones, bundled font | **Accepted** |
+| 0013 | A Screen page of its own | **Accepted** |
 
 Template:
 

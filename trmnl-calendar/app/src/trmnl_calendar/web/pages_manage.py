@@ -216,17 +216,24 @@ def _screen(request: Request, conn):
 
 
 @router.get("/settings")
-def settings(request: Request, saved: int = 0, screen: str = "", conn=Depends(get_conn)):
+def settings(request: Request, saved: int = 0, conn=Depends(get_conn)):
+    ctx = views.settings_context(conn, saved=bool(saved))
+    return _page(request, "settings.html", nav="settings", **ctx)
+
+
+# ---- the screen (status, battery, push, connection check)
+
+
+@router.get("/screen")
+def screen_page(request: Request, screen: str = "", conn=Depends(get_conn)):
     flash = {
         "pushed": "Sent to the screen.",
         "failed": "The push did not work. The reason is shown below.",
         "on": "Pushing is switched on.",
         "off": "Pushing is switched off.",
     }.get(screen, "")
-    ctx = views.settings_context(
-        conn, saved=bool(saved), screen=_screen(request, conn), screen_flash=flash
-    )
-    return _page(request, "settings.html", nav="settings", **ctx)
+    ctx = views.screen_page_context(_screen(request, conn), screen_flash=flash)
+    return _page(request, "screen.html", nav="screen", **ctx)
 
 
 @router.post("/settings/theme")
@@ -242,7 +249,7 @@ async def theme_set(request: Request):
     return resp
 
 
-@router.post("/settings/screen/check")
+@router.post("/screen/check")
 async def screen_check(request: Request):
     def work() -> Response:
         from trmnl_calendar.publish import check
@@ -256,22 +263,22 @@ async def screen_check(request: Request):
                 state_repo.get_state(conn).screen_id,
                 remember=lambda d, m: state_repo.remember_device(conn, d, m),
             )
-            ctx = views.settings_context(conn, screen=_screen(request, conn), check_steps=steps)
-            return _page(request, "settings.html", nav="settings", **ctx)
+            ctx = views.screen_page_context(_screen(request, conn), check_steps=steps)
+            return _page(request, "screen.html", nav="screen", **ctx)
 
     return await run_in_threadpool(work)
 
 
-@router.post("/settings/screen/push")
+@router.post("/screen/push")
 async def screen_push(request: Request):
     def work() -> Response:
         out = request.app.state.publisher.run(force=True)
-        return _go("/settings?screen=" + ("pushed" if out.status == "ok" else "failed") + "#screen")
+        return _go("/screen?screen=" + ("pushed" if out.status == "ok" else "failed"))
 
     return await run_in_threadpool(work)
 
 
-@router.post("/settings/screen/enabled")
+@router.post("/screen/enabled")
 async def screen_enabled(request: Request):
     form = forms.parse_body(await request.body())
 
@@ -280,7 +287,7 @@ async def screen_enabled(request: Request):
         with _open(request) as conn:
             conn.execute("UPDATE displays SET enabled = ? WHERE id = 1", (int(on),))
             conn.commit()
-        return _go("/settings?screen=" + ("on" if on else "off") + "#screen")
+        return _go("/screen?screen=" + ("on" if on else "off"))
 
     return await run_in_threadpool(work)
 

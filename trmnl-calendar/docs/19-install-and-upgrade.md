@@ -100,7 +100,7 @@ Upgrading applies migration 0005. The four settings in `.env` (`TERMINUS_URL`, `
 `TERMINUS_SCREEN_NAME` (default `trmnl-calendar`), `TERMINUS_PUSH_INTERVAL` (seconds, default 900, minimum 60) and
 `TERMINUS_VERIFY_TLS`. After editing `.env`, run `docker compose up -d` so the app restarts with the new values.
 
-1. Open **Settings**, section **The screen**, and press **Check connection**. Fix anything marked ✗ or !.
+1. Open the **Screen** page and press **Check connection**. Fix anything marked ✗ or !.
 2. Press **Push now**. The app creates a Terminus screen called `trmnl-calendar` and sends the picture.
 3. In Terminus, open the device's playlist and make `trmnl-calendar` its **only** item (remove the others). The
    device then shows it at its next check-in (about every 15 minutes). Run the connection check again to confirm.
@@ -159,7 +159,7 @@ newer app version, and refuses to run while the app is still using the database.
 To restore onto a **new server or an empty volume**: install as in "First-time install" but do not start
 the app, copy a backup into the volume (`docker cp` or the `docker run` pattern above), then run step 3.
 
-The screen's push state is not part of the restore. After restoring, press **Push now** in Settings.
+The screen's push state is not part of the restore. After restoring, press **Push now** on the Screen page.
 
 ## Alerts (Beszel)
 
@@ -174,7 +174,7 @@ shows `healthy` or `unhealthy`. In the Beszel hub, add alerts for the host runni
    `calendar`.
 
 Two checks the app can answer for you: `curl -s http://<server>:8080/healthz` reports
-`last_backup_age_hours` (it should stay under about 26) and `scheduler` state. Settings → The screen shows
+`last_backup_age_hours` (it should stay under about 26) and `scheduler` state. The Screen page shows
 when the last push worked.
 
 Upgrading to the battery readout applies migration 0008 (a `pre-migration` backup is written first). Settings

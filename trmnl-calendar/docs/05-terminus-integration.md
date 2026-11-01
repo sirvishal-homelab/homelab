@@ -101,7 +101,7 @@ Prototype configuration (environment variables; none are stored in the database)
   (this also moves "today" at midnight and retries after a failure). The first push waits 10 s after start so the
   web server is up when Terminus fetches the image.
 - Every successful write request (page or API) asks for a push, except previews, who-am-I and the push actions.
-- `publish/check.py`: the **Connection check** on the Settings page (settings, login, model, device, picture
+- `publish/check.py`: the **Connection check** on the Screen page (settings, login, model, device, picture
   address, screen and playlist), each with a plain-language fix. **Push now** is the real end-to-end test.
 - Tests use a **fake Terminus** (`tests/fakes/terminus.py`) with the paths and shapes from the spike, and an
   end-to-end test over real sockets. The real server has not been exercised by CI.

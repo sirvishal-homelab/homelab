@@ -1,6 +1,6 @@
 # ADR-0012: A modern look, a bottom bar on phones, and a bundled font
 
-- Status: Accepted
+- Status: Accepted (tab list amended by ADR-0013)
 - Date: 2026-11-01
 
 ## Context
