@@ -195,3 +195,12 @@ def test_look_does_not_trigger_a_push(client):
     from trmnl_calendar.main import NO_PUSH_PATHS
 
     assert "/settings/theme" in NO_PUSH_PATHS
+
+
+def test_css_and_js_urls_carry_a_version_so_browsers_do_not_keep_old_files(client):
+    import re
+
+    html = client.get("/settings").text
+    assert re.search(r'/static/app\.css\?v=[0-9a-f]{10}"', html)
+    assert re.search(r'/static/app\.js\?v=[0-9a-f]{10}"', html)
+    assert client.get("/static/app.css?v=anything").status_code == 200
