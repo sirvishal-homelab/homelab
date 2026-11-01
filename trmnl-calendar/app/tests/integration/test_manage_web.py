@@ -155,3 +155,43 @@ def test_badges_change_the_rendered_image(client):
     p = person(client)
     event(client, people={"ids": [p["id"]], "owner_id": p["id"]})
     assert client.get("/render/current.png").content != before
+
+
+# ---- look (auto / light / dark), remembered per device
+
+
+def test_look_defaults_to_auto_and_sets_no_theme_attribute(client):
+    html = client.get("/settings").text
+    assert "data-theme" not in html
+    assert 'aria-pressed="true">Auto' in html
+
+
+@pytest.mark.parametrize("choice", ["light", "dark"])
+def test_look_choice_is_remembered_in_a_cookie(client, choice):
+    r = client.post("/settings/theme", data={"theme": choice}, follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/settings#look"
+    assert f"theme={choice}" in r.headers["set-cookie"]
+    html = client.get("/settings").text
+    assert f'<html lang="en" data-theme="{choice}">' in html
+    assert f'aria-pressed="true">{choice.capitalize()}' in html
+
+
+def test_look_choice_applies_to_every_page(client):
+    client.post("/settings/theme", data={"theme": "dark"})
+    for path in ("/", "/categories", "/people", "/who"):
+        assert 'data-theme="dark"' in client.get(path).text, path
+
+
+def test_look_ignores_unknown_values(client):
+    client.post("/settings/theme", data={"theme": "dark"})
+    client.post("/settings/theme", data={"theme": "neon"})  # not stored; the old choice stays
+    assert 'data-theme="dark"' in client.get("/settings").text
+    client.cookies.set("theme", "neon")
+    assert "data-theme" not in client.get("/settings").text
+
+
+def test_look_does_not_trigger_a_push(client):
+    from trmnl_calendar.main import NO_PUSH_PATHS
+
+    assert "/settings/theme" in NO_PUSH_PATHS

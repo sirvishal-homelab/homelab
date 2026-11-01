@@ -38,6 +38,14 @@
   <div class="actions"><button class="primary" type="submit">Save settings</button></div>
 </form>
 
+<h2 id="look">Look</h2>
+<p class="meta">Light or dark. Auto follows this device's setting. This applies to this device only.</p>
+<form method="post" action="/settings/theme" class="seg" role="group" aria-label="Look">
+  {% for value, label in [("auto", "Auto"), ("light", "Light"), ("dark", "Dark")] %}
+  <button type="submit" name="theme" value="{{ value }}" class="seg-btn{{ ' on' if (theme or 'auto') == value }}" aria-pressed="{{ 'true' if (theme or 'auto') == value else 'false' }}">{{ label }}</button>
+  {% endfor %}
+</form>
+
 {% if screen %}
 <h2 id="screen">The screen</h2>
 {% if screen_flash %}<div class="notice" role="status">{{ screen_flash }}</div>{% endif %}

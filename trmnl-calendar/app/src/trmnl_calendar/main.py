@@ -37,11 +37,12 @@ from trmnl_calendar.web.api import views as views_api
 log = logging.getLogger("trmnl_calendar")
 
 
-# Writes that cannot change the picture: previews, the who-am-I cookie, the push/check actions.
+# Writes that cannot change the picture: previews, the who-am-I and look cookies, the push/check actions.
 NO_PUSH_PATHS = {
     "/api/v1/views/preview",
     "/api/v1/me",
     "/who",
+    "/settings/theme",
     "/api/v1/display/push",
     "/api/v1/display/check",
     "/settings/screen/push",
