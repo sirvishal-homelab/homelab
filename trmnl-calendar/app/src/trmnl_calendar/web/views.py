@@ -347,15 +347,9 @@ def settings_context(
     errors=None,
     error_message="",
     saved=False,
-    screen=None,
-    check_steps=None,
-    screen_flash="",
 ) -> dict:
     c = cal.get_calendar(conn)
     return {
-        "screen": screen,
-        "check_steps": check_steps,
-        "screen_flash": screen_flash,
         "values": values
         or {
             "name": c.name,
@@ -367,6 +361,11 @@ def settings_context(
         "error_message": error_message,
         "saved": saved,
     }
+
+
+def screen_page_context(screen, check_steps=None, screen_flash="") -> dict:
+    """The Screen page: status, battery, and the connection check when it has just been run."""
+    return {"screen": screen, "check_steps": check_steps, "screen_flash": screen_flash}
 
 
 def who_context(conn: sqlite3.Connection, current: int | None, next_url: str = "/") -> dict:

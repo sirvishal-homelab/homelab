@@ -62,9 +62,9 @@ def test_unconfigured_status_push_and_page(settings):
         assert "password" not in str(st).lower()
         r = c.post(f"{API}/display/push")
         assert r.status_code == 409 and r.json()["error"]["code"] == "not_configured"
-        page = c.get("/settings").text
+        page = c.get("/screen").text
         assert "Not set up" in page and "TERMINUS_URL" in page
-        check = c.post("/settings/screen/check")
+        check = c.post("/screen/check")
         assert check.status_code == 200 and "Connection check" in check.text
         assert c.post(f"{API}/display/check").json()["ok"] is False
 
@@ -74,7 +74,7 @@ def test_enabled_switch(settings):
         assert c.patch(f"{API}/display", json={"enabled": False}).json()["enabled"] is False
         assert c.get(f"{API}/display/status").json()["enabled"] is False
         assert c.patch(f"{API}/display", json={"enabled": "no"}).status_code == 422
-        r = c.post("/settings/screen/enabled", data={"enabled": "1"}, follow_redirects=False)
+        r = c.post("/screen/enabled", data={"enabled": "1"}, follow_redirects=False)
         assert r.status_code == 303 and c.get(f"{API}/display").json()["enabled"] is True
 
 
@@ -90,9 +90,9 @@ def test_check_and_push_failure_surface_terminus_reasons(tmp_path, fake):
         assert r.status_code == 502 and r.json()["error"]["code"] == "push_failed"
         st = c.get(f"{API}/display/status").json()
         assert st["status"] == "error" and st["failures"] == 1 and st["last_error"]
-        page = c.get("/settings").text
+        page = c.get("/screen").text
         assert "Could not send the picture" in page
-        redirect = c.post("/settings/screen/push", follow_redirects=False)
+        redirect = c.post("/screen/push", follow_redirects=False)
         assert redirect.status_code == 303 and "screen=failed" in redirect.headers["location"]
 
 
@@ -106,8 +106,9 @@ def test_status_never_leaks_secrets(tmp_path):
             bodies = [
                 c.get(f"{API}/display/status").text,
                 c.get(f"{API}/display").text,
+                c.get("/screen").text,
                 c.get("/settings").text,
-                c.post("/settings/screen/check").text,
+                c.post("/screen/check").text,
                 c.post(f"{API}/display/check").text,
                 c.post(f"{API}/display/push").text,
             ]

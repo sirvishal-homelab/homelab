@@ -233,3 +233,22 @@ def test_font_is_served_by_the_app_not_a_third_party(client):
         r = client.get(f"/static/fonts/DMSans-{name}.woff")
         assert r.status_code == 200 and len(r.content) > 5000, name
     assert client.get("/static/fonts/OFL.txt").status_code == 200
+
+
+# ---- the Screen page (ADR-0013)
+
+
+def test_screen_page_holds_status_and_actions_and_settings_links_to_it(client):
+    page = client.get("/screen")
+    assert page.status_code == 200
+    for needle in ('action="/screen/check"', "Not set up", 'alt="The picture on the screen"'):
+        assert needle in page.text, needle
+    assert 'href="/screen" aria-current=page' in page.text
+    settings = client.get("/settings").text
+    assert 'href="/screen"' in settings and "/screen/push" not in settings
+    assert "/settings/screen/" not in page.text
+
+
+def test_old_screen_form_paths_are_gone_and_more_lists_views(client):
+    assert client.post("/settings/screen/check").status_code in (404, 405)
+    assert 'href="/views"' in client.get("/more").text

@@ -182,7 +182,7 @@ def test_device_refresh_time_is_read_from_terminus(env):
     assert state_repo.device_refresh_seconds(conn) == 600
     ctx = views.screen_context(conn, pub.settings, None)
     assert ctx["device_minutes"] == 10
-    html = views.render_page("settings.html", **views.settings_context(conn, screen=ctx))
+    html = views.render_page("screen.html", **views.screen_page_context(ctx))
     assert "every 10 minutes in Terminus" in html
 
 

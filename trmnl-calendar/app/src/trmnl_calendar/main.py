@@ -45,8 +45,8 @@ NO_PUSH_PATHS = {
     "/settings/theme",
     "/api/v1/display/push",
     "/api/v1/display/check",
-    "/settings/screen/push",
-    "/settings/screen/check",
+    "/screen/push",
+    "/screen/check",
 }
 
 

@@ -93,10 +93,12 @@ screen: it would be too cramped at 800x480.
 ## Look and navigation (ADR-0012)
 
 Cards, pill buttons and chips, DM Sans (bundled in `static/fonts`, no font service). Under 800 px wide the
-main links are a bar along the bottom: Calendar, Month, Views and **More**; More opens a page listing
-Categories, People, Settings, Who are you, Recently deleted and the data download. From 800 px up, the top
+main links are a bar along the bottom: Calendar, Month, **Screen** and **More**; More opens a page listing
+Views, Categories, People, Settings, Who are you, Recently deleted and the data download. From 800 px up, the top
 bar has every link. On a wide screen (1000 px and up) Home puts the screen picture beside "Coming up".
-Still to come, as a separate slice: Shifts and Screen as pages of their own.
+The **Screen** page (`/screen`, ADR-0013) holds the picture, last push, battery, the connection check, Push now
+and the pushing switch; Settings keeps only the household settings and the Look control. Still to come, as a
+separate slice: a Shifts page.
 
 ## Look: auto, light or dark
 
@@ -152,7 +154,7 @@ right of an item's first line, so long titles wrap onto the next line rather tha
 followed by a long first word may wrap to a second line. Existing views pick the option up as "on".
 Both layouts draw the boxes through one shared module, `render/layouts/badges.py`.
 
-## Battery readout (Settings, The screen)
+## Battery readout (Screen page)
 
 Shows "Battery about 50% (3.84 V, an estimate from the voltage)", whether it is charging, full on USB
 power, or draining (with percent per day and roughly how many days are left at that rate), the Wi-Fi
