@@ -102,6 +102,10 @@ blocks must be kept in step. Design mockups of the modern look, light and dark, 
 the owner reviewed; the colours of this change are the existing palette, and the wider restyle is a
 separate slice.
 
+The CSS and JS links carry a short content hash (`app.css?v=...`), so a browser that cached an older
+file fetches the new one at once. Without it a desktop browser can keep the old CSS and ignore a new
+rule such as the Dark override.
+
 ## Phone pass (slice 5)
 
 Checked at 390 px wide in dark mode (home, month, add/edit event, categories, people, views, holidays;

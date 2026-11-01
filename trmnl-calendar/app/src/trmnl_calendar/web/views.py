@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 from datetime import date, datetime, timedelta
 from functools import lru_cache
+from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
@@ -22,6 +24,16 @@ UPCOMING_DAYS = 28
 
 
 @lru_cache(maxsize=1)
+def asset_version() -> str:
+    """Short hash of the CSS and JS, added to their URLs so browsers fetch a changed file."""
+    static = Path(__file__).parent / "static"
+    digest = hashlib.sha256()
+    for name in ("app.css", "app.js"):
+        digest.update((static / name).read_bytes())
+    return digest.hexdigest()[:10]
+
+
+@lru_cache(maxsize=1)
 def env() -> Environment:
     e = Environment(
         loader=PackageLoader("trmnl_calendar.web", "templates"),
@@ -34,6 +46,7 @@ def env() -> Environment:
         freq_choices=forms.FREQ_CHOICES,
         nth_choices=forms.NTH_CHOICES,
         weekdays=forms.WEEKDAYS,
+        asset_v=asset_version(),
     )
     return e
 
