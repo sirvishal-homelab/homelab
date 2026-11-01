@@ -98,7 +98,7 @@ Views, Categories, People, Settings, Who are you, Recently deleted and the data 
 bar has every link. On a wide screen (1000 px and up) Home puts the screen picture beside "Coming up".
 The **Screen** page (`/screen`, ADR-0013) holds the picture, last push, battery, the connection check, Push now
 and the pushing switch; Settings keeps only the household settings and the Look control. Still to come, as a
-separate slice: a Shifts page.
+separate slice: a Shifts page (proposed in `20-shifts-page.md`).
 
 ## Look: auto, light or dark
 
