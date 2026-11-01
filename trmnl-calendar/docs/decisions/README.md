@@ -17,6 +17,7 @@ ADR-0008 is accepted for stage 1 only.
 | 0009 | Python 3.12, FastAPI, server-rendered pages, no build step | **Accepted** |
 | 0010 | Floating local time, clamped monthly repeats, skip exceptions | **Accepted** |
 | 0011 | Optional online holiday lookup (Nager.Date) | **Proposed** |
+| 0012 | Modern look, bottom bar on phones, bundled font | **Accepted** |
 
 Template:
 
