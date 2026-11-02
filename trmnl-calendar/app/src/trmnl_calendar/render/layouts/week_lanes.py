@@ -108,8 +108,8 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                 add(Rect(x + 2, banner_y, cw - 4, 15, fill=GREY))
                 label, _ = T.ellipsize(", ".join(names), 11, True, cw - 12)
                 add(Text(x + cw // 2, banner_y + 12, label, 11, True, anchor="m"))
-        if i:
-            add(Line(x, banner_y if banners else lane_top, x, lane_bot, dotted=True))
+        # also before the first day, so the lane labels are ruled off like every other column
+        add(Line(x, banner_y if banners else lane_top, x, lane_bot, dotted=True))
 
     # lanes
     truncated = overflow = 0

@@ -8,7 +8,7 @@ from trmnl_calendar.domain.recurrence import occurrences
 from trmnl_calendar.render import text as T
 from trmnl_calendar.render.layouts import base, week_lanes
 from trmnl_calendar.render.pipeline import RenderCache, render
-from trmnl_calendar.render.scene import Rect, Text
+from trmnl_calendar.render.scene import Line, Rect, Text
 
 SECS = (
     Section(1, "Events", 1),
@@ -246,3 +246,20 @@ def test_trip_bar_shows_badges_inside_the_bar():
     bar = next(i for i in scene.items if isinstance(i, Rect) and i.h == 16)
     for b in boxes(scene):
         assert bar.x < b.x and b.x + b.w <= bar.x + bar.w
+
+
+def test_every_day_column_including_the_first_has_a_dotted_rule_on_its_left():
+    scene, _ = week_lanes.plan(ctx([E(1, "Dentist")]))
+    rules = {i.x1 for i in scene.items if isinstance(i, Line) and i.dotted and i.x1 == i.x2}
+    first = week_lanes.MARGIN + week_lanes.GUTTER
+    cw = (800 - 2 * week_lanes.MARGIN - week_lanes.GUTTER) // 7
+    assert rules == {first + i * cw for i in range(7)}
+
+
+def test_the_first_rule_also_appears_with_a_banner_and_fewer_days():
+    banner = Section(5, "Holidays", 5, placement="banner")
+    scene, _ = week_lanes.plan(
+        ctx([E(1, "Dentist")], secs=SECS + (banner,), weekdays=0b0011111)
+    )
+    rules = [i for i in scene.items if isinstance(i, Line) and i.dotted and i.x1 == i.x2]
+    assert len(rules) == 5 and min(r.x1 for r in rules) == week_lanes.MARGIN + week_lanes.GUTTER
