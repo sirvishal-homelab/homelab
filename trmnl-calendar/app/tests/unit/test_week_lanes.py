@@ -258,8 +258,6 @@ def test_every_day_column_including_the_first_has_a_dotted_rule_on_its_left():
 
 def test_the_first_rule_also_appears_with_a_banner_and_fewer_days():
     banner = Section(5, "Holidays", 5, placement="banner")
-    scene, _ = week_lanes.plan(
-        ctx([E(1, "Dentist")], secs=SECS + (banner,), weekdays=0b0011111)
-    )
+    scene, _ = week_lanes.plan(ctx([E(1, "Dentist")], secs=SECS + (banner,), weekdays=0b0011111))
     rules = [i for i in scene.items if isinstance(i, Line) and i.dotted and i.x1 == i.x2]
     assert len(rules) == 5 and min(r.x1 for r in rules) == week_lanes.MARGIN + week_lanes.GUTTER
