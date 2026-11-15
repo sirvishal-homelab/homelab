@@ -298,4 +298,4 @@ minutes apart; rows older than 90 days are deleted. Not part of `GET /export` (d
 revised_arr_utc, dep_airport, arr_airport, dep_gate, checked_at, next_due_at)`, primary key
 `(code, dep_date)`; `code` without the space (`AC123`). The last answer from the flight provider for a flight
 code spotted in an event, and when to ask again. `flight_calls(month, count)` counts calls for the monthly
-cap. Derived data: not part of `GET /export`, kept by backups, rows deleted 7 days after `dep_date`. See `21`.
+cap. Derived data: not part of `GET /export`, left out of backups (the provider allows 7 days of caching), rows deleted 7 days after `checked_at`. See `21`.

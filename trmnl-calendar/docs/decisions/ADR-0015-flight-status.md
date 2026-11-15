@@ -21,7 +21,7 @@ wants the event to look as it does now, with the status added. Alerts are not wa
 ## Consequences
 Good: no new screen, no new form field; one small module and one table; a change of status reaches the
 panel through the existing push; nothing changes for people who do not turn it on.
-Bad: a paid outside service with a small free allowance, so the cap can run out in a heavy travel month;
+Bad: an outside service whose free plan (400 units, 2 per lookup) covers about 8 to 15 flights a month, so the cap can run out in a heavy travel month; its terms require attribution and allow 7 days of caching, so flight data stays out of backups;
 the data is only as good as the provider's; a false match costs one call; this is designed without a live
 call, so the first real flight is the verification (`08`, R-15).
 

@@ -86,8 +86,10 @@ Times there are the airport's local times, which matches floating local time (AD
 
 ## 5. Data
 
-Migration 0009, one table. Derived data like `device_samples`: kept by backups, not part of `GET /export`,
-rows deleted 7 days after the flight date.
+Migration 0009, one table. Derived data: not part of `GET /export`, and **left out of backups** (the
+backup copy empties the flight tables), because the provider allows keeping its data for 7 days only and
+backups are kept longer. Rows are deleted 7 days after `checked_at`; a status that is still needed is
+simply fetched again.
 
 `flight_status(code, dep_date, found, status, sched_dep_utc, revised_dep_utc, sched_arr_utc,
 revised_arr_utc, dep_airport, arr_airport, dep_gate, checked_at, next_due_at)`, primary key
@@ -98,9 +100,14 @@ lives in `flight_calls(month, count)`.
 
 **AeroDataBox** (through RapidAPI), endpoint `GET /flights/number/{code}/{dateLocal}`. It returns one or
 more legs with scheduled and revised times, airports, gate and a status from the list in section 4. Its
-free plan has a small monthly unit allowance and the flight-status call is a tier-2 endpoint, so it costs
-more than one unit; the cap in section 3 is set well below the allowance. Confirm the plan's numbers on
-the RapidAPI page before relying on them.
+free **Basic** plan (owner's screenshot, 2026-11-15): 400 units and 1,600 requests a month, both hard
+limits; a tier-2 call such as flight status costs **2 units** (4 if flight plans are asked for, which they
+are not). So 400 units buy **200 lookups**. The default cap of 100 lookups uses half and covers about
+8 flights a month at about 12 lookups each; raise `FLIGHT_MONTHLY_LIMIT` to at most 190 for about 15.
+
+Plan terms that shape the design: **attribution is required**, so the event page and the Screen page say
+"Flight data: AeroDataBox" wherever a flight status is shown (the e-paper image does not, for space; to be
+checked against the terms). **Caching is limited to 7 days**, hence section 5.
 
 Only `flight_source.py` talks to the service (as `holiday_source.py` does for holidays): standard library,
 short timeout, size cap, one function that returns a small `FlightInfo` or "not found". A different
