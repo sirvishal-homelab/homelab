@@ -8,6 +8,8 @@ firmware), first use is a **homelab status screen** fed by Beszel.
 - Location: office, near the desk or the server rack (may move). Viewer: the owner only.
 - Wants a hook into **Beszel** showing what is up (VMs, containers) and some stats.
 - Will create a **dedicated Beszel account** for the app.
+- Beszel agents already run on **both Proxmox nodes and TrueNAS**, so those hosts are in Beszel today.
+- Wants a **lightweight web interface** to choose which systems are shown.
 
 ## What the data sources can give
 
@@ -37,6 +39,10 @@ version the app is tested against and keep the Beszel client in one small module
 | F-9 | Read VM/LXC state from the Proxmox API and fill the "VMs/LXC" tile; a guest marked "onboot" that is stopped counts as down. | 1b |
 | F-10 | If Beszel cannot be reached, show a distinct "Beszel unreachable" screen (grey/amber), not stale green. | 1 |
 | F-11 | A minimal status page or `/health` endpoint so Beszel or the owner can see the app itself is alive. | 1 |
+| F-12 | **Settings page** (phone-friendly, LAN only): lists every system Beszel reports, with a checkbox to show it, a drag/up-down order, and an optional short display name (e.g. `truenas` → `NAS`). New systems appear unticked. | 1 |
+| F-13 | Settings page also edits: amber/red thresholds, poll interval, which containers may stop without alerting (F-6), and the screen address. | 1 |
+| F-14 | Settings page shows a **live preview** of the current 240x240 image and a "Push now" button. | 1 |
+| F-15 | Up to **3 systems** fit on the overview; if more are selected, the overview rotates through pages of 3 (interval configurable). Hidden systems still raise alerts unless "ignore alerts" is ticked for them. | 1 |
 
 Red conditions (draft, owner to confirm): a host down; a Proxmox node down or quorum lost (1b);
 an expected container or onboot guest down; disk >= 90 %; Beszel unreachable for > 5 min.
@@ -47,10 +53,11 @@ an expected container or onboot guest down; disk >= 90 %; Beszel unreachable for
 |----|-------------|
 | N-1 | Runs as one small Docker container on the existing Docker LXC, next to TRMNL Calendar. |
 | N-2 | Python 3.12 + Pillow (same stack and conventions as TRMNL Calendar). |
-| N-3 | Config (thresholds, poll interval, device address) in a config file or env; **secrets only in env** (`BESZEL_URL`, `BESZEL_USER`, `BESZEL_PASSWORD`, later `PVE_TOKEN_ID`, `PVE_TOKEN_SECRET`). Nothing secret in git. |
+| N-3 | Settings (selected systems, order, names, thresholds, intervals, device address) stored in **SQLite**, edited through the settings page (as TRMNL Calendar ADR-0005/0007); **secrets only in env** (`BESZEL_URL`, `BESZEL_USER`, `BESZEL_PASSWORD`, later `PVE_TOKEN_ID`, `PVE_TOKEN_SECRET`). Nothing secret in git. |
 | N-4 | Poll every 60 s (configurable). Upload under 2 s. A change appears on screen within ~1 min. |
 | N-5 | Recovers by itself after the screen, Beszel or the network restarts. |
 | N-6 | Read-only everywhere: the Beszel account and Proxmox token cannot change anything. |
+| N-8 | Settings page has no login (LAN only, single user, same as TRMNL Calendar); it holds no secrets and cannot change Beszel. |
 | N-7 | Unit tests for rendering and the Beszel and Proxmox clients (with recorded fixtures); CI like TRMNL Calendar. |
 
 ## Owner set-up (when we build)
