@@ -1,7 +1,8 @@
 # 07 - Install and upgrade runbook (server, Docker)
 
-Status: **Partly verified 2026-11-15:** first install and two upgrades ran on the server as written
-(0.1.0 → 0.1.2). Backups, restore drill and rollback not yet run (S-5). Describes the agreed path: build on
+Status: **Partly verified 2026-11-15:** install and upgrades 0.1.0 → 0.4.0 ran on the server as
+written. Backup, restore drill and rollback corrected 2026-11-15 (volume name, WAL files,
+image-tag rollback); to be run in S-5. Describes the agreed path: build on
 the server from a clone, manual pull and update (same as TRMNL Calendar `docs/19`). Slice S-1
 runs every command on the real server and corrects this file; S-5 marks it Verified.
 
@@ -16,7 +17,7 @@ this public repo.
 | `/root/terminus` | Terminus (unchanged) |
 | `/root/homelab` | Existing sparse clone of this repo, already used by TRMNL Calendar |
 | `/root/homelab/esp-mini-screen/app/deploy/.env` | Secrets and settings, `chmod 600`, never committed |
-| Docker volume `esp-screen-data` | SQLite database and its backups (`/data` in the container) |
+| Docker volume `esp-screen_esp-screen-data` | SQLite database and its backups (`/data` in the container) |
 | Port `8081` | Settings page (TRMNL Calendar keeps `8080`, Terminus `2300`) |
 
 Expected footprint: one container, roughly 60-100 MB RAM, an image of about 200 MB.
@@ -106,24 +107,46 @@ Later (S-4): open `http://<server-ip>:8081/` from your phone, pick the focus sys
 ## Backups
 
 The database only holds settings and container memory; losing it means re-picking focus
-systems. The app keeps 7 nightly copies in the volume. To keep one off the server:
+systems. The app keeps 7 automatic copies in the volume (`/data/backups`), plus one before every
+migration. The volume is called **`esp-screen_esp-screen-data`** (compose project + volume name).
+
+Back up now and copy the backups off the container's volume:
 
 ```bash
+cd /root/homelab/esp-mini-screen/app/deploy
+docker compose exec esp-screen python -m esp_screen.storage.backup --now
 mkdir -p /root/esp-screen-backups
-docker run --rm -v esp-screen-data:/data:ro -v /root/esp-screen-backups:/out alpine \
-    sh -c 'cp -n /data/backups/*.db /out/'
+docker run --rm -v esp-screen_esp-screen-data:/data:ro -v /root/esp-screen-backups:/out alpine \
+    sh -c 'cp -n /data/backups/*.db /out/ && ls -l /out'
 ```
 
-Restore drill (S-5): stop the app, copy a backup over `/data/screen.db`, start, check the
-Settings page shows the same focus systems.
+### Restore (and the S-5 drill)
+
+```bash
+cd /root/homelab/esp-mini-screen/app/deploy
+docker compose stop esp-screen
+# list backups, newest last
+docker run --rm -v esp-screen_esp-screen-data:/data alpine ls -1 /data/backups
+# restore one: replace the database AND delete its WAL side files, then fix ownership
+docker run --rm -v esp-screen_esp-screen-data:/data alpine sh -c '
+  cp /data/backups/<backup-file>.db /data/screen.db &&
+  rm -f /data/screen.db-wal /data/screen.db-shm &&
+  chown 10001:10001 /data/screen.db'
+docker compose start esp-screen
+curl -s http://localhost:8081/healthz
+```
+
+Check on the settings page that the focus systems, names and tuning are the ones from the
+backup. **Drill:** change one display name, take a backup, change it again, restore the backup:
+the first name must come back.
 
 ## Upgrade
 
 ```bash
 cd /root/homelab/esp-mini-screen/app/deploy
 
-# 1. Note what runs now (for rollback)
-git -C /root/homelab rev-parse --short HEAD
+# 1. Keep the running image for a quick rollback
+docker tag esp-mini-screen:local esp-mini-screen:previous
 
 # 2. Fetch and read what changed
 git -C /root/homelab pull --ff-only
@@ -145,16 +168,18 @@ the clone: `git pull` updates both folders, but each only changes when you rebui
 
 ## Roll back
 
+Fast path (no git): go back to the image tagged before the last upgrade.
+
 ```bash
-cd /root/homelab
-git checkout <previous-short-sha> -- esp-mini-screen
-cd esp-mini-screen/app/deploy
-docker compose build && docker compose up -d
+cd /root/homelab/esp-mini-screen/app/deploy
+docker tag esp-mini-screen:previous esp-mini-screen:local
+docker compose up -d --no-build
+curl -s http://localhost:8081/healthz      # "version" shows the older number
 ```
 
-If the newer version applied a migration, first restore its `pre-migration` backup (as in the
-restore drill). Return to `main` with `git -C /root/homelab checkout main -- esp-mini-screen`
-once a fix is merged.
+If the newer version applied a database migration (the log says "migrations applied" with a
+new number), also restore its `...-pre-migration-v<N>.db` backup as above, because an older app
+cannot read a newer schema. To go forward again: `docker compose build && docker compose up -d`.
 
 ## Screen firmware
 
@@ -164,8 +189,13 @@ Settings page still works, and record the new version in `03`.
 
 ## Monitoring
 
-Beszel already watches this container host. Add (owner, S-5): container `esp-screen` health
-shown as healthy; alert if it is not, where your Beszel version supports container alerts.
+- **The screen watches itself:** the header time is the time of the last good Beszel read and
+  changes every minute. A time more than a few minutes old means the app or the screen is stuck.
+- **Beszel:** the Terminus container host is already monitored; `esp-screen` appears in its
+  container list. If your Beszel version offers alerts for a single container, add one for
+  `esp-screen`; otherwise the stale header time is the signal.
+- **`/healthz`:** `screen.last_result`, `beszel.last_error` and `alert` say what is happening.
+- **Memory:** `docker stats --no-stream esp-screen` (expected well under 150 MB).
 
 ## Uninstall
 
