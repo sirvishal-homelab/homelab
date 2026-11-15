@@ -1,6 +1,6 @@
 [project]
 name = "esp-mini-screen"
-version = "0.1.0"
+version = "0.1.1"
 description = "Renders a homelab status image from Beszel and pushes it to a GeekMagic SmallTV-Ultra"
 requires-python = ">=3.12"
 dependencies = [

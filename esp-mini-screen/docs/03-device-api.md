@@ -37,6 +37,9 @@ scripts, plus one test upload. Undocumented by the vendor, so it may change with
   vendor sample images before relying on it.
 - Keep frames small (simple flat graphics compress to a few KB) to keep uploads fast and limit
   flash wear. Push only when the content changes, not on a fixed fast timer.
+- **Busy answers:** right after an upload, JSON reads such as `/album.json` and `/space.json` can
+  return a bare `OK` instead of JSON (seen 2026-11-14 in the spike and 2026-11-15 on the first
+  install). Treat reads after an upload as advisory: pause, retry once, never fail a push on them.
 - No authentication: anyone on the LAN can change the screen. Acceptable on a home LAN; note it.
 - Power: the device shut itself off once on a weak USB source (2026-11-14). Use a 5 V / 1 A or
   better adapter.
