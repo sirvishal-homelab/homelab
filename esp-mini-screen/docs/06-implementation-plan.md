@@ -43,7 +43,7 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Update `05` section 2 and 7 if names differ. Record findings in `docs/08-beszel-api.md`.
 - **Done when:** fixtures and `08` are merged; R-1 in `05` updated.
 
-### S-1 Foundations and first push: **built 2026-11-15** (awaiting install on the server)
+### S-1 Foundations and first push: **done 2026-11-15** (0.1.2 installed; frame on the real screen; install and upgrade steps in `07` ran as written)
 
 - `app/` skeleton mirroring TRMNL Calendar: `pyproject.toml` (uv, ruff, pytest), multi-stage
   non-root `Dockerfile` with bundled Inter font and `HEALTHCHECK`, `deploy/compose.yml`,
@@ -56,7 +56,7 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
   `permissions: contents: read`).
 - **Done when:** installed on the server with `07`; the frame shows on the real screen; `/healthz` green.
 
-### S-2 Live overview
+### S-2 Live overview: **built 2026-11-15** (0.2.0, awaiting install)
 
 - Beszel client (login, token cache, 401 refresh, timeouts) against S-0 fixtures + fake hub.
 - `domain/evaluate.py` (thresholds, tiles) with table-driven tests.

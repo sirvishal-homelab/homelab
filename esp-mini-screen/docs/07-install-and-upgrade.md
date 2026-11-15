@@ -1,6 +1,7 @@
 # 07 - Install and upgrade runbook (server, Docker)
 
-Status: **DRAFT, updated 2026-11-15 for S-1 (code exists, CI builds and runs the image). Not yet run on the server.** Describes the agreed path: build on
+Status: **Partly verified 2026-11-15:** first install and two upgrades ran on the server as written
+(0.1.0 → 0.1.2). Backups, restore drill and rollback not yet run (S-5). Describes the agreed path: build on
 the server from a clone, manual pull and update (same as TRMNL Calendar `docs/19`). Slice S-1
 runs every command on the real server and corrects this file; S-5 marks it Verified.
 
@@ -75,6 +76,12 @@ docker compose ps                         # "healthy" after ~30 s
 curl -s http://localhost:8081/healthz     # "status":"ok"; "screen": {"last_result": "ok", ...}
 docker compose logs --tail=50 esp-screen  # migrations applied, "start-up frame shown on the screen"
 ```
+
+**After S-2 (0.2.0):** add `FOCUS_SYSTEMS=<name>,<name>,<name>` to `.env` (names as shown in
+Beszel, 1 to 4, in order), then `docker compose up -d`. The start-up card shows for about a minute,
+then the live overview. `/healthz` gains `beszel` (last read, last error) and `overview` (what the
+screen shows). If Beszel cannot be reached the screen keeps its last picture and `/healthz` says
+why; the on-screen warning arrives in S-3.
 
 **What to expect after S-1:** the screen shows a **"Screen connected - waiting for Beszel"** card with
 the start time, within a few seconds of `up -d`. The only URL is `/healthz`; the settings page arrives
