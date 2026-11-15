@@ -9,8 +9,6 @@ from collections.abc import Callable
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-import httpx
-
 from esp_screen import __version__
 from esp_screen.config import Settings
 from esp_screen.device.client import DeviceError, ScreenClient
@@ -26,7 +24,6 @@ async def push_startup_frame(
     settings: Settings,
     *,
     now: Callable[[], datetime] = datetime.now,
-    transport: httpx.AsyncBaseTransport | None = None,
 ) -> bool:
     """Render the start-up frame and show it. Never raises: the result goes to push_state."""
     with contextlib.closing(db.connect(settings.db_path)) as conn:
@@ -37,7 +34,7 @@ async def push_startup_frame(
         stamp = now().astimezone(ZoneInfo(settings.timezone)).strftime("%H:%M")
         data = frames.encode_jpeg(frames.hello(__version__, stamp))
         digest = frames.frame_hash(data)
-        async with ScreenClient(url, transport=transport) as screen:
+        async with ScreenClient(url) as screen:
             try:
                 await screen.push(STATUS_IMAGE, data)
             except DeviceError as exc:

@@ -12,24 +12,31 @@ from esp_screen.main import create_app  # noqa: E402
 from tests.fakes.screen import FakeScreen  # noqa: E402
 
 
-def test_startup_migrates_backs_up_and_pushes(settings):
+def test_startup_migrates_backs_up_and_pushes(tmp_path):
+    from esp_screen.config import load_settings
+
     fake = FakeScreen()
-    app = create_app(settings, screen_transport=fake.transport)
-    with TestClient(app) as client:
+    with fake.serve() as url:
+        settings = load_settings({"DATA_DIR": str(tmp_path), "SCREEN_URL": url})
+        body = _start_and_wait(settings)
+    assert body["status"] == "ok"
+    assert body["schema_version"] == 1
+    assert body["screen"]["configured"] is True
+    assert body["screen"]["last_result"] == "ok"
+    assert body["last_backup_age_hours"] is not None
+    assert body["beszel_configured"] is False
+    assert fake.shown == "/image/status.jpg"
+
+
+def _start_and_wait(settings) -> dict:
+    with TestClient(create_app(settings)) as client:
         for _ in range(50):  # the start-up push runs in the background
             r = client.get("/healthz")
             if r.json().get("screen", {}).get("last_result"):
                 break
             time.sleep(0.05)
     assert r.status_code == 200
-    body = r.json()
-    assert body["screen"]["last_result"] == "ok"
-    assert fake.shown == "/image/status.jpg"
-    assert body["status"] == "ok"
-    assert body["schema_version"] == 1
-    assert body["screen"]["configured"] is True
-    assert body["last_backup_age_hours"] is not None
-    assert body["beszel_configured"] is False
+    return r.json()
 
 
 def test_rejects_more_than_one_worker(tmp_path):

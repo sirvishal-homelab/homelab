@@ -20,9 +20,11 @@ def no_waiting(monkeypatch):
 
 
 def push(settings, fake):
-    return asyncio.run(
-        publish.push_startup_frame(settings, now=lambda: NOON_UTC, transport=fake.transport)
-    )
+    with fake.serve() as url:
+        with contextlib.closing(db.connect(settings.db_path)) as conn:
+            if repo.get_setting(conn, "device_url"):
+                repo.set_setting(conn, "device_url", url)
+        return asyncio.run(publish.push_startup_frame(settings, now=lambda: NOON_UTC))
 
 
 def test_startup_frame_reaches_screen(migrated):
@@ -37,7 +39,7 @@ def test_startup_frame_reaches_screen(migrated):
 
 
 def test_screen_offline_is_recorded_not_raised(migrated):
-    fake = FakeScreen(fail_next=10)
+    fake = FakeScreen(drop_next=10)
     assert push(migrated, fake) is False
     with contextlib.closing(db.connect(migrated.db_path)) as conn:
         state = repo.get_push_state(conn)

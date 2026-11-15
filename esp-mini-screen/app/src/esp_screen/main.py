@@ -17,7 +17,7 @@ from esp_screen.storage import backup, db, migrate, repo
 log = logging.getLogger("esp_screen")
 
 
-def create_app(settings: Settings | None = None, *, screen_transport=None) -> FastAPI:
+def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
 
     def backup_if_due() -> None:
@@ -50,7 +50,7 @@ def create_app(settings: Settings | None = None, *, screen_transport=None) -> Fa
             log.info("Beszel is not configured (.env): status screens arrive in slice S-2")
         tasks = [
             asyncio.create_task(backup_loop()),
-            asyncio.create_task(publish.push_startup_frame(settings, transport=screen_transport)),
+            asyncio.create_task(publish.push_startup_frame(settings)),
         ]
         app.state.tasks = tasks
         try:
