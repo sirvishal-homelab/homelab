@@ -22,6 +22,7 @@ class Settings:
     beszel_user: str = ""
     beszel_password: str = field(default="", repr=False)  # a secret: never shown or logged
     timezone: str = "America/Halifax"
+    focus_systems: tuple[str, ...] = ()  # until the settings page (S-4); names or Beszel ids
 
     @property
     def db_path(self) -> Path:
@@ -52,4 +53,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         beszel_user=e.get("BESZEL_USER", "").strip(),
         beszel_password=e.get("BESZEL_PASSWORD", ""),
         timezone=e.get("TZ", "America/Halifax").strip() or "America/Halifax",
+        focus_systems=tuple(n.strip() for n in e.get("FOCUS_SYSTEMS", "").split(",") if n.strip())[
+            :4
+        ],
     )

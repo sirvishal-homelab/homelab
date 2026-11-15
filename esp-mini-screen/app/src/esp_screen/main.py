@@ -11,13 +11,14 @@ from fastapi import FastAPI, Response
 
 from esp_screen import __version__, publish
 from esp_screen.config import Settings, load_settings
+from esp_screen.loop import Runner
 from esp_screen.render.fonts import verify_fonts
 from esp_screen.storage import backup, db, migrate, repo
 
 log = logging.getLogger("esp_screen")
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, *, beszel_transport=None) -> FastAPI:
     settings = settings or load_settings()
 
     def backup_if_due() -> None:
@@ -46,12 +47,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             log.info("migrations applied: %s", applied or "none")
             repo.seed_device_url(conn, settings.screen_url)
         backup_if_due()
-        if not settings.beszel_configured:
-            log.info("Beszel is not configured (.env): status screens arrive in slice S-2")
-        tasks = [
-            asyncio.create_task(backup_loop()),
-            asyncio.create_task(publish.push_startup_frame(settings)),
-        ]
+        runner = (
+            Runner(settings, beszel_transport=beszel_transport)
+            if settings.beszel_configured
+            else None
+        )
+        app.state.runner = runner
+
+        async def screen_loop() -> None:
+            await publish.push_startup_frame(settings)
+            if runner is None:
+                log.info("Beszel is not configured (.env): showing the start-up frame only")
+                return
+            if not settings.focus_systems:
+                log.info("no FOCUS_SYSTEMS set: the overview shows the counters only")
+            await runner.run_forever()
+
+        tasks = [asyncio.create_task(backup_loop()), asyncio.create_task(screen_loop())]
         app.state.tasks = tasks
         try:
             yield
@@ -61,9 +73,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             for t in tasks:
                 with contextlib.suppress(asyncio.CancelledError):
                     await t
+            if runner is not None:
+                await runner.aclose()
 
     app = FastAPI(title="ESP Mini Screen", version=__version__, lifespan=lifespan)
     app.state.settings = settings
+    app.state.runner = None
 
     @app.get("/healthz")
     def healthz(response: Response) -> dict:
@@ -83,6 +98,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             response.status_code = 503
             return {"status": "error", "version": __version__, "detail": type(exc).__name__}
         body["beszel_configured"] = settings.beszel_configured
+        runner = app.state.runner
+        if runner is not None:
+            h = runner.health
+            body["beszel"] = {
+                "last_ok_at": h.last_ok_at,
+                "last_error": h.last_error,
+                "data_changed": h.data_changed,
+            }
+            st = runner.last_status
+            if st is not None:
+                body["overview"] = {
+                    "focus": [f"{r.label}:{r.state.value}" for r in st.rows],
+                    "containers": f"{st.containers.up}/{st.containers.total}",
+                    "other_systems": f"{st.others.up}/{st.others.total}",
+                    "paused": st.others.paused,
+                }
         body["last_backup_age_hours"] = backup.latest_age_hours(settings.backup_dir)
         return body
 

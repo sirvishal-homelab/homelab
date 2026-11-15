@@ -63,3 +63,29 @@ def record_push(
             (f"{now} {error}",),
         )
     conn.commit()
+
+
+# --- container memory (docs/05 section 4) -----------------------------------------------------
+
+
+def load_container_memory(
+    conn: sqlite3.Connection,
+) -> tuple[dict[tuple[str, str], int], frozenset[tuple[str, str]]]:
+    rows = conn.execute(
+        "SELECT system_id, name, missing_polls, allowed_to_stop FROM known_containers"
+    ).fetchall()
+    memory = {(r["system_id"], r["name"]): r["missing_polls"] for r in rows}
+    allowed = frozenset((r["system_id"], r["name"]) for r in rows if r["allowed_to_stop"])
+    return memory, allowed
+
+
+def save_container_memory(conn: sqlite3.Connection, memory: dict[tuple[str, str], int]) -> None:
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    conn.executemany(
+        "INSERT INTO known_containers (system_id, name, missing_polls, last_running) "
+        "VALUES (?, ?, ?, CASE WHEN ? = 0 THEN ? END) "
+        "ON CONFLICT(system_id, name) DO UPDATE SET missing_polls = excluded.missing_polls, "
+        "last_running = COALESCE(excluded.last_running, known_containers.last_running)",
+        [(sid, name, n, n, now) for (sid, name), n in memory.items()],
+    )
+    conn.commit()

@@ -46,3 +46,34 @@ def test_rejects_more_than_one_worker(tmp_path):
     with pytest.raises(RuntimeError, match="WEB_CONCURRENCY"):
         with TestClient(create_app(s)):
             pass
+
+
+def test_live_overview_reported_in_healthz(tmp_path):
+    from esp_screen.config import load_settings
+    from tests.fakes.beszel import PASSWORD, USER, FakeHub
+
+    hub, fake = FakeHub(), FakeScreen()
+    with fake.serve() as url:
+        settings = load_settings(
+            {
+                "DATA_DIR": str(tmp_path),
+                "SCREEN_URL": url,
+                "BESZEL_URL": "http://beszel:8090",
+                "BESZEL_USER": USER,
+                "BESZEL_PASSWORD": PASSWORD,
+                "FOCUS_SYSTEMS": "node-a,node-b,nas",
+            }
+        )
+        with TestClient(create_app(settings, beszel_transport=hub.transport)) as client:
+            for _ in range(100):
+                body = client.get("/healthz").json()
+                if "overview" in body:
+                    break
+                time.sleep(0.05)
+    assert body["beszel"]["last_error"] is None
+    assert body["overview"] == {
+        "focus": ["node-a:up", "node-b:up", "nas:up"],
+        "containers": "9/9",
+        "other_systems": "3/3",
+        "paused": 1,
+    }
