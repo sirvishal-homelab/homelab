@@ -17,10 +17,11 @@ esp-mini-screen/
     ├── 00-overview.md         Device, goals, constraints, what the lab already has
     ├── 01-ideas.md            Candidate uses, scored against the existing homelab
     ├── 02-open-questions.md   What must be answered before choosing a direction
+    ├── 03-device-api.md       Stock firmware HTTP API (spike results)
     └── decisions/             Architecture Decision Records (none yet)
 ```
 
-Planned once a direction is chosen: `docs/03-requirements.md`, `docs/04-design.md`, then
+Planned once a direction is chosen: `docs/04-requirements.md`, `docs/05-design.md`, then
 code in `app/` (if a push service is built) or `firmware/` (if the device is reflashed).
 
 ## Related
