@@ -1,5 +1,5 @@
 # ADR-0001: Push rendered images to the stock firmware
-Status: Proposed
+Status: **Accepted 2026-11-15 by the owner**
 Date: 2026-11-14
 
 ## Context

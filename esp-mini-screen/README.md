@@ -5,7 +5,7 @@ screen driven by an ESP8266 or ESP32, sold as a "WiFi weather clock") so that it
 in this homelab and home.
 
 > **Status: exploring.** Device confirmed as SmallTV-Ultra (firmware Ultra-V9.0.50).
-> Direction: homelab status screen fed by Beszel (requirements agreed, design proposed). Nothing flashed or built.
+> Direction: homelab status screen fed by Beszel (design signed off 2026-11-15; building). Nothing flashed or built.
 
 ## Repository layout
 
@@ -22,12 +22,12 @@ esp-mini-screen/
     ├── 05-design.md           Architecture, rules, screens, data model (proposed)
     ├── 06-implementation-plan.md  Gate checklist and build slices S-0..S-5 (proposed)
     ├── 07-install-and-upgrade.md  Install, upgrade, rollback on the Terminus container (draft)
+    ├── 08-beszel-api.md       Beszel 0.21.2 fields and findings (S-0)
     ├── assets/                Mock-ups (sample data) and their generator
-    └── decisions/             Architecture Decision Records (0001-0003 proposed)
+    └── decisions/             Architecture Decision Records (0001-0003 accepted)
 ```
 
-Next: owner sign-off of `docs/05`, `06`, `07` and ADR-0001 to 0003 (gate checklist in `06`), then slice S-0.
-No code is written until the gate is clear., then
+Gate clear 2026-11-15. S-0 done 2026-11-15. Next: S-1 (foundations and first push)., then
 code in `app/` (if a push service is built) or `firmware/` (if the device is reflashed).
 
 ## Related

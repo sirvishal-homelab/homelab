@@ -1,5 +1,5 @@
 # ADR-0002: Beszel is the only data source
-Status: Proposed (direction agreed by owner 2026-11-14)
+Status: **Accepted 2026-11-15 by the owner**
 Date: 2026-11-14
 
 ## Context

@@ -1,13 +1,13 @@
 # 06 - Implementation plan
 
-Status: **Proposed 2026-11-14. No code until the gate checklist is clear.**
+Status: **Signed off 2026-11-15. Gate clear 2026-11-15; S-0 may start.**
 Design: `05-design.md`. Install and upgrade: `07-install-and-upgrade.md`.
 
 ```mermaid
 flowchart LR
   P0["0 Explore<br/>done"] --> P1["1 Verify device<br/>done (03)"]
   P1 --> P2["2 Requirements<br/>agreed (04)"]
-  P2 --> P3["3 Design + plan<br/>awaiting sign-off (05, 06, 07)"]
+  P2 --> P3["3 Design + plan<br/>signed off (05, 06, 07)"]
   P3 --> G{{"Gate"}}
   G --> P4["4 Build in slices S-0..S-5"]
 ```
@@ -17,17 +17,17 @@ flowchart LR
 | 0 Explore | `00`, `01`, `02` | Done |
 | 1 Verify device | `03-device-api.md` (upload and set verified on V9.0.50) | Done 2026-11-14 |
 | 2 Requirements | `04-requirements.md` | Agreed 2026-11-14 |
-| 3 Design and plan | `05`, `06`, `07`, ADR-0001 to 0003 | Proposed, awaiting owner sign-off |
+| 3 Design and plan | `05`, `06`, `07`, ADR-0001 to 0003 | Signed off 2026-11-15 |
 | 4 Build | Slices below | Not started |
 
 ## Gate checklist (all must be ticked before any code in `app/`)
 
-1. [ ] Owner signs off `05-design.md`, this plan, `07-install-and-upgrade.md` and ADR-0001 to 0003.
-2. [ ] Beszel: read-only app user created and all systems shared with it (`07`, "Before install").
-3. [ ] Pi-hole DHCP reservation for the screen (Q-8).
-4. [ ] Screen on a 5 V / 1 A (or better) adapter and stable for 24 h (it shut off once on weak power).
-5. [ ] Terminus container has room: free disk >= 3 GB (`df -h /`), free memory >= 200 MB (`free -m`).
-6. [ ] Port chosen and free on that container (proposed `8081`; the calendar uses `8080`).
+1. [x] Owner signs off `05-design.md`, this plan, `07-install-and-upgrade.md` and ADR-0001 to 0003. Done 2026-11-15 (merged #38, confirmed in chat).
+2. [x] Beszel: read-only app user created and all systems shared with it (`07`, "Before install"). Done 2026-11-15.
+3. [x] Pi-hole DHCP reservation for the screen (Q-8). Done 2026-11-15.
+4. [x] Screen on a 5 V / 1 A (or better) adapter and stable (it shut off once on weak power). Adapter swapped 2026-11-14; stable since.
+5. [x] Terminus container has room: free disk >= 3 GB (`df -h /`), free memory >= 200 MB (`free -m`). 2026-11-15: 16 GB free of 30 GB; 1372 MB available of 2048 MB.
+6. [x] Port chosen and free on that container (`8081`; the calendar uses `8080`). Free 2026-11-15. The container reaches the screen (HTTP 302 to its settings page) and the Beszel hub by name (`http://beszel:8090/api/health` OK).
 
 S-0 is a read-only spike and may run once items 1 and 2 are ticked.
 
@@ -35,9 +35,9 @@ S-0 is a read-only spike and may run once items 1 and 2 are ticked.
 
 Each slice ends with a check on the real screen or the real hub. Each is one pull request.
 
-### S-0 Beszel contract spike (throwaway script, no app code)
+### S-0 Beszel contract spike (throwaway script, no app code): **done 2026-11-15** (`08`, fixtures in `app/tests/fixtures/beszel-0.21.2/`)
 
-- Log in as the app user; fetch `systems` and `containers` once; note the hub version.
+- Log in as the app user; fetch `systems` and `containers` once. Hub version at gate: **Beszel 0.21.2** (owner updates when releases appear).
 - Record scrubbed JSON (no IPs, hostnames kept only if the owner agrees) as test fixtures.
 - Confirm field names for: system status, CPU %, memory %, disk %, container name, state, system link.
 - Update `05` section 2 and 7 if names differ. Record findings in `docs/08-beszel-api.md`.
@@ -61,13 +61,13 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Beszel client (login, token cache, 401 refresh, timeouts) against S-0 fixtures + fake hub.
 - `domain/evaluate.py` (thresholds, tiles) with table-driven tests.
 - `render.overview()` with snapshot tests; focus systems read from env for now.
-- Loop: poll, render, push on change, 15-minute keep-alive.
+- Loop: read Beszel, render, upload on change; "updated at" HH:MM (24-hour) in the header.
 - **Done when:** the real screen shows pve1, pve2 and NAS with live numbers; a change appears within ~1 min.
 
 ### S-3 Alerts
 
 - Container memory (`known_containers`, 2-poll rule, allowed-to-stop).
-- `render.alert()` and `render.unreachable()`; alert/overview flip; most severe first.
+- `render.alert()`, `render.unreachable()` and the "Beszel data changed" frame (F-16); alert/overview flip with `/set?img=` only; most severe first.
 - **Done when:** stopping a test container shows the alert within ~2 min and clears after restart;
   stopping the Beszel hub shows "unreachable" (amber, then red after 5 min).
 

@@ -1,0 +1,243 @@
+{
+  "items": [
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2025-11-05 13:47:57.121Z",
+      "host": "<ip-dns>",
+      "id": "39njf3esao2z3bz",
+      "info": {
+        "bb": 2287,
+        "cpu": 0.15,
+        "ct": 2,
+        "dp": 58.58,
+        "dt": 31,
+        "la": [
+          0.09,
+          0.03,
+          0.02
+        ],
+        "mp": 13.38,
+        "sv": [
+          32,
+          0
+        ],
+        "t": 1,
+        "u": 2424184,
+        "v": "0.21.2"
+      },
+      "name": "dns",
+      "port": "45876",
+      "status": "up",
+      "updated": "2026-11-15 10:24:25.743Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    },
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2025-11-05 13:48:56.643Z",
+      "host": "<ip-node-a>",
+      "id": "as4fkbiyv9cpbkx",
+      "info": {
+        "bb": 71140,
+        "cpu": 0.91,
+        "ct": 2,
+        "dp": 53.91,
+        "dt": 31,
+        "la": [
+          0.04,
+          0.02,
+          0.02
+        ],
+        "mp": 6.97,
+        "pu": [
+          14,
+          1
+        ],
+        "sv": [
+          72,
+          0
+        ],
+        "t": 4,
+        "u": 2424250,
+        "v": "0.21.2"
+      },
+      "name": "node-a",
+      "port": "45876",
+      "status": "up",
+      "updated": "2026-11-15 10:23:33.567Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    },
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2025-11-05 13:01:31.120Z",
+      "host": "<ip-node-b>",
+      "id": "zq8djodrq1bx5oj",
+      "info": {
+        "bb": 100578,
+        "cpu": 2.26,
+        "ct": 2,
+        "dp": 50.63,
+        "dt": 33,
+        "la": [
+          0,
+          0.03,
+          0.03
+        ],
+        "mp": 9.87,
+        "pu": [
+          0,
+          0
+        ],
+        "sv": [
+          77,
+          0
+        ],
+        "t": 4,
+        "u": 2424542,
+        "v": "0.21.2"
+      },
+      "name": "node-b",
+      "port": "45876",
+      "status": "up",
+      "updated": "2026-11-15 10:23:32.921Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    },
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2025-11-02 13:28:44.651Z",
+      "host": "<ip-backup>",
+      "id": "iky9db7bjoxo7po",
+      "info": {
+        "bb": 0,
+        "cpu": 0,
+        "dp": 0,
+        "la": [
+          0,
+          0,
+          0
+        ],
+        "mp": 0,
+        "u": 0,
+        "v": ""
+      },
+      "name": "backup",
+      "port": "45876",
+      "status": "paused",
+      "updated": "2026-05-31 18:14:23.606Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    },
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2026-01-11 19:19:49.906Z",
+      "host": "nas",
+      "id": "xq4jezbmzo6b7dk",
+      "info": {
+        "bb": 33322,
+        "cpu": 0.94,
+        "ct": 1,
+        "dp": 0.05,
+        "dt": 52.85,
+        "la": [
+          0.12,
+          0.12,
+          0.09
+        ],
+        "mp": 27.78,
+        "t": 4,
+        "u": 2337020,
+        "v": "0.21.2"
+      },
+      "name": "nas",
+      "port": "45876",
+      "status": "up",
+      "updated": "2026-11-15 10:23:51.671Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    },
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2026-10-22 11:02:12.712Z",
+      "host": "docker-host",
+      "id": "grh0kefzwq2t2g3",
+      "info": {
+        "bb": 2117,
+        "cpu": 2.3,
+        "ct": 2,
+        "dp": 43.2,
+        "dt": 33,
+        "la": [
+          0,
+          0.03,
+          0.03
+        ],
+        "mp": 9.86,
+        "t": 2,
+        "u": 2424543,
+        "v": "0.21.2"
+      },
+      "name": "docker-host",
+      "port": "45876",
+      "status": "up",
+      "updated": "2026-11-15 10:23:33.351Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    },
+    {
+      "collectionId": "2hz5ncl8tizk5nx",
+      "collectionName": "systems",
+      "created": "2025-11-05 13:49:49.975Z",
+      "host": "<ip-vm-1>",
+      "id": "bxngngsyslrc3ww",
+      "info": {
+        "bb": 1888,
+        "cpu": 0.18,
+        "ct": 2,
+        "dp": 86.3,
+        "dt": 34,
+        "la": [
+          0,
+          0.02,
+          0.03
+        ],
+        "mp": 37.65,
+        "pu": [
+          0,
+          0
+        ],
+        "sv": [
+          39,
+          1
+        ],
+        "t": 2,
+        "u": 2424579,
+        "v": "0.21.2"
+      },
+      "name": "vm-1",
+      "port": "45876",
+      "status": "up",
+      "updated": "2026-11-15 10:24:28.524Z",
+      "users": [
+        "user_admin_0001"
+      ]
+    }
+  ],
+  "page": 1,
+  "perPage": 500,
+  "totalItems": 7,
+  "totalPages": 1
+}
