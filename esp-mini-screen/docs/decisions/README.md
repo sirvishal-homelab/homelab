@@ -4,7 +4,9 @@ One file per decision. Status values: **Proposed**, **Accepted**, **Superseded**
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| (none yet) | | |
+| 0001 | Push rendered images to the stock firmware | Proposed |
+| 0002 | Beszel is the only data source | Proposed |
+| 0003 | Settings in SQLite, edited on a small web page | Proposed |
 
 Template:
 
