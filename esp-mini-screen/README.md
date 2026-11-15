@@ -4,8 +4,8 @@ What to do with a **GeekMagic "SmallTV"** desktop display (a 1.54" 240x240 colou
 screen driven by an ESP8266 or ESP32, sold as a "WiFi weather clock") so that it is useful
 in this homelab and home.
 
-> **Status: exploring.** No direction chosen yet. The device model (Ultra or Pro) is not
-> confirmed. Nothing has been flashed or built.
+> **Status: exploring.** Device confirmed as SmallTV-Ultra (firmware Ultra-V9.0.50).
+> Direction: homelab status screen fed by Beszel (requirements agreed, design proposed). Nothing flashed or built.
 
 ## Repository layout
 
@@ -17,10 +17,17 @@ esp-mini-screen/
     ├── 00-overview.md         Device, goals, constraints, what the lab already has
     ├── 01-ideas.md            Candidate uses, scored against the existing homelab
     ├── 02-open-questions.md   What must be answered before choosing a direction
-    └── decisions/             Architecture Decision Records (none yet)
+    ├── 03-device-api.md       Stock firmware HTTP API (spike results)
+    ├── 04-requirements.md     Homelab status screen fed by Beszel (agreed)
+    ├── 05-design.md           Architecture, rules, screens, data model (proposed)
+    ├── 06-implementation-plan.md  Gate checklist and build slices S-0..S-5 (proposed)
+    ├── 07-install-and-upgrade.md  Install, upgrade, rollback on the Terminus container (draft)
+    ├── assets/                Mock-ups (sample data) and their generator
+    └── decisions/             Architecture Decision Records (0001-0003 proposed)
 ```
 
-Planned once a direction is chosen: `docs/03-requirements.md`, `docs/04-design.md`, then
+Next: owner sign-off of `docs/05`, `06`, `07` and ADR-0001 to 0003 (gate checklist in `06`), then slice S-0.
+No code is written until the gate is clear., then
 code in `app/` (if a push service is built) or `firmware/` (if the device is reflashed).
 
 ## Related

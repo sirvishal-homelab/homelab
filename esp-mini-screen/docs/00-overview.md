@@ -10,7 +10,8 @@ and decide whether that use is worth building.
 | Item | Value | Confidence |
 |------|-------|------------|
 | Product | GeekMagic "SmallTV" mini WiFi weather clock (AliExpress item 1005006728045097) | Verified (purchase) |
-| Model | **Ultra** (ESP8266 / ESP-12E) or **Pro** (ESP32, touch button) | Pending: check the box or the device web page |
+| Model | **SmallTV-Ultra** (ESP8266 / ESP-12E, no touch) | Verified (device web page, 2026-11-14) |
+| Firmware | **Ultra-V9.0.50**, the highest version in the vendor repo ([GeekMagicClock/smalltv-ultra](https://github.com/GeekMagicClock/smalltv-ultra)) as of 2026-11-14. Vendor warns: only flash Ultra firmware; a wrong image may be hard to recover | Verified |
 | Screen | 1.54" IPS, 240x240, ST7789 controller, colour | Inferred (both models) |
 | Power | USB, always on | Inferred |
 | Stock firmware | Weather, clock, photo album / GIF modes; web UI at `http://<screen-ip>/`; accepts image uploads over HTTP; has a firmware upload page | Inferred from community reports; to verify |

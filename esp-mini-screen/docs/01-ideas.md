@@ -9,8 +9,8 @@ Status: **Draft for discussion.** Effort: S = an evening, M = a weekend, L = sev
 | **A. Push images to stock firmware** | A small service renders a 240x240 PNG/JPEG with Pillow and uploads it to the device over HTTP. Same pattern as TRMNL Calendar (app owns data and drawing; the device only displays). | **Yes.** No flashing, reuses existing code style, Docker, CI. Works on Ultra and Pro. |
 | **B. Reflash with ESPHome** | Device becomes programmable; draws its own UI; Pro can use LVGL and the touch button. | Best with Home Assistant, which the lab does not run. One-way (stock firmware may need an activation code to restore). |
 
-Recommendation: start with **A**. Revisit B only if Home Assistant is added or touch input
-becomes important.
+Recommendation: **A**. The device is confirmed as the **Ultra** (ESP8266, no touch), where
+ESPHome is RAM-limited and there is no touch input to gain, so B is not worth it here.
 
 ## Candidate uses
 

@@ -1,0 +1,60 @@
+# Throwaway mock-up generator (sample data only). Run: python3 make_mockups.py.txt <out_dir>
+import sys
+from PIL import Image, ImageDraw, ImageFont
+
+F = "/usr/share/fonts/opentype/inter/Inter-{}.otf"
+def f(w, s): return ImageFont.truetype(F.format(w), s)
+
+BG, CARD, FG, DIM = (14, 17, 22), (28, 33, 41), (235, 238, 242), (140, 148, 160)
+OK, WARN, BAD = (46, 204, 113), (241, 196, 15), (231, 76, 60)
+
+def bar(d, x, y, w, pct, col):
+    d.rounded_rectangle((x, y, x + w, y + 8), 4, fill=(50, 56, 66))
+    d.rounded_rectangle((x, y, x + max(8, int(w * pct / 100)), y + 8), 4, fill=col)
+
+def col(p): return BAD if p >= 90 else WARN if p >= 75 else OK
+
+def overview(path, hosts, guests, ctrs, clock):
+    im = Image.new("RGB", (240, 240), BG); d = ImageDraw.Draw(im)
+    d.text((10, 8), "HOMELAB", font=f("Bold", 15), fill=DIM)
+    d.text((230, 8), clock, font=f("SemiBold", 15), fill=DIM, anchor="ra")
+    # summary tiles
+    for i, (label, up, total) in enumerate([("Containers", *ctrs), ("Systems", *guests)]):
+        x = 10 + i * 113
+        c = OK if up == total else BAD
+        d.rounded_rectangle((x, 32, x + 107, 92), 10, fill=CARD)
+        d.text((x + 10, 38), label, font=f("Medium", 13), fill=DIM)
+        d.text((x + 10, 54), f"{up}", font=f("Bold", 28), fill=c)
+        d.text((x + 10 + d.textlength(str(up), font=f("Bold", 28)) + 4, 66), f"/ {total}", font=f("Medium", 15), fill=DIM)
+    # hosts
+    y = 102
+    for name, up, cpu, mem, disk in hosts:
+        d.rounded_rectangle((10, y, 230, y + 40), 8, fill=CARD)
+        d.ellipse((18, y + 8, 28, y + 18), fill=OK if up else BAD)
+        d.text((34, y + 5), name, font=f("SemiBold", 14), fill=FG)
+        if up:
+            d.text((222, y + 6), f"CPU {cpu}%", font=f("Medium", 12), fill=DIM, anchor="ra")
+            bar(d, 18, y + 26, 98, mem, col(mem)); bar(d, 124, y + 26, 98, disk, col(disk))
+        else:
+            d.text((222, y + 6), "DOWN", font=f("Bold", 13), fill=BAD, anchor="ra")
+        y += 45
+    d.text((18, 236), "", font=f("Medium", 9), fill=DIM)
+    im.save(path, quality=90)
+
+def alert(path, title, detail, since):
+    im = Image.new("RGB", (240, 240), (60, 14, 14)); d = ImageDraw.Draw(im)
+    d.rounded_rectangle((10, 10, 230, 230), 16, outline=BAD, width=3)
+    d.text((120, 40), "ATTENTION", font=f("Bold", 16), fill=(255, 180, 170), anchor="mm")
+    d.text((120, 100), title, font=f("Bold", 30), fill=FG, anchor="mm")
+    d.text((120, 140), detail, font=f("Medium", 16), fill=(255, 210, 205), anchor="mm")
+    d.text((120, 200), since, font=f("Medium", 13), fill=(220, 160, 155), anchor="mm")
+    im.save(path, quality=90)
+
+out = sys.argv[1] if len(sys.argv) > 1 else "."
+overview(f"{out}/mock-overview.jpg",
+         [("pve1", True, 12, 61, 48), ("pve2", True, 7, 44, 77), ("NAS", True, 3, 52, 60)],
+         (7, 7), (14, 14), "21:45")
+overview(f"{out}/mock-overview-problem.jpg",
+         [("pve1", True, 35, 81, 48), ("pve2", False, 0, 0, 0), ("NAS", True, 4, 55, 93)],
+         (5, 7), (12, 14), "21:45")
+alert(f"{out}/mock-alert.jpg", "pve2 down", "3 containers offline", "since 21:32 (13 min)")
