@@ -23,7 +23,7 @@ flowchart LR
 ## Gate checklist (all must be ticked before any code in `app/`)
 
 1. [ ] Owner signs off `05-design.md`, this plan, `07-install-and-upgrade.md` and ADR-0001 to 0003.
-2. [ ] Beszel: read-only app user created and all systems shared with it (`07`, "Before install").
+2. [x] Beszel: read-only app user created and all systems shared with it (`07`, "Before install"). Done 2026-11-15.
 3. [ ] Pi-hole DHCP reservation for the screen (Q-8).
 4. [ ] Screen on a 5 V / 1 A (or better) adapter and stable for 24 h (it shut off once on weak power).
 5. [ ] Terminus container has room: free disk >= 3 GB (`df -h /`), free memory >= 200 MB (`free -m`).

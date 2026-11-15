@@ -27,7 +27,21 @@ Expected footprint: one container, roughly 60-100 MB RAM, an image of about 200 
 2. **Beszel app user** (in the Beszel hub, **menu names vary by version; to verify in S-0**):
    1. Create a user, e.g. `esp-screen@<your-domain>`, with a long random password.
    2. Set its role to **read-only**.
-   3. Share every system with it (or only the ones you want counted).
+   3. Share every system with it. **Done 2026-11-15** with `SHARE_ALL_SYSTEMS=true` on the hub,
+      which shares all systems (including future ones) with every user. The hub runs as the
+      systemd service `beszel-hub` (binary in `/opt/beszel`, port 8090), so the variable is a
+      drop-in override:
+      ```bash
+      cat > /etc/systemd/system/beszel-hub.service.d/override.conf <<'EOF'
+      [Service]
+      Environment="SHARE_ALL_SYSTEMS=true"
+      EOF
+      systemctl daemon-reload && systemctl restart beszel-hub
+      systemctl show beszel-hub -p Environment      # expect SHARE_ALL_SYSTEMS=true
+      ```
+      The `[Service]` line is required; without it systemd logs "Assignment outside of section.
+      Ignoring." Alternative: share system by system in the PocketBase admin (`/_/`, collection
+      `systems`, field `users`); new systems then need sharing by hand.
    4. Check: log in as that user in a private window; you should see the systems and be unable to add or edit.
 3. **Screen.**
    1. Pi-hole DHCP reservation for the screen (keeps `<screen-ip>` fixed).
