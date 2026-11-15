@@ -28,6 +28,14 @@ class Settings:
     push_startup_delay_seconds: float = 10.0
     holiday_lookup: bool = True  # the optional online holiday lookup (ADR-0011)
     holiday_api_url: str = "https://date.nager.at/api/v3"
+    flight_status: bool = False  # flight status on events (ADR-0015); needs flight_api_key
+    flight_api_key: str = field(default="", repr=False)  # a secret: never shown or logged
+    flight_api_url: str = "https://aerodatabox.p.rapidapi.com"
+    flight_monthly_limit: int = 100
+
+    @property
+    def flight_enabled(self) -> bool:
+        return self.flight_status and bool(self.flight_api_key)
 
     @property
     def terminus_configured(self) -> bool:
@@ -67,4 +75,9 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         not in ("0", "off", "false", "no"),
         holiday_api_url=e.get("HOLIDAY_API_URL", "").strip().rstrip("/")
         or "https://date.nager.at/api/v3",
+        flight_status=e.get("FLIGHT_STATUS", "off").strip().lower() in ("1", "on", "true", "yes"),
+        flight_api_key=e.get("FLIGHT_API_KEY", "").strip(),
+        flight_api_url=e.get("FLIGHT_API_URL", "").strip().rstrip("/")
+        or "https://aerodatabox.p.rapidapi.com",
+        flight_monthly_limit=min(1000, max(1, int(e.get("FLIGHT_MONTHLY_LIMIT", "100") or 100))),
     )

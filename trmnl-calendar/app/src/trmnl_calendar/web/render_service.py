@@ -9,6 +9,7 @@ import sqlite3
 from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo
 
+from trmnl_calendar import flight_service
 from trmnl_calendar.domain.models import View
 from trmnl_calendar.domain.recurrence import occurrences
 from trmnl_calendar.render.layouts.base import PlanContext
@@ -46,6 +47,7 @@ def render_view(
         calendar.week_start,
         repo.notes_for(conn, ids),
     )
+    occ = flight_service.annotate(conn, occ)
     sections = tuple(s for s in cal.list_sections(conn, include_hidden=False))
     if view.categories_mode == "only":
         sections = tuple(s for s in sections if s.id in view.category_ids)

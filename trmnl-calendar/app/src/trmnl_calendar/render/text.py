@@ -66,3 +66,23 @@ def wrap(
         truncated = truncated or cut
         out.append(t)
     return out, truncated
+
+
+def split_tail(text: str, tail: str) -> tuple[str, str]:
+    """Split "11:25 AC663 (Delayed)" into ("11:25 AC663", "(Delayed)"); (text, "") if absent."""
+    mark = f" ({tail})"
+    if not tail or mark not in text:
+        return text, ""
+    return text.replace(mark, "", 1), mark.strip()
+
+
+def ellipsize_keep(
+    text: str, tail: str, size: int, bold: bool, max_width: float
+) -> tuple[str, bool]:
+    """Like ellipsize, but shorten the text before " (tail)" and keep the tail (docs/21 s4)."""
+    fitted, cut = ellipsize(text, size, bold, max_width)
+    head, end = split_tail(text, tail)
+    if not cut or not end:
+        return fitted, cut
+    short, _ = ellipsize(head, size, bold, max_width - measure(" " + end, size, bold))
+    return f"{short} {end}", True

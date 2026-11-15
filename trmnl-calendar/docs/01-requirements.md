@@ -21,6 +21,7 @@ Status column refers to the prototype in `reference/prototype/`:
 | FR-11 | Show push status in the UI and allow "push now". | None |
 | FR-12 | Preview exactly what the device will show, inside the editor. | Done (v1) |
 | FR-13 | Machine-readable list of upcoming occurrences. | Done (`/api/upcoming`) |
+| FR-14 | Optional: an event with a flight code (`AC123`) shows the flight's status (On time, Delayed, ...) after its title (`21`, ADR-0015). | Built 2026-11-15; live API to verify |
 
 ## Non-functional
 

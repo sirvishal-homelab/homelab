@@ -13,6 +13,8 @@ from fastapi.staticfiles import StaticFiles
 
 from trmnl_calendar import __version__
 from trmnl_calendar.config import Settings, load_settings
+from trmnl_calendar.flight_service import FlightRefresher
+from trmnl_calendar.flight_source import FlightSource
 from trmnl_calendar.holiday_source import HolidaySource
 from trmnl_calendar.publish.publisher import Publisher
 from trmnl_calendar.publish.scheduler import Scheduler
@@ -36,6 +38,7 @@ from trmnl_calendar.web.api import manage as manage_api
 from trmnl_calendar.web.api import views as views_api
 
 log = logging.getLogger("trmnl_calendar")
+FLIGHT_LOOP_SECONDS = 300  # each flight has its own next_due_at; this is only how often to look
 
 
 # Writes that cannot change the picture: previews, the who-am-I and look cookies, push and check.
@@ -70,6 +73,20 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
             except Exception:  # keep the loop alive; healthz shows the age
                 log.exception("backup failed")
 
+    def flights_once() -> bool:
+        with contextlib.closing(db.connect(settings.db_path)) as conn:
+            return app.state.flights.refresh(conn, clock())
+
+    async def flight_loop() -> None:
+        await asyncio.sleep(settings.push_startup_delay_seconds)
+        while True:
+            try:
+                if await asyncio.to_thread(flights_once) and app.state.scheduler is not None:
+                    app.state.scheduler.request_push("flight status")
+            except Exception:  # keep the loop alive; the event page shows the last error
+                log.exception("flight status refresh failed")
+            await asyncio.sleep(FLIGHT_LOOP_SECONDS)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if settings.web_concurrency != 1:
@@ -81,6 +98,11 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
         conn.close()  # request handlers open their own short-lived connection (thread safety)
         backup_if_due()  # synchronous, so a backup exists before the first request
         task = asyncio.create_task(backup_loop())
+        flights_task = None
+        if app.state.flights is not None:
+            flights_task = asyncio.create_task(flight_loop())
+            limit = settings.flight_monthly_limit
+            log.info("flight status is on (limit %d lookups a month)", limit)
         scheduler = app.state.scheduler
         if scheduler is not None:
             scheduler.start()
@@ -91,15 +113,26 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
         finally:
             if scheduler is not None:
                 await scheduler.stop()
-            task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await task
+            for t in (task, flights_task):
+                if t is None:
+                    continue
+                t.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await t
 
     app = FastAPI(title="TRMNL Calendar", version=__version__, lifespan=lifespan)
     app.state.settings = settings
     app.state.clock = clock
     app.state.render_cache = RenderCache()
     app.state.holiday_source = HolidaySource(settings.holiday_api_url)
+    app.state.flights = (
+        FlightRefresher(
+            FlightSource(settings.flight_api_key, settings.flight_api_url),
+            settings.flight_monthly_limit,
+        )
+        if settings.flight_enabled
+        else None
+    )
     app.state.publisher = Publisher(settings, app.state.render_cache, clock)
     app.state.scheduler = (
         Scheduler(

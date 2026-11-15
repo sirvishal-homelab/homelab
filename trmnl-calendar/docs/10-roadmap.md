@@ -43,6 +43,12 @@ the month page. Still the owner's to run: the restore drill on the server and th
 after slice 5: slice 4b (optional) and more holiday regions. ICS import is no longer needed for her
 shifts (see the work schedule below); it stays a possible later item for other events.
 
+**Owner idea 2026-11-15: flight status on events** (`21`, ADR-0015, proposed). An event with a flight code
+such as `AC123` keeps its look and gains a status word: On time, Delayed, and so on. Screen and web pages only,
+no alerts. Design agreed and built 2026-11-15 (`21`): migration 0009, `flight_source.py`, `flight_service.py`, the
+suffix, the event page panel with Check now, tests. Next: the owner puts the key in `deploy/.env`, and one
+Check now on a real flight verifies the live reply (R-15).
+
 **Owner additions 2026-10-29:** a work schedule as rotating weeks with per-day in/out and days off,
 instead of ICS import for her shifts.
 

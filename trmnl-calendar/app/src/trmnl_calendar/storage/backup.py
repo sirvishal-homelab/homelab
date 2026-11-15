@@ -25,12 +25,24 @@ def make_backup(db_path: Path, backup_dir: Path, *, label: str = "auto", keep: i
         dst = sqlite3.connect(dest)
         try:
             src.backup(dst)
+            _drop_provider_data(dst)
         finally:
             dst.close()
     finally:
         src.close()
     prune(backup_dir, keep, protect=dest)
     return dest
+
+
+def _drop_provider_data(dst: sqlite3.Connection) -> None:
+    """Flight status may be kept 7 days only (ADR-0015); backups live longer, so leave it out."""
+    has = dst.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'flight_status'"
+    ).fetchone()
+    if has:
+        dst.execute("DELETE FROM flight_status")
+        dst.commit()
+        dst.execute("VACUUM")  # so the deleted rows are not left in free pages
 
 
 def prune(backup_dir: Path, keep: int, protect: Path | None = None) -> None:

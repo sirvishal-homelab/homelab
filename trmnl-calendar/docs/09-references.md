@@ -58,6 +58,8 @@ Playwright with headless Chromium was used for screenshots and form tests.
 | HTTP problem details (error body style Terminus may use) | https://www.rfc-editor.org/rfc/rfc9457 |
 | iCalendar (if ICS import is chosen) | https://www.rfc-editor.org/rfc/rfc5545 |
 | DejaVu fonts licence (if bundling) | https://dejavu-fonts.github.io/License.html |
+| AeroDataBox flight status API (ADR-0015) | https://rapidapi.com/aedbx-aedbx/api/aerodatabox |
+| FlightAware AeroAPI (fallback, ADR-0015) | https://flightaware.com/commercial/aeroapi/ |
 
 ### Man pages likely useful
 

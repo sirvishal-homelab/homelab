@@ -10,6 +10,7 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
+from trmnl_calendar import flight_service
 from trmnl_calendar.domain.models import Event, Section
 from trmnl_calendar.domain.recurrence import occurrences, week_floor
 from trmnl_calendar.domain.repeat_text import repeat_text
@@ -80,6 +81,7 @@ def upcoming_groups(
         calendar.week_start,
         repo.notes_for(conn, ids),
     )
+    occ = flight_service.annotate(conn, occ)
     names = {s.id: s.name for s in cal.list_sections(conn)}
     everyone = people_repo.list_people(conn)
     person_names = {p.id: p.name for p in everyone}
@@ -122,6 +124,7 @@ def upcoming_groups(
         "window_days": UPCOMING_DAYS,
         "people_list": [p for p in everyone if p.active],
         "filter_person": person_id,
+        "flight_credit": flight_service.CREDIT if any(o.flight for o in occ) else "",
     }
 
 
@@ -617,6 +620,7 @@ def month_context(
         calendar.week_start,
         repo.notes_for(conn, ids),
     )
+    occ = flight_service.annotate(conn, occ)
     sections = cal.list_sections(conn)
     symbol = {s.id: SYMBOLS[i % len(SYMBOLS)] for i, s in enumerate(sections)}
     names = {s.id: s.name for s in sections}
@@ -698,4 +702,5 @@ def month_context(
         "selected_items": by_day.get(selected, []) if selected else [],
         "people_list": [p for p in everyone if p.active],
         "filter_person": person_id,
+        "flight_credit": flight_service.CREDIT if any(o.flight for o in occ) else "",
     }

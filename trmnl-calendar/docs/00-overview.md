@@ -20,7 +20,7 @@ home network. No cloud account is required for the calendar content.
 ## Scope
 
 In scope: event entry and storage, recurrence, sections, layout configuration, image
-rendering, delivery to Terminus, a home-network deployment.
+rendering, delivery to Terminus, a home-network deployment, optional flight status on events (`21`).
 
 Out of scope (for now, confirm with the user): multi-user accounts, internet exposure,
 importing from Google Calendar or ICS feeds, notifications, mobile app, TRMNL's hosted cloud

@@ -109,6 +109,19 @@ Upgrading applies migration 0005. The four settings in `.env` (`TERMINUS_URL`, `
 If a push fails the reason is shown on the same page and the screen keeps its old picture; the app retries at the next
 15-minute check. **Switch pushing off** stops all sending. Bulk holiday import is on **Categories → Add holidays**; **Look up holidays online** on that page adds other countries from the Nager.Date service (needs internet, only when you press Look up; `HOLIDAY_LOOKUP=off` hides it).
 
+### Turning on flight status (optional)
+
+1. Subscribe to AeroDataBox on RapidAPI (the free Basic plan is enough) and copy your key.
+2. In `deploy/.env` set `FLIGHT_STATUS=on` and `FLIGHT_API_KEY=<your key>` (remove the `#` in front of both),
+   then restart the app (`docker compose up -d`). The log says "flight status is on".
+3. Open an event whose title holds a flight code such as `AC663` and press **Check now** in its
+   **Flight status** panel. You should see the route and a word such as On time. If it says the key was
+   refused, check the key and the subscription.
+
+From then on flights on the calendar are looked up from the day before, more often in the last four hours,
+and the word appears after the title on the screen. `FLIGHT_MONTHLY_LIMIT` (default 100) caps lookups; the
+free plan allows about 190. Flight data is kept 7 days and is not in backups.
+
 ## Backups and the restore drill
 
 The app writes a backup of the database to the volume (`/data/backups`) every `BACKUP_INTERVAL_HOURS`
