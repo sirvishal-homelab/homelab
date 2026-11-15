@@ -43,8 +43,13 @@ A paused system keeps zeroed `info` and an old `updated`.
 | `cpu`, `memory` | CPU %, memory MB | `0.54`, `27.54` |
 | `image`, `ports`, `updatable`, `updated` | Not used in v1 | |
 
-Only **running** containers are listed: a stopped container disappears rather than showing
-`Exited`. This confirms the design's "missing for 2 polls = down" rule.
+**Corrected 2026-11-15 (live test):** a stopped container is **not** removed at once. Its record
+stays, still saying e.g. `Up 5 days`, but its `updated` time stops moving. Every running
+container's `updated` (milliseconds) equals its system's `updated` to the millisecond, because
+both are written by the same agent report. Rule used by the app: a container is running only if
+its `updated` is within 15 s of its system's `updated`. Verified on the live hub: running
+containers 0 s behind, a stopped `watchtower` 480 s behind, and the old record of a recreated
+container 540 s behind. Beszel deletes old records later; that case is handled too.
 
 ## Detail collections (not needed for v1)
 
@@ -57,7 +62,7 @@ with them.
 | ID | Finding | Effect |
 |----|---------|--------|
 | B-1 | Container ids change on recreate | Key containers by system id + name (as designed). |
-| B-2 | Stopped containers vanish from the list | Missing-for-2-polls rule is the only way to see "down" (as designed). |
+| B-2 | Stopped containers keep a stale record (corrected 2026-11-15; first read as "vanish") | Count only records updated in the system's latest report; then the missing-for-2-reads rule applies (`beszel/client.py` `running_containers`). |
 | B-3 | `nas` (TrueNAS) reports disk 0.05 % of 833 GB: the agent only sees its own small dataset, no `efs` | **Resolved 2026-11-15:** disk is not shown or monitored at all (owner). No agent change needed. |
 | B-4 | `backup` is `paused` since 2026-05-31 | **Resolved 2026-11-15:** paused = monitored-off on purpose; excluded from counts and alerts, shown as "n paused". |
 | B-5 | `info.sv` gives failed systemd services (`vm-1` has 1) | Possible later red/amber condition; not in v1. |
