@@ -43,7 +43,7 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Update `05` section 2 and 7 if names differ. Record findings in `docs/08-beszel-api.md`.
 - **Done when:** fixtures and `08` are merged; R-1 in `05` updated.
 
-### S-1 Foundations and first push
+### S-1 Foundations and first push: **built 2026-11-15** (awaiting install on the server)
 
 - `app/` skeleton mirroring TRMNL Calendar: `pyproject.toml` (uv, ruff, pytest), multi-stage
   non-root `Dockerfile` with bundled Inter font and `HEALTHCHECK`, `deploy/compose.yml`,

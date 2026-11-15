@@ -1,6 +1,6 @@
 # 07 - Install and upgrade runbook (server, Docker)
 
-Status: **DRAFT, 2026-11-14. Nothing here has been run.** Describes the agreed path: build on
+Status: **DRAFT, updated 2026-11-15 for S-1 (code exists, CI builds and runs the image). Not yet run on the server.** Describes the agreed path: build on
 the server from a clone, manual pull and update (same as TRMNL Calendar `docs/19`). Slice S-1
 runs every command on the real server and corrects this file; S-5 marks it Verified.
 
@@ -72,12 +72,16 @@ docker compose up -d
 
 # 4. Check
 docker compose ps                         # "healthy" after ~30 s
-curl -s http://localhost:8081/healthz     # "status":"ok", beszel and screen reachability
-docker compose logs --tail=50 esp-screen  # migrations applied, first push OK
+curl -s http://localhost:8081/healthz     # "status":"ok"; "screen": {"last_result": "ok", ...}
+docker compose logs --tail=50 esp-screen  # migrations applied, "start-up frame shown on the screen"
 ```
 
-Then open `http://<server-ip>:8081/` from your phone, pick the 3 focus systems, Save. The screen
-changes within a minute.
+**What to expect after S-1:** the screen shows a **"Screen connected - waiting for Beszel"** card with
+the start time, within a few seconds of `up -d`. The only URL is `/healthz`; the settings page arrives
+in S-4 and live status in S-2. If the log warns that album autoplay is on, turn off **Enable image
+auto display** on the screen's Pictures page.
+
+Later (S-4): open `http://<server-ip>:8081/` from your phone, pick the focus systems, Save.
 
 ## Backups
 
