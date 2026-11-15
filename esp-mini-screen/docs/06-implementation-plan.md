@@ -71,7 +71,7 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - **Done when:** stopping a test container shows the alert within ~2 min and clears after restart;
   stopping the Beszel hub shows "unreachable" (amber, then red after 5 min).
 
-### S-4 Settings page: **built 2026-11-15** (0.4.0, awaiting install)
+### S-4 Settings page: **done 2026-11-15** (0.4.0 installed; renaming a focus system from the phone updated the screen)
 
 - Server-rendered page: focus systems (max 3, order, display name), ignore alerts, thresholds,
   timing, containers (allowed to stop, forget), screen address, preview, Push now, last push status.
