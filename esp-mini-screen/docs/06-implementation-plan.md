@@ -61,13 +61,13 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Beszel client (login, token cache, 401 refresh, timeouts) against S-0 fixtures + fake hub.
 - `domain/evaluate.py` (thresholds, tiles) with table-driven tests.
 - `render.overview()` with snapshot tests; focus systems read from env for now.
-- Loop: poll, render, push on change, 15-minute keep-alive.
+- Loop: read Beszel, render, upload on change; "updated at" HH:MM (24-hour) in the header.
 - **Done when:** the real screen shows pve1, pve2 and NAS with live numbers; a change appears within ~1 min.
 
 ### S-3 Alerts
 
 - Container memory (`known_containers`, 2-poll rule, allowed-to-stop).
-- `render.alert()` and `render.unreachable()`; alert/overview flip; most severe first.
+- `render.alert()`, `render.unreachable()` and the "Beszel data changed" frame (F-16); alert/overview flip with `/set?img=` only; most severe first.
 - **Done when:** stopping a test container shows the alert within ~2 min and clears after restart;
   stopping the Beszel hub shows "unreachable" (amber, then red after 5 min).
 

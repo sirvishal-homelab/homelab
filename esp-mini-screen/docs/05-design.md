@@ -36,7 +36,7 @@ Beszel is the only data source (ADR-0002).
 | `domain/evaluate.py` | Pure: snapshot + settings + memory of known containers → `Status` (per-row colours, tile counts, list of alerts, overall level). | none |
 | `render/` | Pure: `Status` → 240x240 RGB image. `overview()`, `alert()`, `unreachable()`. JPEG encode, quality 85. | none |
 | `device/client.py` | Upload to `/doUpload?dir=/image/` with a fixed filename, then `/set?img=`. Read `/album.json`; warn if autoplay is on. Timeouts 5 s, one retry. | HTTP |
-| `loop.py` | One asyncio task: every `poll_s` fetch → evaluate → choose frame → render → push if hash changed or keep-alive due. Alternates alert/overview every `alert_flip_s`. | yes |
+| `loop.py` | One asyncio task: every `poll_s` fetch → evaluate → render frames → upload a frame only if its hash changed. While alerting, both `overview.jpg` and `alert.jpg` are on the device and the loop switches between them every `alert_flip_s` with `/set?img=` only. | yes |
 | `storage/` | SQLite: settings, known containers, push state. Migrations as numbered SQL files (as TRMNL Calendar). | disk |
 | `web/` | FastAPI + Jinja server-rendered pages: Settings, Preview (`/preview.jpg`), Push now, `/healthz`. No build step. | HTTP |
 
@@ -60,8 +60,8 @@ sequenceDiagram
     L->>E: unreachable since T
     E-->>L: amber "Beszel unreachable" frame (red after 5 min)
   end
-  L->>L: hash(frame) == last pushed and keep-alive not due?
-  opt changed or keep-alive (15 min)
+  L->>L: hash(frame) == last uploaded?
+  opt changed (at least once a minute: "updated at" time)
     L->>S: POST /doUpload (status.jpg)
     L->>S: GET /set?img=/image/status.jpg
     L->>L: store hash, time, result
@@ -91,7 +91,7 @@ Tiles: Containers = running / expected; Other systems = up / non-paused systems 
 
 See `assets/mock-*.jpg` (generator: `assets/make_mockups.py.txt`).
 
-- **Overview:** header (HOMELAB, clock), two tiles (Containers, Other systems), up to three focus rows with CPU and MEM bars and percentages.
+- **Overview:** header (HOMELAB, "updated at" `HH:MM`, 24-hour), two tiles (Containers, Other systems), up to three focus rows with CPU and MEM bars and percentages.
 - **Overview, 4 focus systems:** compact layout: smaller header, both counters in one strip, four rows (`assets/mock-overview-4.jpg`). Smaller text (names 13 px, labels 10-11 px on a 1.54" panel) reads well at desk distance, less so from across the room. Unused focus slots are
   left empty. Long names are cut to fit (display names are set on the Settings page).
 - **Alert:** dark red card, title (e.g. `pve2 down`), one detail line, "since hh:mm (n min)".
@@ -116,7 +116,7 @@ Focus systems (1 to 4)            Display name   Ignore alerts
   (new systems appear here unticked)
 
 Thresholds   bar amber [75] %   bar red [90] %
-Timing       poll [60] s   alert flip [10] s   keep-alive [15] min
+Timing       read Beszel every [60] s   alert flip [10] s   unreachable grace [5] min   container gone after [2] reads
 Containers   allowed to stop: [x] watchtower-run ...   known but gone: beszel-old [forget]
 [Save]
 ```
@@ -125,7 +125,7 @@ Containers   allowed to stop: [x] watchtower-run ...   known but gone: beszel-ol
 
 | Table | Columns |
 |-------|---------|
-| `settings` | key, value (JSON). Keys: `device_url`, `warn_pct`, `crit_pct`, `poll_s`, `alert_flip_s`, `keepalive_min` |
+| `settings` | key, value (JSON). Keys: `device_url`, `warn_pct`, `crit_pct`, `poll_s`, `alert_flip_s`, `unreachable_grace_min`, `container_missing_polls` |
 | `systems` | beszel_id (PK), beszel_name, display_name, focus_order (null = not focus), ignore_alerts, first_seen, last_seen |
 | `known_containers` | system_id, name, allowed_to_stop, last_running, missing_polls (PK system_id + name) |
 | `push_state` | id = 1, last_hash, last_push_at, last_result, last_error |
@@ -178,5 +178,5 @@ See `06-implementation-plan.md` (gate checklist and slices S-0 to S-5).
 | R-1 | Beszel's API is PocketBase internals; field names (system `info`, `containers` collection) differ by version and may change in minor releases. The owner updates Beszel as releases appear, so this will happen | S-0 records real fixtures (0.21.2); one mapping module; on unexpected data the screen shows a distinct "Beszel data changed" frame and the Settings page names the missing field, instead of showing wrong numbers; check the Beszel release notes before updating |
 | R-2 | Screen firmware API is undocumented; a firmware update may change it | Do not auto-update the screen; device client is one small module; `03-device-api.md` records the tested version |
 | R-3 | Someone switches the screen theme; dashboard silently hidden | Warn on the Settings page when `/album.json` shows autoplay on; find the theme request and enforce it later |
-| R-4 | Flash wear from frequent uploads | Push only on change plus 15-min keep-alive (~100-200 writes/day); one fixed filename |
+| R-4 | Flash wear from frequent uploads | About 1 upload a minute (~1,500 writes/day of a ~5 KB file, two fixed filenames). The ~3 MB LittleFS is wear-levelled over ~750 4 KB blocks rated ~100k cycles: tens of millions of block writes, i.e. decades at this rate. Alert flips use `/set?img=` only, no upload. Effect of `/set` on flash to be checked in S-1 |
 | R-5 | Device shut off on weak USB power once | 5 V / 1 A adapter; "last push failed" visible on the Settings page; Beszel cannot see the screen, so add an optional ping check later |
