@@ -22,11 +22,12 @@ esp-mini-screen/
     ├── 05-design.md           Architecture, rules, screens, data model (proposed)
     ├── 06-implementation-plan.md  Gate checklist and build slices S-0..S-5 (proposed)
     ├── 07-install-and-upgrade.md  Install, upgrade, rollback on the Terminus container (draft)
+    ├── 08-beszel-api.md       Beszel 0.21.2 fields and findings (S-0)
     ├── assets/                Mock-ups (sample data) and their generator
     └── decisions/             Architecture Decision Records (0001-0003 accepted)
 ```
 
-Gate clear 2026-11-15. Next: slice S-0 (Beszel contract spike), then S-1., then
+Gate clear 2026-11-15. S-0 done 2026-11-15. Next: S-1 (foundations and first push)., then
 code in `app/` (if a push service is built) or `firmware/` (if the device is reflashed).
 
 ## Related

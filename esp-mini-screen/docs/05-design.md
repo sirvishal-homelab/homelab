@@ -76,22 +76,23 @@ alerts → the card cycles through them, most severe first.
 
 | Item | Amber | Red |
 |------|-------|-----|
-| System | status `paused` or `pending` | status `down` (unless "ignore alerts") |
-| Memory, disk % | >= `warn_pct` (75) | disk >= `crit_pct` (90); memory never red by default |
-| CPU % | shown as a number only | none |
+| System | status `pending` | status `down` (unless "ignore alerts"). **`paused` is never a problem**: left out of counts and alerts |
+| CPU, memory % (focus rows) | bar amber >= `warn_pct` (75), red >= `crit_pct` (90) | colour only, never an alert |
+| Disk | not shown, not monitored (owner decision 2026-11-15) | none |
 | Container | - | an expected container missing for 2 polls, or not running |
 | Beszel | unreachable < 5 min | unreachable >= 5 min |
 
 **Expected containers:** every container seen running is remembered in `known_containers`
 (system, name, last_seen). One that disappears for 2 consecutive polls is "down" until it
 returns or is dismissed on the Settings page ("forget"), or is ticked "allowed to stop".
-Tiles: Containers = running / expected; Systems = up / all non-ignored systems.
+Tiles: Containers = running / expected; Other systems = up / non-paused systems that are not focus rows, with "n paused" beside it.
 
 ## 5. Screens
 
 See `assets/mock-*.jpg` (generator: `assets/make_mockups.py.txt`).
 
-- **Overview:** header (HOMELAB, clock), two tiles, three focus rows. Unused focus slots are
+- **Overview:** header (HOMELAB, clock), two tiles (Containers, Other systems), up to three focus rows with CPU and MEM bars and percentages.
+- **Overview, 4 focus systems:** compact layout: smaller header, both counters in one strip, four rows (`assets/mock-overview-4.jpg`). Smaller text (names 13 px, labels 10-11 px on a 1.54" panel) reads well at desk distance, less so from across the room. Unused focus slots are
   left empty. Long names are cut to fit (display names are set on the Settings page).
 - **Alert:** dark red card, title (e.g. `pve2 down`), one detail line, "since hh:mm (n min)".
 - **Unreachable:** amber card, "Beszel unreachable", last good time.
@@ -106,7 +107,7 @@ One phone-friendly page, server-rendered:
 Screen    [ <screen-ip> ]   status: last push 21:45 OK   [Push now]
 Preview   [ 240x240 live image ]
 
-Focus systems (max 3)            Display name   Ignore alerts
+Focus systems (1 to 4)            Display name   Ignore alerts
   [x] pve1              ^ v      [ pve1     ]   [ ]
   [x] pve2              ^ v      [ pve2     ]   [ ]
   [x] truenas           ^ v      [ NAS      ]   [ ]
@@ -114,7 +115,7 @@ Focus systems (max 3)            Display name   Ignore alerts
   [ ] calendar-lxc               [          ]   [x]
   (new systems appear here unticked)
 
-Thresholds   warn [75] %   critical disk [90] %
+Thresholds   bar amber [75] %   bar red [90] %
 Timing       poll [60] s   alert flip [10] s   keep-alive [15] min
 Containers   allowed to stop: [x] watchtower-run ...   known but gone: beszel-old [forget]
 [Save]

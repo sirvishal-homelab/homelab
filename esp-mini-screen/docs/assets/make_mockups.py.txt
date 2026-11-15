@@ -14,47 +14,92 @@ def bar(d, x, y, w, pct, col):
 
 def col(p): return BAD if p >= 90 else WARN if p >= 75 else OK
 
-def overview(path, hosts, guests, ctrs, clock):
+def overview(path, hosts, others, ctrs, clock, paused=0):
     im = Image.new("RGB", (240, 240), BG); d = ImageDraw.Draw(im)
     d.text((10, 8), "HOMELAB", font=f("Bold", 15), fill=DIM)
     d.text((230, 8), clock, font=f("SemiBold", 15), fill=DIM, anchor="ra")
-    # summary tiles
-    for i, (label, up, total) in enumerate([("Containers", *ctrs), ("Systems", *guests)]):
+    # summary tiles: containers, other systems (paused excluded)
+    for i, (label, up, total, note) in enumerate([("Containers", *ctrs, ""),
+                                                  ("Other systems", *others, f"{paused} paused" if paused else "")]):
         x = 10 + i * 113
         c = OK if up == total else BAD
         d.rounded_rectangle((x, 32, x + 107, 92), 10, fill=CARD)
-        d.text((x + 10, 38), label, font=f("Medium", 13), fill=DIM)
+        d.text((x + 10, 38), label, font=f("Medium", 12), fill=DIM)
         d.text((x + 10, 54), f"{up}", font=f("Bold", 28), fill=c)
         d.text((x + 10 + d.textlength(str(up), font=f("Bold", 28)) + 4, 66), f"/ {total}", font=f("Medium", 15), fill=DIM)
-    # hosts
+        if note:
+            d.text((x + 100, 72), note, font=f("Medium", 10), fill=DIM, anchor="ra")
+    # focus rows: name, status, CPU and memory bars
     y = 102
-    for name, up, cpu, mem, disk in hosts:
+    for name, up, cpu, mem in hosts:
         d.rounded_rectangle((10, y, 230, y + 40), 8, fill=CARD)
         d.ellipse((18, y + 8, 28, y + 18), fill=OK if up else BAD)
-        d.text((34, y + 5), name, font=f("SemiBold", 14), fill=FG)
+        d.text((34, y + 4), name, font=f("SemiBold", 14), fill=FG)
         if up:
-            d.text((222, y + 6), f"CPU {cpu}%", font=f("Medium", 12), fill=DIM, anchor="ra")
-            bar(d, 18, y + 26, 98, mem, col(mem)); bar(d, 124, y + 26, 98, disk, col(disk))
+            for j, (lab, v) in enumerate([("CPU", cpu), ("MEM", mem)]):
+                bx = 18 + j * 106
+                d.text((bx, y + 22), lab, font=f("Medium", 10), fill=DIM)
+                bar(d, bx + 26, y + 25, 46, v, col(v))
+                d.text((bx + 100, y + 21), f"{v:.0f}%", font=f("SemiBold", 11), fill=FG, anchor="ra")
         else:
             d.text((222, y + 6), "DOWN", font=f("Bold", 13), fill=BAD, anchor="ra")
         y += 45
-    d.text((18, 236), "", font=f("Medium", 9), fill=DIM)
     im.save(path, quality=90)
 
 def alert(path, title, detail, since):
     im = Image.new("RGB", (240, 240), (60, 14, 14)); d = ImageDraw.Draw(im)
     d.rounded_rectangle((10, 10, 230, 230), 16, outline=BAD, width=3)
     d.text((120, 40), "ATTENTION", font=f("Bold", 16), fill=(255, 180, 170), anchor="mm")
-    d.text((120, 100), title, font=f("Bold", 30), fill=FG, anchor="mm")
+    size = 30
+    while d.textlength(title, font=f("Bold", size)) > 196 and size > 14:
+        size -= 1
+    d.text((120, 100), title, font=f("Bold", size), fill=FG, anchor="mm")
     d.text((120, 140), detail, font=f("Medium", 16), fill=(255, 210, 205), anchor="mm")
     d.text((120, 200), since, font=f("Medium", 13), fill=(220, 160, 155), anchor="mm")
     im.save(path, quality=90)
 
+def overview4(path, hosts, others, ctrs, clock, paused=0):
+    """Compact layout for 4 focus rows: counters in one strip."""
+    im = Image.new("RGB", (240, 240), BG); d = ImageDraw.Draw(im)
+    d.text((10, 6), "HOMELAB", font=f("Bold", 13), fill=DIM)
+    d.text((230, 6), clock, font=f("SemiBold", 13), fill=DIM, anchor="ra")
+    d.rounded_rectangle((10, 26, 230, 58), 8, fill=CARD)
+    x = 18
+    for label, (up, total), note in [("Containers", ctrs, ""), ("Others", others, f"+{paused}p" if paused else "")]:
+        c = OK if up == total else BAD
+        d.text((x, 33), label, font=f("Medium", 11), fill=DIM)
+        lx = x + d.textlength(label, font=f("Medium", 11)) + 6
+        d.text((lx, 29), f"{up}", font=f("Bold", 19), fill=c)
+        lx += d.textlength(str(up), font=f("Bold", 19)) + 2
+        d.text((lx, 34), f"/{total}", font=f("Medium", 12), fill=DIM)
+        if note:
+            lx += d.textlength(f"/{total}", font=f("Medium", 12)) + 4
+            d.text((lx, 35), note, font=f("Medium", 9), fill=DIM)
+        x = 128
+    y = 64
+    for name, up, cpu, mem in hosts:
+        d.rounded_rectangle((10, y, 230, y + 39), 8, fill=CARD)
+        d.ellipse((17, y + 7, 26, y + 16), fill=OK if up else BAD)
+        d.text((32, y + 3), name, font=f("SemiBold", 13), fill=FG)
+        if up:
+            for j, (lab, v) in enumerate([("CPU", cpu), ("MEM", mem)]):
+                bx = 18 + j * 106
+                d.text((bx, y + 22), lab, font=f("Medium", 10), fill=DIM)
+                bar(d, bx + 26, y + 25, 46, v, col(v))
+                d.text((bx + 100, y + 21), f"{v:.0f}%", font=f("SemiBold", 11), fill=FG, anchor="ra")
+        else:
+            d.text((222, y + 5), "DOWN", font=f("Bold", 13), fill=BAD, anchor="ra")
+        y += 43
+    im.save(path, quality=90)
+
 out = sys.argv[1] if len(sys.argv) > 1 else "."
 overview(f"{out}/mock-overview.jpg",
-         [("pve1", True, 12, 61, 48), ("pve2", True, 7, 44, 77), ("NAS", True, 3, 52, 60)],
-         (7, 7), (14, 14), "21:45")
+         [("node-a", True, 1, 7), ("node-b", True, 2, 10), ("nas", True, 1, 28)],
+         (3, 3), (9, 9), "06:30", paused=1)
 overview(f"{out}/mock-overview-problem.jpg",
-         [("pve1", True, 35, 81, 48), ("pve2", False, 0, 0, 0), ("NAS", True, 4, 55, 93)],
-         (5, 7), (12, 14), "21:45")
-alert(f"{out}/mock-alert.jpg", "pve2 down", "3 containers offline", "since 21:32 (13 min)")
+         [("node-a", True, 64, 81), ("node-b", False, 0, 0), ("nas", True, 3, 93)],
+         (2, 3), (7, 9), "06:30", paused=1)
+overview4(f"{out}/mock-overview-4.jpg",
+          [("node-a", True, 1, 7), ("node-b", True, 2, 10), ("nas", True, 1, 28), ("dns", True, 0, 13)],
+          (2, 2), (9, 9), "06:30", paused=1)
+alert(f"{out}/mock-alert.jpg", "node-b down", "since 06:17 (13 min)", "also: 2 containers gone")

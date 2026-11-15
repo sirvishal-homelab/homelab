@@ -35,7 +35,7 @@ S-0 is a read-only spike and may run once items 1 and 2 are ticked.
 
 Each slice ends with a check on the real screen or the real hub. Each is one pull request.
 
-### S-0 Beszel contract spike (throwaway script, no app code)
+### S-0 Beszel contract spike (throwaway script, no app code): **done 2026-11-15** (`08`, fixtures in `app/tests/fixtures/beszel-0.21.2/`)
 
 - Log in as the app user; fetch `systems` and `containers` once. Hub version at gate: **Beszel 0.21.2** (owner updates when releases appear).
 - Record scrubbed JSON (no IPs, hostnames kept only if the owner agrees) as test fixtures.
