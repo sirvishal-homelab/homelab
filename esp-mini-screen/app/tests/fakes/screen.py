@@ -14,6 +14,7 @@ class FakeScreen:
     autoplay: int = 0
     fail_next: int = 0  # number of connections to drop before answering
     status_code: int = 200
+    album_busy: int = 0  # answer /album.json with a bare "OK" this many times (firmware quirk)
     files: dict[str, bytes] = field(default_factory=dict)
     shown: str | None = None
     calls: list[str] = field(default_factory=list)
@@ -42,6 +43,9 @@ class FakeScreen:
                 self.shown = unquote(img)
             return httpx.Response(200, text="")
         if request.method == "GET" and path == "/album.json":
+            if self.album_busy > 0:
+                self.album_busy -= 1
+                return httpx.Response(200, text="OK")
             return httpx.Response(200, text=json.dumps({"autoplay": self.autoplay, "i_i": 5}))
         return httpx.Response(404, text="404")
 

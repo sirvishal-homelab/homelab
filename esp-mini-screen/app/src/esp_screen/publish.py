@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 from collections.abc import Callable
@@ -36,19 +37,36 @@ async def push_startup_frame(
         stamp = now().astimezone(ZoneInfo(settings.timezone)).strftime("%H:%M")
         data = frames.encode_jpeg(frames.hello(__version__, stamp))
         digest = frames.frame_hash(data)
-        try:
-            async with ScreenClient(url, transport=transport) as screen:
+        async with ScreenClient(url, transport=transport) as screen:
+            try:
                 await screen.push(STATUS_IMAGE, data)
-                album = await screen.album()
+            except DeviceError as exc:
+                log.warning("push to screen failed: %s", exc)
+                repo.record_push(conn, ok=False, frame_hash=None, error=str(exc))
+                return False
+            repo.record_push(conn, ok=True, frame_hash=digest)
+            log.info("start-up frame shown on the screen (%d bytes)", len(data))
+            await warn_if_autoplay(screen)
+        return True
+
+
+async def warn_if_autoplay(screen: ScreenClient) -> None:
+    """Advisory only: never turns a good push into a failure.
+
+    Right after an upload the firmware can answer /album.json with a bare "OK" (seen on
+    Ultra-V9.0.50, docs/03), so read it after a short pause and give up quietly if it is busy.
+    """
+    for delay in (1.0, 3.0):
+        await asyncio.sleep(delay)
+        try:
+            album = await screen.album()
         except DeviceError as exc:
-            log.warning("push to screen failed: %s", exc)
-            repo.record_push(conn, ok=False, frame_hash=None, error=str(exc))
-            return False
-        repo.record_push(conn, ok=True, frame_hash=digest)
-        log.info("start-up frame shown on the screen (%d bytes)", len(data))
+            log.debug("album settings not readable yet: %s", exc)
+            continue
         if album.autoplay:
             log.warning(
                 "the screen's album autoplay is ON: it will rotate away from the status image. "
                 "Turn off 'Enable image auto display' on the screen's Pictures page."
             )
-        return True
+        return
+    log.info("could not read the screen's album settings (it answered 'OK'); check skipped")
