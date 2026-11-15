@@ -64,14 +64,14 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Loop: read Beszel, render, upload on change; "updated at" HH:MM (24-hour) in the header.
 - **Done when:** the real screen shows pve1, pve2 and NAS with live numbers; a change appears within ~1 min.
 
-### S-3 Alerts: **installed 2026-11-15** (0.3.0). System-down alert verified on the real screen; container alert needed the stale-record fix (0.3.1, docs/08 B-2)
+### S-3 Alerts: **done 2026-11-15** (0.3.1). Container-down and VM-down alerts and recovery verified on the real screen (container alert needed the stale-record fix, docs/08 B-2)
 
 - Container memory (`known_containers`, 2-poll rule, allowed-to-stop).
 - `render.alert()`, `render.unreachable()` and the "Beszel data changed" frame (F-16); alert/overview flip with `/set?img=` only; most severe first.
 - **Done when:** stopping a test container shows the alert within ~2 min and clears after restart;
   stopping the Beszel hub shows "unreachable" (amber, then red after 5 min).
 
-### S-4 Settings page
+### S-4 Settings page: **built 2026-11-15** (0.4.0, awaiting install)
 
 - Server-rendered page: focus systems (max 3, order, display name), ignore alerts, thresholds,
   timing, containers (allowed to stop, forget), screen address, preview, Push now, last push status.

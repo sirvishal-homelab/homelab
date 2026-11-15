@@ -129,6 +129,13 @@ Containers   allowed to stop: [x] watchtower-run ...   known but gone: beszel-ol
 [Save]
 ```
 
+Implemented in S-4 as one form (`web/routes.py`, template `web/templates/settings.html`):
+"Row" is a 1-4 choice per system (gaps closed on save, duplicates refused), changes apply within
+seconds (the loop is woken), and "Push now" re-uploads even an unchanged picture. Focus systems
+from `FOCUS_SYSTEMS` (.env, S-2) are copied into the database once, on the first read after the
+upgrade; after that the page owns them and the variable is ignored. Times on the page are local,
+24-hour.
+
 ## 7. Data model (SQLite)
 
 | Table | Columns |

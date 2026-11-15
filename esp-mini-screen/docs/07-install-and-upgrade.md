@@ -77,6 +77,11 @@ curl -s http://localhost:8081/healthz     # "status":"ok"; "screen": {"last_resu
 docker compose logs --tail=50 esp-screen  # migrations applied, "start-up frame shown on the screen"
 ```
 
+**After S-4 (0.4.0):** open `http://<server-ip>:8081/` on your phone. Your current focus systems
+are taken over from `FOCUS_SYSTEMS` automatically; from now on change them on the page (row 1-4,
+display name, ignore alerts), plus containers that may stop, timing and thresholds. Save applies
+within seconds. You can then delete the `FOCUS_SYSTEMS` line from `.env` (it is ignored).
+
 **After S-3 (0.3.0):** no `.env` change. Problems now show on the screen: a red **ATTENTION**
 card alternates with the overview every 10 s while a system is down or an expected container is
 gone; an amber, then red, **Beszel unreachable** card replaces the overview after two failed

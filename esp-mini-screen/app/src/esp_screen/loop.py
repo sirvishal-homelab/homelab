@@ -70,7 +70,11 @@ class Runner:
         self.health = BeszelHealth()
         self.plan = ScreenPlan()
         self.last_status: Status | None = None
+        self.last_states: dict[str, str] = {}  # system id -> state, for the settings page
+        self.last_overview: bytes | None = None  # for the settings page preview
+        self.last_alert: bytes | None = None
         self._last_good: datetime | None = None
+        self._wake: asyncio.Event | None = None
         self._beszel = BeszelClient(
             settings.beszel_url,
             settings.beszel_user,
@@ -141,17 +145,24 @@ class Runner:
         h.last_ok_at = snap.taken_at.strftime("%Y-%m-%dT%H:%M:%SZ")
         h.last_error, h.data_changed, h.failures, h.failing_since = None, False, 0, None
         self._last_good = snap.taken_at
+        self.last_states = {s.id: s.state.value for s in snap.systems}
 
         with contextlib.closing(db.connect(self.settings.db_path)) as conn:
+            repo.sync_systems(conn, [(s.id, s.name) for s in snap.systems])
+            if repo.seed_focus_by_name(conn, self.settings.focus_systems):
+                log.info("focus systems moved from FOCUS_SYSTEMS (.env) to the settings page")
+            focus = repo.focus_ids(conn)
             memory, allowed = repo.load_container_memory(conn)
             not_up = {s.id for s in snap.systems if s.state is not SystemState.UP}
             nxt = remember(ContainerMemory(memory, allowed), snap.containers, not_up)
             repo.save_container_memory(conn, nxt)
             status = evaluate(
                 snap,
-                self.settings.focus_systems,
+                focus,
                 nxt,
                 allowed_to_stop=allowed,
+                labels=repo.labels(conn),
+                ignore_alerts=repo.ignored_systems(conn),
                 missing_limit=int(repo.get_setting(conn, "container_missing_polls", 2)),
                 thresholds=Thresholds(
                     float(repo.get_setting(conn, "warn_pct", 75)),
@@ -173,15 +184,18 @@ class Runner:
                     self._minutes_since(card.since),
                     card.also,
                 )
-                await self._upload_alert(conn, frames.encode_jpeg(image))
+                self.last_alert = frames.encode_jpeg(image)
+                await self._upload_alert(conn, self.last_alert)
                 self.plan.flipping = self.plan.alert_hash is not None
             else:
+                self.last_alert = None
                 if self.plan.flipping:
                     log.info("all clear")
                 back_to_overview = self.plan.showing_alert
                 self.plan.flipping = self.plan.showing_alert = False
 
             overview = frames.encode_jpeg(frames.overview(status, self._stamp(snap.taken_at)))
+            self.last_overview = overview
             # While the alert card is on screen, store the new overview without switching to
             # it: the flip timer decides what shows.
             uploaded = await self._upload_status(conn, overview, show=not self.plan.showing_alert)
@@ -214,6 +228,7 @@ class Runner:
         # No fresh data: one card, no flipping. Uploading with show=True also leaves alert.jpg.
         self.plan.flipping = self.plan.showing_alert = False
         self.plan.card = None
+        self.last_overview, self.last_alert = data, None
         with contextlib.closing(db.connect(self.settings.db_path)) as conn:
             return await self._upload_status(conn, data, show=True)
 
@@ -227,8 +242,19 @@ class Runner:
             if await self._screen(conn, lambda s: s.show(target)):
                 self.plan.showing_alert = target == ALERT_IMAGE
 
+    # --- settings page hooks ------------------------------------------------------------------
+    def request_refresh(self, *, force: bool = False) -> None:
+        """Run a cycle now (after a settings change). `force` re-uploads even if unchanged."""
+        if force:
+            with contextlib.closing(db.connect(self.settings.db_path)) as conn:
+                repo.clear_push_hash(conn)
+            self.plan.alert_hash = None
+        if self._wake is not None:
+            self._wake.set()
+
     # --- forever ----------------------------------------------------------------------------
     async def run_forever(self) -> None:
+        self._wake = asyncio.Event()
         next_poll = time.monotonic()
         while True:
             try:
@@ -242,4 +268,9 @@ class Runner:
             wait = next_poll - time.monotonic()
             if self.plan.flipping:
                 wait = min(wait, max(3.0, float(self._setting("alert_flip_s", 10))))
-            await asyncio.sleep(max(0.5, wait))
+            try:
+                await asyncio.wait_for(self._wake.wait(), timeout=max(0.5, wait))
+            except TimeoutError:
+                continue
+            self._wake.clear()
+            next_poll = time.monotonic()  # woken by the settings page: read now

@@ -108,7 +108,7 @@ def evaluate(
     focus_items = find_focus(snap.systems, focus)
     focus_ids = {i.id for i in focus_items if isinstance(i, System)}
     rows = tuple(
-        row_for(i, thresholds, labels.get(i.id) if isinstance(i, System) else None)
+        row_for(i, thresholds, labels.get(i.id if isinstance(i, System) else i))
         for i in focus_items
     )
 
