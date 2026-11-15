@@ -37,6 +37,10 @@ scripts, plus one test upload. Undocumented by the vendor, so it may change with
   vendor sample images before relying on it.
 - Keep frames small (simple flat graphics compress to a few KB) to keep uploads fast and limit
   flash wear. Push only when the content changes, not on a fixed fast timer.
+- **Not strict HTTP:** the answer to `POST /doUpload` carries **two different `Content-Length`
+  headers** (seen 2026-11-15). Browsers ignore this; strict clients (httpx/h11) reject the reply
+  even though the upload worked. The app's screen client therefore speaks plain HTTP/1.1 over a
+  socket and trusts only the status line (`app/src/esp_screen/device/client.py`).
 - **Busy answers:** right after an upload, JSON reads such as `/album.json` and `/space.json` can
   return a bare `OK` instead of JSON (seen 2026-11-14 in the spike and 2026-11-15 on the first
   install). Treat reads after an upload as advisory: pause, retry once, never fail a push on them.
