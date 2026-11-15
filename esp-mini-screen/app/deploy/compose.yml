@@ -1,0 +1,18 @@
+# The screen app's compose project on the server (built from the clone, like TRMNL Calendar).
+# Run from this folder:  docker compose build && docker compose up -d
+name: esp-screen
+services:
+  esp-screen:
+    build:
+      context: ..
+    image: esp-mini-screen:local
+    container_name: esp-screen
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${HOST_PORT:-8081}:8080"
+    volumes:
+      - esp-screen-data:/data
+    # The image's HEALTHCHECK calls /healthz; `docker compose ps` shows "healthy".
+volumes:
+  esp-screen-data:

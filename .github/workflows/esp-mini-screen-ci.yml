@@ -1,0 +1,61 @@
+name: esp-mini-screen CI
+on:
+  pull_request:
+    paths: ["esp-mini-screen/app/**", ".github/workflows/esp-mini-screen-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["esp-mini-screen/app/**", ".github/workflows/esp-mini-screen-ci.yml"]
+permissions:
+  contents: read
+defaults:
+  run:
+    working-directory: esp-mini-screen/app
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Same action versions as trmnl-calendar-ci.yml; pin to SHAs together (docs/12 there).
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install uv
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - name: pytest
+        run: |
+          set +e
+          uv run pytest -q -rs 2>&1 | tee /tmp/pytest.log
+          rc=${PIPESTATUS[0]}
+          if [ $rc -ne 0 ]; then echo "::error title=pytest failed::$(tail -25 /tmp/pytest.log | tr '\n' '~')"; fi
+          # In CI nothing may be skipped: the integration tests need FastAPI, which is installed.
+          if grep -q "SKIPPED" /tmp/pytest.log; then echo "::error title=tests skipped in CI::see log"; exit 1; fi
+          exit $rc
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: esp-mini-screen-uv-lock
+          path: esp-mini-screen/app/uv.lock
+          if-no-files-found: ignore
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build image
+        run: docker build -t esp-mini-screen:ci .
+      - name: Run and check /healthz
+        run: |
+          docker run -d --name screen -p 8081:8080 esp-mini-screen:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8081/healthz && ok=1 && break
+            sleep 2
+          done
+          docker logs screen
+          if [ "${ok:-0}" != 1 ]; then
+            echo "::error title=container log::$(docker logs screen 2>&1 | tail -30 | tr '\n' '~')"
+            exit 1
+          fi
+          docker exec screen python -m esp_screen.storage.backup --now
+          docker exec screen ls /data/backups
+          docker inspect --format '{{.Config.User}}' screen | grep -qx app
