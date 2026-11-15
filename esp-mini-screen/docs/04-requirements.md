@@ -55,6 +55,7 @@ an expected container down; disk >= 90 %; Beszel unreachable for > 5 min.
 | N-4 | Poll every 60 s (configurable). Upload under 2 s. A change appears on screen within ~1 min. |
 | N-5 | Recovers by itself after the screen, Beszel or the network restarts. |
 | N-6 | Read-only: the Beszel account cannot change anything. |
+| N-9 | Install, upgrade, rollback and uninstall steps documented before coding (`07`) and verified on the server before the project is called done. Hosted on the existing Terminus container. |
 | N-8 | Settings page has no login (LAN only, single user, same as TRMNL Calendar); it holds no secrets and cannot change Beszel. |
 | N-7 | Unit tests for rendering and the Beszel client (with recorded fixtures); CI like TRMNL Calendar. |
 
