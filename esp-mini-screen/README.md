@@ -4,8 +4,8 @@ What to do with a **GeekMagic "SmallTV"** desktop display (a 1.54" 240x240 colou
 screen driven by an ESP8266 or ESP32, sold as a "WiFi weather clock") so that it is useful
 in this homelab and home.
 
-> **Status: exploring.** No direction chosen yet. The device model (Ultra or Pro) is not
-> confirmed. Nothing has been flashed or built.
+> **Status: exploring.** Device confirmed as SmallTV-Ultra (firmware Ultra-V9.0.50).
+> No direction chosen yet. Nothing has been flashed or built.
 
 ## Repository layout
 

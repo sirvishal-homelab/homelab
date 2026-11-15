@@ -2,7 +2,7 @@
 
 | ID | Question | How to answer | Blocks |
 |----|----------|---------------|--------|
-| Q-1 | Ultra or Pro? Firmware version? | Box label, or the device web page | Everything |
+| Q-1 | ~~Ultra or Pro? Firmware version?~~ **Answered 2026-11-14: SmallTV-Ultra, Ultra-V9.0.50.** ESP8266, so ESPHome (approach B) is constrained; approach A is the clear fit | Device web page | - |
 | Q-2 | Stock firmware HTTP API: how to upload an image and select it; size and format limits; does it keep working when left in "photo" mode? | Spike: browse the web UI, capture its requests, upload a test 240x240 JPEG | Approach A |
 | Q-3 | Where will it sit (desk, kitchen, rack)? Who looks at it? | Owner | Which idea first |
 | Q-4 | Which signals deserve "red"? (e.g. a Proxmox node down, disk > 90 %, Pi-hole down, backup missed) | Owner | Idea 1 |
