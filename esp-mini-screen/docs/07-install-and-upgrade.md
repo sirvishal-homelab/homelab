@@ -77,6 +77,14 @@ curl -s http://localhost:8081/healthz     # "status":"ok"; "screen": {"last_resu
 docker compose logs --tail=50 esp-screen  # migrations applied, "start-up frame shown on the screen"
 ```
 
+**After S-3 (0.3.0):** no `.env` change. Problems now show on the screen: a red **ATTENTION**
+card alternates with the overview every 10 s while a system is down or an expected container is
+gone; an amber, then red, **Beszel unreachable** card replaces the overview after two failed
+reads; **Beszel data changed** appears if a Beszel update changes its data. `/healthz` gains
+`alert` and `beszel.failures_in_a_row`. To try it safely: stop a container you can spare on the
+Docker host (`docker stop watchtower`), wait about 2 minutes for the card, then
+`docker start watchtower`; the card clears within a minute.
+
 **After S-2 (0.2.0):** add `FOCUS_SYSTEMS=<name>,<name>,<name>` to `.env` (names as shown in
 Beszel, 1 to 4, in order), then `docker compose up -d`. The start-up card shows for about a minute,
 then the live overview. `/healthz` gains `beszel` (last read, last error) and `overview` (what the

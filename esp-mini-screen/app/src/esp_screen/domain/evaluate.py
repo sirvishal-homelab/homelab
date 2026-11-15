@@ -101,8 +101,9 @@ def evaluate(
     missing_limit: int = 2,
     thresholds: Thresholds = DEFAULT_THRESHOLDS,
     labels: Mapping[str, str] | None = None,
+    ignore_alerts: frozenset[str] = frozenset(),
 ) -> Status:
-    """`memory` is the result of `remember()` for this snapshot."""
+    """`memory` is the result of `remember()` for this snapshot. `ignore_alerts`: system ids."""
     labels = labels or {}
     focus_items = find_focus(snap.systems, focus)
     focus_ids = {i.id for i in focus_items if isinstance(i, System)}
@@ -124,10 +125,21 @@ def evaluate(
     # A container counts as down only once it has been missing for `missing_limit` reads,
     # so one slow read or a quick restart does not flash the tile red.
     container_tile = Tile(up=len(expected) - len(down), total=len(expected))
+    focus_down = [
+        r.label
+        for r, i in zip(rows, focus_items, strict=True)
+        if r.state is RowState.DOWN and isinstance(i, System) and i.id not in ignore_alerts
+    ]
+    other_down = sorted(
+        labels.get(s.id, s.name)
+        for s in watched
+        if s.state is SystemState.DOWN and s.id not in ignore_alerts
+    )
     return Status(
         rows=rows,
         containers=container_tile,
         others=other_tile,
         down_containers=tuple(f"{names.get(sid, sid)}/{name}" for sid, name in down),
+        down_systems=tuple(focus_down + other_down),
         updated_at=snap.taken_at,
     )

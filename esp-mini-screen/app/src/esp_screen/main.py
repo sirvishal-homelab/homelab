@@ -105,7 +105,14 @@ def create_app(settings: Settings | None = None, *, beszel_transport=None) -> Fa
                 "last_ok_at": h.last_ok_at,
                 "last_error": h.last_error,
                 "data_changed": h.data_changed,
+                "failures_in_a_row": h.failures,
             }
+            card = runner.plan.card
+            body["alert"] = (
+                None
+                if card is None
+                else {"title": card.title, "detail": card.detail, "also": card.also}
+            )
             st = runner.last_status
             if st is not None:
                 body["overview"] = {

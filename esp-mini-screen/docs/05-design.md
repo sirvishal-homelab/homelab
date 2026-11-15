@@ -70,7 +70,15 @@ sequenceDiagram
 
 Frame choice: no alerts → overview. Alerts → alternate alert card and overview every
 `alert_flip_s` (default 10 s; the loop wakes for the flip, polls still every 60 s). Several
-alerts → the card cycles through them, most severe first.
+alerts → **one card** for the most severe (systems before containers, then oldest), with a
+summary line ("also: app-a stopped" / "also: 2 more problems"). *Changed in S-3 from "cycle
+through them": one stored card means flips never upload (R-4).* Several stopped containers are
+grouped into one alert ("3 containers gone").
+
+Beszel failures: one failed read is ignored (the overview stays). From the **second** failed
+read in a row the overview is replaced by an amber "Beszel unreachable" card, red once no good
+read for `unreachable_grace_min`. An unknown data shape shows "Beszel data changed" at once.
+Alert "since" times are kept in memory: a restart restarts the clock.
 
 ## 4. Status rules
 

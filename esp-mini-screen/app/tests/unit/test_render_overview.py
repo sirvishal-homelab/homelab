@@ -67,3 +67,22 @@ def test_time_change_changes_frame():
     a = frames.encode_jpeg(frames.overview(status(3), "08:30"))
     b = frames.encode_jpeg(frames.overview(status(3), "08:31"))
     assert frames.frame_hash(a) != frames.frame_hash(b)
+
+
+def test_cards_red_and_amber():
+    red = frames.alert("node-b down", "Beszel reports it down", "08:17", 13, "also: a stopped")
+    amber = frames.unreachable("08:30", 3, red=False)
+    late = frames.unreachable(None, 75, red=True)
+    data = frames.data_changed("systems/x: field 'mp' is missing " * 3)
+    assert red.getpixel((40, 120)) == frames.RED_BG
+    assert amber.getpixel((40, 120)) == frames.AMBER_BG
+    assert late.getpixel((40, 120)) == frames.RED_BG
+    assert data.getpixel((40, 120)) == frames.AMBER_BG
+    for im in (red, amber, late, data):
+        assert len(frames.encode_jpeg(im)) < 25_000
+
+
+def test_long_alert_title_fits():
+    frames.alert(
+        "a-container-with-a-really-long-name stopped", "container on host", "08:00", 125, ""
+    )
