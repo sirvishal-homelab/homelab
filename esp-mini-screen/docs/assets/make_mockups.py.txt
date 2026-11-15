@@ -19,7 +19,7 @@ def overview(path, hosts, guests, ctrs, clock):
     d.text((10, 8), "HOMELAB", font=f("Bold", 15), fill=DIM)
     d.text((230, 8), clock, font=f("SemiBold", 15), fill=DIM, anchor="ra")
     # summary tiles
-    for i, (label, up, total) in enumerate([("VMs/LXC", *guests), ("Docker", *ctrs)]):
+    for i, (label, up, total) in enumerate([("Containers", *ctrs), ("Systems", *guests)]):
         x = 10 + i * 113
         c = OK if up == total else BAD
         d.rounded_rectangle((x, 32, x + 107, 92), 10, fill=CARD)
@@ -52,9 +52,9 @@ def alert(path, title, detail, since):
 
 out = sys.argv[1] if len(sys.argv) > 1 else "."
 overview(f"{out}/mock-overview.jpg",
-         [("pve1", True, 12, 61, 48), ("pve2", True, 7, 44, 77), ("terminus", True, 3, 52, 60)],
-         (9, 9), (14, 14), "21:45")
+         [("pve1", True, 12, 61, 48), ("pve2", True, 7, 44, 77), ("NAS", True, 3, 52, 60)],
+         (7, 7), (14, 14), "21:45")
 overview(f"{out}/mock-overview-problem.jpg",
-         [("pve1", True, 35, 81, 48), ("pve2", False, 0, 0, 0), ("terminus", True, 4, 55, 93)],
-         (5, 9), (12, 14), "21:45")
-alert(f"{out}/mock-alert.jpg", "pve2 down", "4 guests offline", "since 21:32 (13 min)")
+         [("pve1", True, 35, 81, 48), ("pve2", False, 0, 0, 0), ("NAS", True, 4, 55, 93)],
+         (5, 7), (12, 14), "21:45")
+alert(f"{out}/mock-alert.jpg", "pve2 down", "3 containers offline", "since 21:32 (13 min)")
