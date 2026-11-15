@@ -20,7 +20,7 @@ scripts, plus one test upload. Undocumented by the vendor, so it may change with
 | Purpose | Request | Confidence |
 |---------|---------|------------|
 | Upload an image | `POST /doUpload?dir=/image/`, multipart form, field `file` (filename becomes the stored name). Returns the HTML file list | Verified |
-| Show a given image | `GET /set?img=<url-encoded path>`, e.g. `/set?img=%2Fimage%2Fname.jpg`. Returns 200, empty body | Verified (200); on-screen effect to confirm |
+| Show a given image | `GET /set?img=<url-encoded path>`, e.g. `/set?img=%2Fimage%2Fname.jpg`. Returns 200, empty body. **Only visible when the Photo Album theme (3) is active**; with album autoplay off (`autoplay:0`) the chosen image stays on screen | Verified on device 2026-11-14 |
 | List images | `GET /filelist?dir=/image/` (HTML table) | Verified |
 | Delete one image | `GET /delete?file=<url-encoded path>` | Read from UI code |
 | Delete all images | `GET /set?clear=image` | Read from UI code |
@@ -31,7 +31,8 @@ scripts, plus one test upload. Undocumented by the vendor, so it may change with
 
 ## Consequences for the design
 
-- Approach A (push images) works: render a 240x240 JPEG, `POST /doUpload`, then `GET /set?img=`.
+- Approach A (push images) works end to end: render a 240x240 JPEG, `POST /doUpload`, then `GET /set?img=`.
+- The device must stay on the **Photo Album** theme with **autoplay off** and theme auto-switch off. The service should check this (or set it, once the theme request string is known) so a manual change does not silently hide the dashboard.
 - **Re-use one filename** (overwrite) rather than adding files: free space is ~100 KB. Delete the
   vendor sample images before relying on it.
 - Keep frames small (simple flat graphics compress to a few KB) to keep uploads fast and limit
