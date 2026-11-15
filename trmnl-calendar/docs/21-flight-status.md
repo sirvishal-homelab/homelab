@@ -106,7 +106,7 @@ Only `flight_source.py` talks to the service (as `holiday_source.py` does for ho
 short timeout, size cap, one function that returns a small `FlightInfo` or "not found". A different
 provider is a new version of that one file.
 
-Settings (environment, ADR-0005): `FLIGHT_STATUS=off` by default (it needs a key), `FLIGHT_API_KEY`
+Settings (environment, ADR-0005; template in `app/.env.example`): `FLIGHT_STATUS=off` by default (it needs a key), `FLIGHT_API_KEY`
 (a secret: never logged, never in the repo), `FLIGHT_API_URL`, `FLIGHT_MONTHLY_LIMIT`. Only the flight
 code and the date are sent.
 
