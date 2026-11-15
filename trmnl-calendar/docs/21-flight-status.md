@@ -1,6 +1,6 @@
 # 21. Flight status on events (design note)
 
-Status: **proposed 2026-11-15** (owner idea; not built). Decision record: ADR-0015.
+Status: **agreed 2026-11-15** (owner accepted FL-1 to FL-5; not built). Decision record: ADR-0015.
 
 ## 1. What this is for
 
@@ -110,15 +110,18 @@ Settings (environment, ADR-0005): `FLIGHT_STATUS=off` by default (it needs a key
 (a secret: never logged, never in the repo), `FLIGHT_API_URL`, `FLIGHT_MONTHLY_LIMIT`. Only the flight
 code and the date are sent.
 
-## 7. Decisions to confirm
+## 7. Decisions (owner accepted all five, 2026-11-15)
 
-| # | Question | Proposed |
+| # | Question | Decision |
 |---|----------|----------|
 | FL-1 | Words only, or "Delayed 14:50" with the new time? | Words only (owner, 2026-11-15). The new time is on the event page. |
 | FL-2 | Spot codes automatically, or only in one category such as "Travel"? | Automatically; a false match costs one call. |
 | FL-3 | Status in brackets like notes, `(On time)`? | Yes, for consistency. |
 | FL-4 | Provider | AeroDataBox; FlightAware AeroAPI if its data proves better (section 9 of ADR-0015). |
 | FL-5 | Show "Departed" and "Landed" after take-off, or stop showing anything? | Show them; they tell the family she is in the air or down. |
+
+A mock-up with the real renderer (AC663, Monday 11:25, badge M) showed the status wrapping to the
+second line of a week cell with no shortening and no fit warnings.
 
 ## 8. Tests
 

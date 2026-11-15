@@ -45,7 +45,7 @@ shifts (see the work schedule below); it stays a possible later item for other e
 
 **Owner idea 2026-11-15: flight status on events** (`21`, ADR-0015, proposed). An event with a flight code
 such as `AC123` keeps its look and gains a status word: On time, Delayed, and so on. Screen and web pages only,
-no alerts. Waiting for owner sign-off of `21` section 7 and an AeroDataBox key; then one slice: migration 0009,
+no alerts. Design agreed 2026-11-15 (`21` section 7); waiting for an AeroDataBox key; then one slice: migration 0009,
 `flight_source.py`, the lookup schedule, the suffix, tests.
 
 **Owner additions 2026-10-29:** a work schedule as rotating weeks with per-day in/out and days off,
