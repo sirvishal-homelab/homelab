@@ -3,9 +3,9 @@
 Renders a 240x240 homelab status image from Beszel and pushes it to a GeekMagic SmallTV-Ultra.
 Design: `../docs/05-design.md`. Install and upgrade: `../docs/07-install-and-upgrade.md`.
 
-**Version 0.2 (slice S-2):** reads Beszel every 60 s and shows the live overview (counters for
-containers and other systems, CPU and memory rows for 1-4 focus systems from `FOCUS_SYSTEMS`),
-uploading only when the picture changes. Alerts arrive in S-3, the settings page in S-4.
+**Version 0.4 (slice S-4):** live overview from Beszel, alert cards, and a settings page at `/`
+(focus systems, display names, ignore alerts, containers that may stop, timing, thresholds,
+preview, Push now). Remaining: S-5 (operate and verify).
 
 ## Layout
 

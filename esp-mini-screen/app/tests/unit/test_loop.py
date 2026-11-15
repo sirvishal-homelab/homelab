@@ -279,3 +279,66 @@ def test_container_removed_by_beszel_also_counts(tmp_path):
         runner = Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)
         run_ticks(runner, clock, 3, between=world)
     assert runner.last_status.down_containers == ("docker-host/app-a",)
+
+
+# --- S-4: settings in the database -------------------------------------------------------
+
+
+def test_focus_seeded_from_env_then_owned_by_database(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    with screen.serve() as url:
+        s = setup(tmp_path, url, focus="node-a,nas")
+        runner = Runner(s, now=clock, beszel_transport=hub.transport)
+        run_ticks(runner, clock, 1)
+        assert [r.label for r in runner.last_status.rows] == ["node-a", "nas"]
+        with contextlib.closing(db.connect(s.db_path)) as conn:
+            ids = {p.beszel_name: p.beszel_id for p in repo.list_systems(conn)}
+            repo.save_system_prefs(
+                conn,
+                {ids["dns"]: (1, "DNS", False), ids["node-b"]: (2, None, False)},
+            )
+        runner = Runner(s, now=clock, beszel_transport=hub.transport)
+        clock.advance()
+        run_ticks(runner, clock, 1)
+    assert [r.label for r in runner.last_status.rows] == ["DNS", "node-b"]
+
+
+def test_ignored_system_does_not_alert(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("vm-1", "down")
+    with screen.serve() as url:
+        s = setup(tmp_path, url)
+        runner = Runner(s, now=clock, beszel_transport=hub.transport)
+        run_ticks(runner, clock, 1)
+        assert runner.plan.card is not None
+        with contextlib.closing(db.connect(s.db_path)) as conn:
+            vm = next(p.beszel_id for p in repo.list_systems(conn) if p.beszel_name == "vm-1")
+            repo.save_system_prefs(conn, {vm: (None, None, True)})
+        runner = Runner(s, now=clock, beszel_transport=hub.transport)
+        run_ticks(runner, clock, 1)
+    assert runner.plan.card is None
+
+
+def test_force_refresh_reuploads_same_picture(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+
+    async def go(runner):
+        assert await runner.tick() is True
+        assert await runner.tick() is False  # same minute, same data
+        runner.request_refresh(force=True)
+        assert await runner.tick() is True  # Push now
+        await runner.aclose()
+
+    with screen.serve() as url:
+        asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))
+
+
+def test_preview_frames_kept(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("node-b", "down")
+    with screen.serve() as url:
+        runner = Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)
+        run_ticks(runner, clock, 1)
+    assert runner.last_overview[:2] == b"\xff\xd8"
+    assert runner.last_alert[:2] == b"\xff\xd8"
+    assert runner.last_states  # for the settings page

@@ -14,6 +14,7 @@ from esp_screen.config import Settings, load_settings
 from esp_screen.loop import Runner
 from esp_screen.render.fonts import verify_fonts
 from esp_screen.storage import backup, db, migrate, repo
+from esp_screen.web.routes import build_router
 
 log = logging.getLogger("esp_screen")
 
@@ -79,6 +80,8 @@ def create_app(settings: Settings | None = None, *, beszel_transport=None) -> Fa
     app = FastAPI(title="ESP Mini Screen", version=__version__, lifespan=lifespan)
     app.state.settings = settings
     app.state.runner = None
+
+    app.include_router(build_router(settings, app.state))
 
     @app.get("/healthz")
     def healthz(response: Response) -> dict:

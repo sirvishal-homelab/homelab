@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP Mini Screen</title>
+<style>
+  :root { --bg:#0e1116; --card:#1c2129; --fg:#ebeef2; --dim:#8c94a0; --ok:#2ecc71; --warn:#f1c40f; --bad:#e74c3c; --line:#2a313b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:720px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:4px 0 12px; }
+  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:24px 0 8px; }
+  section, .card { background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; }
+  .note { color:var(--dim); font-size:13px; }
+  .msg { border-left:4px solid var(--ok); }
+  .msg.err { border-left-color:var(--bad); }
+  .msg.warn { border-left-color:var(--warn); }
+  .top { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+  .preview img { width:240px; height:240px; border-radius:10px; display:block; image-rendering:pixelated; background:#000; }
+  .status dt { color:var(--dim); font-size:13px; } .status dd { margin:0 0 6px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:7px 4px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  th { color:var(--dim); font-weight:500; font-size:13px; }
+  input[type=text], input[type=number], select { background:#0e1116; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:7px 8px; font:inherit; width:100%; }
+  input[type=number] { max-width:110px; }
+  .grid { display:grid; grid-template-columns:1fr auto; gap:8px 12px; align-items:center; }
+  button { background:#2b6cdf; color:#fff; border:0; border-radius:8px; padding:9px 16px; font:inherit; font-weight:600; cursor:pointer; }
+  button.secondary { background:#39414d; }
+  button.small { padding:4px 10px; font-size:13px; }
+  .state-up { color:var(--ok); } .state-down { color:var(--bad); } .state-paused, .state-missing { color:var(--dim); } .state-pending { color:var(--warn); }
+  .gone { color:var(--bad); }
+  .row-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ESP Mini Screen <span class="note">v{{ version }}</span></h1>
+
+  {% if saved %}<div class="card msg">Saved. The screen updates within a few seconds.</div>{% endif %}
+  {% if pushed %}<div class="card msg">Pushed to the screen.</div>{% endif %}
+  {% if forgot %}<div class="card msg">Container forgotten.</div>{% endif %}
+  {% if errors %}<div class="card msg err"><strong>Not saved:</strong><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  {% for w in warnings %}<div class="card msg warn">{{ w }}</div>{% endfor %}
+
+  <div class="top">
+    <div class="card preview">
+      <img src="/preview.jpg?t={{ now_ts }}" alt="What the screen shows">
+      {% if has_alert %}<img src="/preview.jpg?which=alert&t={{ now_ts }}" alt="Alert card" style="margin-top:8px">{% endif %}
+      <form method="post" action="/push" class="row-actions"><button class="secondary" type="submit">Push now</button></form>
+    </div>
+    <dl class="card status" style="flex:1; min-width:220px">
+      <dt>Screen</dt><dd>{% if push.last_result == 'ok' %}<span class="state-up">last push {{ last_push }}</span>{% elif push.last_result %}<span class="state-down">{{ push.last_error }}</span>{% else %}no push yet{% endif %}</dd>
+      <dt>Beszel</dt><dd>{% if beszel is none %}not configured (.env){% elif beszel.last_error %}<span class="state-down">{{ beszel.last_error }}</span>{% else %}<span class="state-up">last read {{ last_read }}</span>{% endif %}</dd>
+      <dt>Alert</dt><dd>{% if alert %}<span class="state-down">{{ alert.title }}</span>{% if alert.also %} <span class="note">({{ alert.also }})</span>{% endif %}{% else %}none{% endif %}</dd>
+    </dl>
+  </div>
+
+  <form method="post" action="/settings">
+    <h2>Focus systems</h2>
+    <section>
+      <p class="note">Pick up to 4 rows for the screen, in order. Up to 3 use the large layout, 4 the compact one. The display name replaces Beszel's name on the screen (max 20 characters). "Ignore alerts" keeps a system off the alert card.</p>
+      {% if systems %}
+      <table>
+        <tr><th>System</th><th style="width:84px">Row</th><th>Display name</th><th style="width:70px">Ignore alerts</th></tr>
+        {% for s in systems %}
+        <tr>
+          <td>{{ s.beszel_name }}<br><span class="note state-{{ states.get(s.beszel_id, 'missing') }}">{{ states.get(s.beszel_id, 'not reported') }}</span></td>
+          <td><select name="pos_{{ s.beszel_id }}" aria-label="Row for {{ s.beszel_name }}">
+            <option value="">-</option>
+            {% for n in range(1, 5) %}<option value="{{ n }}" {% if s.focus_order == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select></td>
+          <td><input type="text" name="name_{{ s.beszel_id }}" value="{{ s.display_name or '' }}" maxlength="20" placeholder="{{ s.beszel_name }}"></td>
+          <td><input type="checkbox" name="ignore_{{ s.beszel_id }}" value="1" {% if s.ignore_alerts %}checked{% endif %} aria-label="Ignore alerts for {{ s.beszel_name }}"></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <p class="note">No systems yet: they appear after the first good read from Beszel.</p>
+      {% endif %}
+    </section>
+
+    <h2>Containers</h2>
+    <section>
+      <p class="note">Every container seen running is expected to keep running. Tick the ones that may stop without an alert (for example one-off jobs).</p>
+      {% if containers %}
+      <table>
+        <tr><th>Container</th><th>Host</th><th style="width:90px">May stop</th></tr>
+        {% for c in containers %}
+        <tr>
+          <td>{{ c.name }}{% if c.missing_polls > 0 %}<br><span class="note gone">not running ({{ c.missing_polls }} reads)</span>{% endif %}</td>
+          <td>{{ c.system_name }}</td>
+          <td><input type="checkbox" name="allow" value="{{ c.system_id }}:{{ c.name }}" {% if c.allowed_to_stop %}checked{% endif %} aria-label="{{ c.name }} may stop"></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <p class="note">No containers seen yet.</p>
+      {% endif %}
+    </section>
+
+    <h2>Tuning</h2>
+    <section class="grid">
+      {% for key, (label, lo, hi) in numbers.items() %}
+      <label for="{{ key }}">{{ label }} <span class="note">({{ lo }}-{{ hi }})</span></label>
+      <input type="number" id="{{ key }}" name="{{ key }}" value="{{ values[key] }}" min="{{ lo }}" max="{{ hi }}" required>
+      {% endfor %}
+      <label for="device_url">Screen address</label>
+      <input type="text" id="device_url" name="device_url" value="{{ device_url }}" placeholder="http://192.0.2.10" style="max-width:220px">
+    </section>
+
+    <div class="row-actions"><button type="submit">Save</button></div>
+  </form>
+
+  {% set gone = containers | selectattr('missing_polls', 'gt', 0) | list %}
+  {% if gone %}
+  <h2>Remove containers that are gone for good</h2>
+  <section>
+    <p class="note">A container you removed on purpose stays "expected" until you forget it here.</p>
+    {% for c in gone %}
+    <form method="post" action="/containers/forget" class="row-actions" style="align-items:center">
+      <input type="hidden" name="key" value="{{ c.system_id }}:{{ c.name }}">
+      <span style="flex:1">{{ c.name }} <span class="note">on {{ c.system_name }}</span></span>
+      <button class="small secondary" type="submit">Forget</button>
+    </form>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <p class="note">Night dimming is set on the screen itself (its Settings page, Night Mode). Health: <a href="/healthz" style="color:var(--dim)">/healthz</a></p>
+</main>
+</body>
+</html>
