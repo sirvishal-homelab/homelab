@@ -24,10 +24,10 @@ flowchart LR
 
 1. [ ] Owner signs off `05-design.md`, this plan, `07-install-and-upgrade.md` and ADR-0001 to 0003.
 2. [x] Beszel: read-only app user created and all systems shared with it (`07`, "Before install"). Done 2026-11-15.
-3. [ ] Pi-hole DHCP reservation for the screen (Q-8).
-4. [ ] Screen on a 5 V / 1 A (or better) adapter and stable for 24 h (it shut off once on weak power).
-5. [ ] Terminus container has room: free disk >= 3 GB (`df -h /`), free memory >= 200 MB (`free -m`).
-6. [ ] Port chosen and free on that container (proposed `8081`; the calendar uses `8080`).
+3. [x] Pi-hole DHCP reservation for the screen (Q-8). Done 2026-11-15.
+4. [x] Screen on a 5 V / 1 A (or better) adapter and stable (it shut off once on weak power). Adapter swapped 2026-11-14; stable since.
+5. [x] Terminus container has room: free disk >= 3 GB (`df -h /`), free memory >= 200 MB (`free -m`). 2026-11-15: 16 GB free of 30 GB; 1372 MB available of 2048 MB.
+6. [x] Port chosen and free on that container (`8081`; the calendar uses `8080`). Free 2026-11-15. The container reaches the screen (HTTP 302 to its settings page) and the Beszel hub by name (`http://beszel:8090/api/health` OK).
 
 S-0 is a read-only spike and may run once items 1 and 2 are ticked.
 

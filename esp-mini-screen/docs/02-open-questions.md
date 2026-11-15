@@ -9,4 +9,4 @@
 | Q-5 | **Partly answered: yes for hosts and Docker; owner chose Beszel only: 3 focus systems + container and system counts (see `04`). Owner will create an app account.** Does Beszel expose what we need over its API, and with what credentials (read-only user)? | Read Beszel docs; try with a read-only account | Idea 1 |
 | Q-6 | Is Home Assistant on the roadmap? (Not needed for the chosen direction.) | Owner | Approach B |
 | Q-7 | Night mode: dim or off overnight? Does the stock firmware allow brightness control over HTTP? | Spike | Comfort |
-| Q-8 | Pi-hole DHCP reservation for the screen (as for the TRMNL, P-1) | Owner, in Pi-hole | Deployment |
+| Q-8 | **Done 2026-11-15.** Pi-hole DHCP reservation for the screen (as for the TRMNL, P-1) | Owner, in Pi-hole | Deployment |
