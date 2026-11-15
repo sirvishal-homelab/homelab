@@ -1,6 +1,6 @@
 # 04 - Requirements (draft)
 
-Status: **Draft, 2026-11-14. Not signed off.** Direction: approach A (push images to stock
+Status: **Agreed with owner 2026-11-14** (direction, layout, red conditions). Design sign-off pending (`05-design.md`). Direction: approach A (push images to stock
 firmware), first use is a **homelab status screen** fed by Beszel.
 
 ## Context from the owner
@@ -42,7 +42,7 @@ version the app is tested against and keep the Beszel client in one small module
 | F-14 | Settings page shows a **live preview** of the current 240x240 image and a "Push now" button. | 1 |
 | F-15 | Non-focus systems are not drawn as rows but are counted in the Systems tile and still raise alerts, unless "ignore alerts" is ticked for them. | 1 |
 
-Red conditions (draft, owner to confirm): a system down;
+Red conditions (**confirmed by owner 2026-11-14**, to start): a system down;
 an expected container down; disk >= 90 %; Beszel unreachable for > 5 min.
 
 ## Non-functional
