@@ -56,7 +56,7 @@ an expected container down; disk >= 90 %; Beszel unreachable for > 5 min.
 | N-5 | Recovers by itself after the screen, Beszel or the network restarts. |
 | N-6 | Read-only: the Beszel account cannot change anything. |
 | N-8 | Settings page has no login (LAN only, single user, same as TRMNL Calendar); it holds no secrets and cannot change Beszel. |
-| N-7 | Unit tests for rendering and the Beszel and Proxmox clients (with recorded fixtures); CI like TRMNL Calendar. |
+| N-7 | Unit tests for rendering and the Beszel client (with recorded fixtures); CI like TRMNL Calendar. |
 
 ## Owner set-up (when we build)
 
