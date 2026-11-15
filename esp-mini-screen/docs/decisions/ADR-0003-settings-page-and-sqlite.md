@@ -1,5 +1,5 @@
 # ADR-0003: Settings in SQLite, edited on a small web page
-Status: Proposed
+Status: **Accepted 2026-11-15 by the owner**
 Date: 2026-11-14
 
 ## Context

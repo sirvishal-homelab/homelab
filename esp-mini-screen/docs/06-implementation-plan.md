@@ -1,13 +1,13 @@
 # 06 - Implementation plan
 
-Status: **Proposed 2026-11-14. No code until the gate checklist is clear.**
+Status: **Signed off 2026-11-15. Gate clear 2026-11-15; S-0 may start.**
 Design: `05-design.md`. Install and upgrade: `07-install-and-upgrade.md`.
 
 ```mermaid
 flowchart LR
   P0["0 Explore<br/>done"] --> P1["1 Verify device<br/>done (03)"]
   P1 --> P2["2 Requirements<br/>agreed (04)"]
-  P2 --> P3["3 Design + plan<br/>awaiting sign-off (05, 06, 07)"]
+  P2 --> P3["3 Design + plan<br/>signed off (05, 06, 07)"]
   P3 --> G{{"Gate"}}
   G --> P4["4 Build in slices S-0..S-5"]
 ```
@@ -17,12 +17,12 @@ flowchart LR
 | 0 Explore | `00`, `01`, `02` | Done |
 | 1 Verify device | `03-device-api.md` (upload and set verified on V9.0.50) | Done 2026-11-14 |
 | 2 Requirements | `04-requirements.md` | Agreed 2026-11-14 |
-| 3 Design and plan | `05`, `06`, `07`, ADR-0001 to 0003 | Proposed, awaiting owner sign-off |
+| 3 Design and plan | `05`, `06`, `07`, ADR-0001 to 0003 | Signed off 2026-11-15 |
 | 4 Build | Slices below | Not started |
 
 ## Gate checklist (all must be ticked before any code in `app/`)
 
-1. [ ] Owner signs off `05-design.md`, this plan, `07-install-and-upgrade.md` and ADR-0001 to 0003.
+1. [x] Owner signs off `05-design.md`, this plan, `07-install-and-upgrade.md` and ADR-0001 to 0003. Done 2026-11-15 (merged #38, confirmed in chat).
 2. [x] Beszel: read-only app user created and all systems shared with it (`07`, "Before install"). Done 2026-11-15.
 3. [x] Pi-hole DHCP reservation for the screen (Q-8). Done 2026-11-15.
 4. [x] Screen on a 5 V / 1 A (or better) adapter and stable (it shut off once on weak power). Adapter swapped 2026-11-14; stable since.
@@ -37,7 +37,7 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 
 ### S-0 Beszel contract spike (throwaway script, no app code)
 
-- Log in as the app user; fetch `systems` and `containers` once; note the hub version.
+- Log in as the app user; fetch `systems` and `containers` once. Hub version at gate: **Beszel 0.21.2** (owner updates when releases appear).
 - Record scrubbed JSON (no IPs, hostnames kept only if the owner agrees) as test fixtures.
 - Confirm field names for: system status, CPU %, memory %, disk %, container name, state, system link.
 - Update `05` section 2 and 7 if names differ. Record findings in `docs/08-beszel-api.md`.

@@ -1,6 +1,6 @@
 # 05 - Design
 
-Status: **Proposed 2026-11-14. Awaiting owner sign-off.** Nothing is built.
+Status: **Signed off 2026-11-15.** Nothing is built yet. Tested against Beszel 0.21.2.
 Implements `04-requirements.md`. Decisions: ADR-0001 to ADR-0003.
 
 ## 1. Context
@@ -174,7 +174,7 @@ See `06-implementation-plan.md` (gate checklist and slices S-0 to S-5).
 
 | ID | Risk | Mitigation |
 |----|------|------------|
-| R-1 | Beszel's API is PocketBase internals; field names (system `info`, `containers` collection) differ by version and may change in minor releases | S-0 records real fixtures; one mapping module; pin and note the tested hub version; contract test fails loudly |
+| R-1 | Beszel's API is PocketBase internals; field names (system `info`, `containers` collection) differ by version and may change in minor releases. The owner updates Beszel as releases appear, so this will happen | S-0 records real fixtures (0.21.2); one mapping module; on unexpected data the screen shows a distinct "Beszel data changed" frame and the Settings page names the missing field, instead of showing wrong numbers; check the Beszel release notes before updating |
 | R-2 | Screen firmware API is undocumented; a firmware update may change it | Do not auto-update the screen; device client is one small module; `03-device-api.md` records the tested version |
 | R-3 | Someone switches the screen theme; dashboard silently hidden | Warn on the Settings page when `/album.json` shows autoplay on; find the theme request and enforce it later |
 | R-4 | Flash wear from frequent uploads | Push only on change plus 15-min keep-alive (~100-200 writes/day); one fixed filename |
