@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from starlette.concurrency import run_in_threadpool
 
+from trmnl_calendar import flight_service
 from trmnl_calendar.errors import EditConflict, NotFound, ValidationFailed
 from trmnl_calendar.storage import db
 from trmnl_calendar.storage.repositories import calendar as cal
@@ -167,7 +168,35 @@ def edit_form(event_id: int, request: Request, back: str | None = None, conn=Dep
     ctx = views.form_context(
         conn, forms.event_to_values(ev), event=ev, skips=repo.list_skips(conn, ev.id)
     )
+    ctx.update(_flight_context(request, conn, ev))
     return _html(request, "event_form.html", back=safe_next(back) if back else "", **ctx)
+
+
+def _flight_context(request: Request, conn, ev) -> dict:
+    """The event page's flight panel (docs/21 s4): what is stored, and whether lookups are on."""
+    pairs = flight_service.event_flights(ev)
+    refresher = request.app.state.flights
+    return {
+        "flights": [flight_service.stored(conn, c, d) for c, d in pairs],
+        "flights_on": refresher is not None,
+        "flights_capped": bool(refresher and refresher.capped),
+        "flight_credit": flight_service.CREDIT,
+    }
+
+
+@router.post("/events/{event_id}/flights/check")
+async def flights_check(event_id: int, request: Request):
+    """Look this event's flights up now (counts towards the monthly limit)."""
+    refresher = request.app.state.flights
+
+    def work() -> Response:
+        with _open(request) as conn:
+            ev = repo.get_event(conn, event_id)
+            if refresher is not None:
+                refresher.check_now(conn, ev, now_utc(request))
+        return _see_other(f"/events/{event_id}/edit#flights")
+
+    return await run_in_threadpool(work)
 
 
 @router.post("/events/{event_id}/edit")

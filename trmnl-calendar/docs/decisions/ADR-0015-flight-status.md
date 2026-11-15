@@ -1,5 +1,5 @@
 # ADR-0015: Flight status on events
-Status: **Proposed 2026-11-15** (owner idea; not built)
+Status: **Accepted 2026-11-15** (owner; built the same day; live API not yet verified, R-15)
 Date: 2026-11-15
 
 ## Context

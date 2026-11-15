@@ -1,6 +1,6 @@
 # 21. Flight status on events (design note)
 
-Status: **agreed 2026-11-15** (owner accepted FL-1 to FL-5; not built). Decision record: ADR-0015.
+Status: **built 2026-11-15** (owner accepted FL-1 to FL-5); the live API is not yet verified (R-15). Decision record: ADR-0015.
 
 ## 1. What this is for
 
@@ -80,9 +80,13 @@ the revised departure (the usual airline threshold).
 
 The status is written as a suffix in brackets, like notes: `AC123 (Delayed)`. When the line would be
 shortened to fit, the **title** is shortened and the status is kept, because the status is the point.
-The web pages (event list, month page, Screen preview) show the same suffix; the event page also shows the
-detail in words: scheduled and revised departure, route, gate when known, and when it was last checked.
-Times there are the airport's local times, which matches floating local time (ADR-0010).
+On a trip's bar, the status of the first day shown is used. The web pages (home list, month page, Screen
+preview) and `GET /api/v1/occurrences` (field `flight`) show the same suffix. The event page has a
+**Flight status** panel: for each code, the word, the route, scheduled and revised departure, gate when
+known, the last failure if any, and when it was last checked; and a **Check now** button
+(`POST /events/{id}/flights/check`) that asks once now, whatever the schedule, within the monthly cap.
+When the feature is off the panel says which `.env` settings turn it on. Times there are the airport's
+local times, which matches floating local time (ADR-0010).
 
 ## 5. Data
 
@@ -91,9 +95,10 @@ backup copy empties the flight tables), because the provider allows keeping its 
 backups are kept longer. Rows are deleted 7 days after `checked_at`; a status that is still needed is
 simply fetched again.
 
-`flight_status(code, dep_date, found, status, sched_dep_utc, revised_dep_utc, sched_arr_utc,
-revised_arr_utc, dep_airport, arr_airport, dep_gate, checked_at, next_due_at)`, primary key
-`(code, dep_date)`. `code` is normalised without the space (`AC123`). A month counter for the cap
+`flight_status(code, dep_date, found, status, sched_dep, revised_dep, sched_arr, revised_arr,
+sched_dep_local, revised_dep_local, dep_airport, arr_airport, dep_gate, checked_at, next_due_at,
+last_error)`, primary key `(code, dep_date)`; times in UTC, `*_local` is `HH:MM` on the airport's clock.
+A failed lookup keeps the last good answer, records `last_error` and retries in 30 minutes. `code` is normalised without the space (`AC123`). A month counter for the cap
 lives in `flight_calls(month, count)`.
 
 ## 6. The provider
@@ -105,9 +110,9 @@ limits; a tier-2 call such as flight status costs **2 units** (4 if flight plans
 are not). So 400 units buy **200 lookups**. The default cap of 100 lookups uses half and covers about
 8 flights a month at about 12 lookups each; raise `FLIGHT_MONTHLY_LIMIT` to at most 190 for about 15.
 
-Plan terms that shape the design: **attribution is required**, so the event page and the Screen page say
-"Flight data: AeroDataBox" wherever a flight status is shown (the e-paper image does not, for space; to be
-checked against the terms). **Caching is limited to 7 days**, hence section 5.
+Plan terms that shape the design: **attribution is required**, so the event page, the home list and the
+month page say "Flight data: AeroDataBox" whenever a flight status is shown (the e-paper image and the
+Screen page preview do not, for space; to be checked against the terms). **Caching is limited to 7 days**, hence section 5.
 
 Only `flight_source.py` talks to the service (as `holiday_source.py` does for holidays): standard library,
 short timeout, size cap, one function that returns a small `FlightInfo` or "not found". A different

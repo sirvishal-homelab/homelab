@@ -65,4 +65,5 @@
   <a class="btn primary" href="/events/new?date={{ selected.isoformat() }}&back={{ back | urlencode }}">Add event on this day</a>
 </section>
 {% endif %}
+{% if flight_credit %}<p class="meta">{{ flight_credit }}</p>{% endif %}
 {% endblock %}

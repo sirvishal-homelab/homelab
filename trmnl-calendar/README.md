@@ -30,14 +30,14 @@ inside each day), and pushes that image to Terminus so the device can show it.
 │   ├── 09-references.md       Every source used, and what still needs reading
 │   ├── 10-roadmap.md          Phases and vertical slices
 │   ├── 11-prototype-code-tour.md  Map of the prototype code with key excerpts
-│   ├── 12-delivery-pipeline.md  Code to server: Claude Code, CI, GHCR, pull deploy (proposed)
+│   ├── 12-delivery-pipeline.md  Code to server: Claude Code, CI, GHCR, pull deploy (built)
 │   ├── 13-infrastructure.md   Host, containers, backups, rebuild runbook (draft)
 │   ├── 14-terminus-spike-log.md  Evidence resolving T-1..T-9 (raw log in docs/spikes/)
 │   ├── 15-owner-requirements-views-and-manage.md  Views, people, mobile-first manage (captured)
 │   ├── 16-layout-options.md   1-week and 2-week layout mock-ups and recommendation
 │   ├── 17-view-editor-and-recurrence.md  View editor, templates, recurring and multi-day events
 │   ├── 18-test-strategy.md    Test layers, fixtures, fake Terminus, CI gates
-│   ├── 21-flight-status.md    Flight status on events (proposed)
+│   ├── 21-flight-status.md    Flight status on events (built)
 │   ├── decisions/             Architecture Decision Records (ADR-0001 ...)
 │   └── assets/                Rendered sample screens and v1 UI screenshots
 ├── app/                       FUTURE: the calendar application (structure settled; no code yet)

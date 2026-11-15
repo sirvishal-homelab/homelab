@@ -191,7 +191,7 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                     title = with_range
             if cut_r:
                 title += " ▸"
-            title, cut = T.ellipsize(title, 11, True, bw - 10)
+            title, cut = T.ellipsize_keep(title, o0.flight, 11, True, bw - 10)
             truncated += cut
             add(Text(x + 4, y + 12, title, 11, True))
         list_top = strip_y + (len(level_end[:MAX_BAR_LEVELS]) * BAR_STEP) + 2
@@ -220,6 +220,10 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                 badges = badge_spec(ctx, o)
                 badge_w = badge_width(badges) + (3 if badges else 0)
                 lines, cut = _wrap_with_badges(label, cw - 18, badge_w, 3)
+                head, end = T.split_tail(label, o.flight)
+                if cut and end:  # shorten the title, keep the flight status (docs/21 s4)
+                    lines, _ = _wrap_with_badges(head, cw - 18, badge_w, 2)
+                    lines.append(end)
                 need = LINE_H * len(lines)
                 last_item = o is items[-1]
                 if (yy + need > bottom - LINE_H and not last_item) or yy + need > bottom:

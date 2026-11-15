@@ -47,7 +47,7 @@ check (`18`).
 | `POST /events/{id}/restore` | Undo a delete within 30 days. |
 | `POST /events/{id}/skips` | Body `{ "date": "2026-11-03" }`: skip one occurrence. |
 | `DELETE /events/{id}/skips/{date}` | Bring a skipped occurrence back. |
-| `GET /occurrences?from=&to=` | Expanded occurrences for the phone glance view (window up to 366 days). Optional `category`, `person`. |
+| `GET /occurrences?from=&to=` | Expanded occurrences for the phone glance view (window up to 366 days). Optional `category`, `person`. Each has `flight`: the flight status word, or null (`21`). |
 
 Event body (update takes any subset):
 

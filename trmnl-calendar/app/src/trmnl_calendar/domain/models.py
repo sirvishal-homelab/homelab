@@ -65,6 +65,7 @@ class Occurrence:
     owner_id: int | None = None
     note: str = ""  # "in" / "out" for this day only; already part of `title`
     scheduled: bool = False  # belongs to a rotating-week schedule
+    flight: str = ""  # flight status word for this day ("On time"); already part of `title`
 
     @property
     def is_first(self) -> bool:

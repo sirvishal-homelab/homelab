@@ -161,6 +161,34 @@
 </form>
 
 {% if event %}
+  {% if flights %}
+  <h2 id="flights">Flight status</h2>
+  {% for f in flights %}
+  <div class="meta">
+    <strong>{{ f.code }}</strong> on {{ f.day.isoformat() }}:
+    {% if f.word %}<strong>{{ f.word }}</strong>{% elif f.info and not f.info.found %}no such flight that day{% elif f.checked_at %}no status yet{% else %}not looked up yet{% endif %}
+    {% if f.info and f.info.found %}
+      <br>{{ f.info.dep_airport or "?" }} → {{ f.info.arr_airport or "?" }}
+      {% if f.info.sched_dep_local %}· scheduled {{ f.info.sched_dep_local }}{% endif %}
+      {% if f.info.revised_dep_local and f.info.revised_dep_local != f.info.sched_dep_local %}· now {{ f.info.revised_dep_local }}{% endif %}
+      {% if f.info.dep_gate %}· gate {{ f.info.dep_gate }}{% endif %}
+      <span>(airport times)</span>
+    {% endif %}
+    {% if f.error %}<br><span class="err">Last check failed: {{ f.error }}</span>{% endif %}
+    {% if f.checked_at %}<br>Checked {{ f.checked_at.strftime("%Y-%m-%d %H:%M") }} UTC.{% endif %}
+  </div>
+  {% endfor %}
+  {% if flights_on %}
+  <form method="post" action="/events/{{ event.id }}/flights/check" class="inline">
+    <button type="submit">Check now</button>
+    <span class="meta">Looks the flight{{ "s" if flights|length > 1 }} up once now (2 units each).</span>
+  </form>
+  {% if flights_capped %}<div class="err">This month's lookup limit is reached (FLIGHT_MONTHLY_LIMIT); the last status stays.</div>{% endif %}
+  {% else %}
+  <div class="meta">Flight status is off. Set <code>FLIGHT_STATUS=on</code> and <code>FLIGHT_API_KEY</code> in the .env file and restart the app.</div>
+  {% endif %}
+  <div class="meta">{{ flight_credit }}</div>
+  {% endif %}
   {% if event.freq != "none" %}
   <h2>Days off</h2>
   <form method="post" action="/events/{{ event.id }}/skip" class="event">

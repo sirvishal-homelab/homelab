@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Body, Depends, Header, Query, Request
 from fastapi.responses import JSONResponse
 
+from trmnl_calendar import flight_service
 from trmnl_calendar.domain.recurrence import MAX_WINDOW_DAYS, occurrences
 from trmnl_calendar.domain.validation import parse_date
 from trmnl_calendar.errors import AppError
@@ -160,6 +161,7 @@ def list_occurrences(
     occ = occurrences(
         evs, repo.skips_for(conn, ids), a, b, calendar.week_start, repo.notes_for(conn, ids)
     )
+    occ = flight_service.annotate(conn, occ)
     return [
         {
             "event_id": o.event_id,
@@ -173,6 +175,7 @@ def list_occurrences(
             "day_number": o.day_number,
             "day_count": o.day_count,
             "note": o.note or None,
+            "flight": o.flight or None,
         }
         for o in occ
     ]
