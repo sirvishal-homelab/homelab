@@ -19,12 +19,15 @@ esp-mini-screen/
     ├── 02-open-questions.md   What must be answered before choosing a direction
     ├── 03-device-api.md       Stock firmware HTTP API (spike results)
     ├── 04-requirements.md     Homelab status screen fed by Beszel (agreed)
-    ├── 05-design.md           Architecture, rules, screens, data model, slices (proposed)
+    ├── 05-design.md           Architecture, rules, screens, data model (proposed)
+    ├── 06-implementation-plan.md  Gate checklist and build slices S-0..S-5 (proposed)
+    ├── 07-install-and-upgrade.md  Install, upgrade, rollback on the Terminus container (draft)
     ├── assets/                Mock-ups (sample data) and their generator
     └── decisions/             Architecture Decision Records (0001-0003 proposed)
 ```
 
-Next: owner sign-off of `docs/05-design.md` and ADR-0001 to 0003, then slice S-0, then
+Next: owner sign-off of `docs/05`, `06`, `07` and ADR-0001 to 0003 (gate checklist in `06`), then slice S-0.
+No code is written until the gate is clear., then
 code in `app/` (if a push service is built) or `firmware/` (if the device is reflashed).
 
 ## Related

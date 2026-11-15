@@ -9,7 +9,7 @@ Implements `04-requirements.md`. Decisions: ADR-0001 to ADR-0003.
 flowchart LR
   you([You, phone or laptop])
   subgraph lan["Home LAN"]
-    subgraph docker["Docker LXC (next to TRMNL Calendar)"]
+    subgraph docker["Terminus container (Docker), next to TRMNL Calendar"]
       app["esp-mini-screen :8081<br/>poller, renderer, pusher, settings page"]
       db[("SQLite /data/screen.db")]
     end
@@ -153,7 +153,7 @@ volumes:
   esp-screen-data:
 ```
 
-Deployed by manual pull, as TRMNL Calendar stage 1 (its ADR-0008). Beszel's Docker
+Hosted on the existing Terminus container next to TRMNL Calendar (`8080`) and Terminus (`2300`). Deployed by manual pull, as TRMNL Calendar stage 1 (its ADR-0008). Steps: `07-install-and-upgrade.md`. The database is backed up nightly inside the volume (keep 7). Beszel's Docker
 monitoring then watches this container like any other. CI: a workflow mirroring
 `trmnl-calendar-ci.yml`, path-filtered to `esp-mini-screen/app/**`.
 
@@ -168,14 +168,7 @@ monitoring then watches this container like any other. CI: a workflow mirroring
 
 ## 10. Build slices
 
-| Slice | Delivers | Done when |
-|-------|----------|-----------|
-| S-0 | Spike: read the owner's hub once with the app user; record `systems` and `containers` JSON; confirm field names (risk R-1) | fixtures committed (scrubbed) |
-| S-1 | Skeleton app, settings DB, device client, pushes a static test frame | frame on the real screen |
-| S-2 | Beszel client + evaluate + overview render, focus systems from env for now | live overview on screen |
-| S-3 | Alerts, unreachable frame, container memory | pulling a container shows the alert |
-| S-4 | Settings page + preview + push now | focus systems chosen from phone |
-| S-5 | Compose deploy on the Docker LXC, CI workflow | runs for 48 h unattended |
+See `06-implementation-plan.md` (gate checklist and slices S-0 to S-5).
 
 ## 11. Risks
 
