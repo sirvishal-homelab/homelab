@@ -20,6 +20,7 @@ ADR-0008 is accepted for stage 1 only.
 | 0012 | Modern look, bottom bar on phones, bundled font | **Accepted** |
 | 0013 | A Screen page of its own | **Accepted** |
 | 0014 | Shifts pages for rotating schedules | **Accepted** |
+| 0015 | Flight status on events (AeroDataBox) | **Proposed** |
 
 Template:
 

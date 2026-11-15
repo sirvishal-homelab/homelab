@@ -37,6 +37,7 @@ inside each day), and pushes that image to Terminus so the device can show it.
 │   ├── 16-layout-options.md   1-week and 2-week layout mock-ups and recommendation
 │   ├── 17-view-editor-and-recurrence.md  View editor, templates, recurring and multi-day events
 │   ├── 18-test-strategy.md    Test layers, fixtures, fake Terminus, CI gates
+│   ├── 21-flight-status.md    Flight status on events (proposed)
 │   ├── decisions/             Architecture Decision Records (ADR-0001 ...)
 │   └── assets/                Rendered sample screens and v1 UI screenshots
 ├── app/                       FUTURE: the calendar application (structure settled; no code yet)

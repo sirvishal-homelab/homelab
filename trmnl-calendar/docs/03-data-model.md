@@ -291,3 +291,11 @@ and no row means "not decided". Days off use the existing `event_exceptions` ski
 `(at, voltage, wifi, seen_at)`, primary key `at` (UTC text). One reading of the screen's battery voltage
 and Wi-Fi signal, copied from Terminus's device record at most once per device check-in and at least five
 minutes apart; rows older than 90 days are deleted. Not part of `GET /export` (derived data, kept by backups).
+
+### flight_status, flight_calls (migration 0009, proposed: ADR-0015)
+
+`flight_status(code, dep_date, found, status, sched_dep_utc, revised_dep_utc, sched_arr_utc,
+revised_arr_utc, dep_airport, arr_airport, dep_gate, checked_at, next_due_at)`, primary key
+`(code, dep_date)`; `code` without the space (`AC123`). The last answer from the flight provider for a flight
+code spotted in an event, and when to ask again. `flight_calls(month, count)` counts calls for the monthly
+cap. Derived data: not part of `GET /export`, kept by backups, rows deleted 7 days after `dep_date`. See `21`.

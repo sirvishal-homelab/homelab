@@ -1,0 +1,134 @@
+# 21. Flight status on events (design note)
+
+Status: **proposed 2026-11-15** (owner idea; not built). Decision record: ADR-0015.
+
+## 1. What this is for
+
+The owner's wife travels for work. Her flights are already events, drawn as they are today:
+
+```
+14:05 AC123        [M]
+```
+
+When an event holds a flight code, the app looks up that flight and adds **one word of status** to the
+end of the same line, the way In / Out notes already do ("Work (out)"). Nothing else on the event changes:
+the time is still the event's own start time, the badge stays where it is.
+
+```
+today, or no data yet     on time                  delayed
++--------------+          +--------------+         +--------------+
+| 14:05 AC123 M|          | 14:05 AC123 M|         | 14:05 AC123 M|
+|              |          | (On time)    |         | (Delayed)    |
++--------------+          +--------------+         +--------------+
+```
+
+A week cell is narrow, so the status usually wraps to the second line the cell already allows.
+
+No alerts, no email, no SMS (owner, 2026-11-15). The screen and the web pages only.
+
+## 2. Spotting a flight
+
+- The **title or location** is searched for an airline code followed by a flight number:
+  `\b([A-Z]{2}|[A-Z][0-9]|[0-9][A-Z])\s?([0-9]{1,4})\b`, upper case only. It matches `AC123`, `AC 123`,
+  `WS456`, `B6 789`, `U2 1234`. Lower case ("ac123") is not matched, which keeps out most ordinary words.
+  Two more rules, found by trying the pattern on sample titles: `AM` and `PM` are never airline codes
+  (`PM 5`), and a code followed by a **space** and a year from 1970 to 2100 is skipped (`CA 2026 trip`).
+  Written without the space (`CA2026`) it is still looked up.
+- The code is looked up on the **day of the occurrence it is drawn on**. On a multi-day event (a trip),
+  the **first** code belongs to the first day and the **last** code to the last day, so a trip titled
+  `Toronto AC604 / AC611` gets the outbound status on day one and the return on the last day.
+- A single-day event with two codes (a connection) shows the status of the first flight until it has
+  landed, then the second.
+- A match that is not a real flight costs **one** lookup: the "not found" answer is stored for that date
+  and never asked again. Nothing is shown for it.
+
+## 3. When the app looks a flight up
+
+Flight data costs money per call, so lookups follow the flight, not the screen's 15-minute timer.
+
+| Window | How often |
+|--------|-----------|
+| The day before (any time) | Once, to confirm the flight and learn its times in UTC |
+| 4 hours before scheduled departure until it departs | Every 30 minutes |
+| Departed until it arrives | Every 60 minutes, plus once at the expected arrival |
+| Arrived, cancelled or diverted | Never again |
+| 6 hours after scheduled arrival with no answer | Stop |
+
+About 12 calls per flight. The scheduler loop (ADR-0007, one worker) asks the flight module for due
+lookups before each render; each stored flight has a `next_due_at`. A monthly cap
+(`FLIGHT_MONTHLY_LIMIT`, default 100 calls) stops all lookups when reached; the last known status stays
+on screen and the Screen page says the cap was hit.
+
+The image is still a function of (data, settings, now) (NFR-7): the status comes from the database, not
+from a call made while drawing. A changed status changes the picture, so the normal push-on-change sends
+it. An unchanged status costs nothing.
+
+## 4. The words
+
+Status from the provider, mapped to what is shown. A delay is 15 minutes or more between the scheduled and
+the revised departure (the usual airline threshold).
+
+| Provider status | Shown |
+|-----------------|-------|
+| Expected, CheckIn, Boarding, GateClosed, Unknown with times; less than 15 minutes late | **On time** |
+| Delayed, or any of the above 15 minutes or more late | **Delayed** |
+| Departed, EnRoute, Approaching | **Departed** |
+| Arrived | **Landed** |
+| Canceled, CanceledUncertain | **Cancelled** |
+| Diverted | **Diverted** |
+| No answer yet, not found, outside the window | nothing |
+
+The status is written as a suffix in brackets, like notes: `AC123 (Delayed)`. When the line would be
+shortened to fit, the **title** is shortened and the status is kept, because the status is the point.
+The web pages (event list, month page, Screen preview) show the same suffix; the event page also shows the
+detail in words: scheduled and revised departure, route, gate when known, and when it was last checked.
+Times there are the airport's local times, which matches floating local time (ADR-0010).
+
+## 5. Data
+
+Migration 0009, one table. Derived data like `device_samples`: kept by backups, not part of `GET /export`,
+rows deleted 7 days after the flight date.
+
+`flight_status(code, dep_date, found, status, sched_dep_utc, revised_dep_utc, sched_arr_utc,
+revised_arr_utc, dep_airport, arr_airport, dep_gate, checked_at, next_due_at)`, primary key
+`(code, dep_date)`. `code` is normalised without the space (`AC123`). A month counter for the cap
+lives in `flight_calls(month, count)`.
+
+## 6. The provider
+
+**AeroDataBox** (through RapidAPI), endpoint `GET /flights/number/{code}/{dateLocal}`. It returns one or
+more legs with scheduled and revised times, airports, gate and a status from the list in section 4. Its
+free plan has a small monthly unit allowance and the flight-status call is a tier-2 endpoint, so it costs
+more than one unit; the cap in section 3 is set well below the allowance. Confirm the plan's numbers on
+the RapidAPI page before relying on them.
+
+Only `flight_source.py` talks to the service (as `holiday_source.py` does for holidays): standard library,
+short timeout, size cap, one function that returns a small `FlightInfo` or "not found". A different
+provider is a new version of that one file.
+
+Settings (environment, ADR-0005): `FLIGHT_STATUS=off` by default (it needs a key), `FLIGHT_API_KEY`
+(a secret: never logged, never in the repo), `FLIGHT_API_URL`, `FLIGHT_MONTHLY_LIMIT`. Only the flight
+code and the date are sent.
+
+## 7. Decisions to confirm
+
+| # | Question | Proposed |
+|---|----------|----------|
+| FL-1 | Words only, or "Delayed 14:50" with the new time? | Words only (owner, 2026-11-15). The new time is on the event page. |
+| FL-2 | Spot codes automatically, or only in one category such as "Travel"? | Automatically; a false match costs one call. |
+| FL-3 | Status in brackets like notes, `(On time)`? | Yes, for consistency. |
+| FL-4 | Provider | AeroDataBox; FlightAware AeroAPI if its data proves better (section 9 of ADR-0015). |
+| FL-5 | Show "Departed" and "Landed" after take-off, or stop showing anything? | Show them; they tell the family she is in the air or down. |
+
+## 8. Tests
+
+Unit: the pattern (matches and near misses such as `Room B2`, `PM 5`, `CA 2026 trip`, `ac123`), first / last code on a trip,
+connection order, status mapping and the 15-minute line, the lookup schedule against a fake clock, the
+monthly cap, the title shortened before the status. Contract: recorded AeroDataBox replies (made-up
+flights) for on time, delayed, cancelled, not found, and a garbled reply. Render: a golden image with
+`(Delayed)` on a week cell. No test calls the live service.
+
+## 9. Not in scope
+
+Alerts of any kind, gate changes on the screen, arrival times on the screen, airport maps, tracking flights
+that are not on the calendar.
