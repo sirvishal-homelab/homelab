@@ -88,3 +88,37 @@ def test_missing_items_list_is_data_error():
     hub.containers = {"records": []}
     with pytest.raises(BeszelDataError, match="no 'items'"):
         snap(hub)
+
+
+def test_stopped_container_record_is_not_running():
+    """Seen on the real hub 2026-11-15: a stopped container's record stays with an old time."""
+    hub = FakeHub()
+    hub.stop_container("docker-host", "watchtower")
+    names = {(c.system_id, c.name) for c in snap(hub).containers}
+    assert ("grh0kefzwq2t2g3", "watchtower") not in names
+    assert ("grh0kefzwq2t2g3", "app-a") in names
+    assert len(names) == 8
+
+
+def test_old_twin_of_recreated_container_is_ignored():
+    hub = FakeHub()
+    twin = dict(hub.containers["items"][1], id="oldid", updated=1794738213350 - 600_000)
+    hub.containers["items"].append(twin)
+    assert len(snap(hub).containers) == 9
+
+
+def test_containers_of_unknown_system_are_ignored():
+    hub = FakeHub()
+    hub.containers["items"].append(dict(hub.containers["items"][0], system="nosuch"))
+    assert len(snap(hub).containers) == 9
+
+
+def test_bad_update_times_are_data_errors():
+    hub = FakeHub()
+    hub.systems["items"][0]["updated"] = "yesterday"
+    with pytest.raises(BeszelDataError, match="not a time"):
+        snap(hub)
+    hub = FakeHub()
+    hub.containers["items"][0]["updated"] = "soon"
+    with pytest.raises(BeszelDataError, match="'updated' has type str"):
+        snap(hub)

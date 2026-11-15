@@ -8,12 +8,17 @@ the screen can say "Beszel data changed" instead of showing wrong numbers (F-16)
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
 
 from esp_screen.domain.model import Container, Snapshot, System, SystemState
+
+# A running container's record is rewritten with every agent report, with the same `updated`
+# time as its system. A stopped container's record stays behind with an old time (docs/08 B-2,
+# corrected 2026-11-15), so "running" means "updated in the system's latest report".
+FRESH_WITHIN = timedelta(seconds=15)
 
 
 class BeszelError(Exception):
@@ -31,6 +36,35 @@ def _need(rec: dict, key: str, kind: type | tuple[type, ...], where: str) -> Any
     if not isinstance(value, kind):
         raise BeszelDataError(f"{where}: field '{key}' has type {type(value).__name__}")
     return value
+
+
+def _system_updated(rec: dict, where: str) -> datetime:
+    raw = _need(rec, "updated", str, where)
+    try:
+        return datetime.fromisoformat(raw.replace(" ", "T").replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise BeszelDataError(f"{where}: field 'updated' is not a time: {raw!r}") from exc
+
+
+def _container_updated(rec: dict, where: str) -> datetime:
+    ms = _need(rec, "updated", (int, float), where)
+    return datetime.fromtimestamp(ms / 1000, tz=UTC)
+
+
+def running_containers(systems: list[dict], containers: list[dict]) -> list[Container]:
+    """Containers whose record came with their system's latest report; stale records dropped."""
+    last_report = {
+        _need(s, "id", str, "systems"): _system_updated(s, f"systems/{s.get('id', '?')}")
+        for s in systems
+    }
+    out = []
+    for rec in containers:
+        c = to_container(rec)
+        seen = _container_updated(rec, f"containers/{rec.get('id', '?')}")
+        report = last_report.get(c.system_id)
+        if report is not None and seen >= report - FRESH_WITHIN:
+            out.append(c)
+    return list(dict.fromkeys(out))  # a recreated container can leave an old twin behind
 
 
 def to_system(rec: dict) -> System:
@@ -127,6 +161,7 @@ class BeszelClient:
         raise BeszelError(f"{collection}: not authorised after a fresh login")
 
     async def snapshot(self) -> Snapshot:
-        systems = [to_system(r) for r in await self._items("systems", 500)]
-        containers = [to_container(r) for r in await self._items("containers", 1000)]
+        system_recs = await self._items("systems", 500)
+        systems = [to_system(r) for r in system_recs]
+        containers = running_containers(system_recs, await self._items("containers", 1000))
         return Snapshot(tuple(systems), tuple(containers), self._now())

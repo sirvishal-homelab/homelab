@@ -265,3 +265,17 @@ def test_unreachable_stops_flipping(tmp_path):
 
     with screen.serve() as url:
         asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))
+
+
+def test_container_removed_by_beszel_also_counts(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+
+    def world(i):
+        clock.advance()
+        if i == 0:
+            hub.remove_container("docker-host", "app-a")
+
+    with screen.serve() as url:
+        runner = Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)
+        run_ticks(runner, clock, 3, between=world)
+    assert runner.last_status.down_containers == ("docker-host/app-a",)

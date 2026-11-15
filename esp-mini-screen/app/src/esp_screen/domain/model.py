@@ -32,7 +32,7 @@ class Container:
 @dataclass(frozen=True)
 class Snapshot:
     systems: tuple[System, ...]
-    containers: tuple[Container, ...]  # Beszel lists running containers only (docs/08 B-2)
+    containers: tuple[Container, ...]  # running only: stale Beszel records already dropped
     taken_at: datetime
 
 

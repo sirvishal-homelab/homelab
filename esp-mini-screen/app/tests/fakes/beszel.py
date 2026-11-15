@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -61,6 +62,23 @@ class FakeHub:
                 s["status"] = status
 
     def stop_container(self, system_name: str, name: str) -> None:
+        """What Beszel 0.21.2 really does: the record stays, its `updated` time stops moving.
+
+        Simulated by moving the system's report (and its other containers) one minute on.
+        """
+        sid = next(s["id"] for s in self.systems["items"] if s["name"] == system_name)
+        for s in self.systems["items"]:
+            if s["id"] == sid:
+                when = datetime.fromisoformat(s["updated"].replace(" ", "T").replace("Z", ""))
+                s["updated"] = (when + timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M:%S.%f")[
+                    :-3
+                ] + "Z"
+        for c in self.containers["items"]:
+            if c["system"] == sid and c["name"] != name:
+                c["updated"] += 60_000
+
+    def remove_container(self, system_name: str, name: str) -> None:
+        """Beszel eventually deletes old records: the container disappears entirely."""
         sid = next(s["id"] for s in self.systems["items"] if s["name"] == system_name)
         self.containers["items"] = [
             c for c in self.containers["items"] if not (c["system"] == sid and c["name"] == name)
