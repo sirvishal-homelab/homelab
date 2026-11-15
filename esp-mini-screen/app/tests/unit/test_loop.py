@@ -123,3 +123,145 @@ def test_screen_offline_is_recorded(tmp_path):
         assert run_ticks(runner, clock, 1) == [False]
     with contextlib.closing(db.connect(s.db_path)) as conn:
         assert repo.get_push_state(conn).last_result == "error"
+
+
+# --- S-3: alerts, flipping, Beszel failures ----------------------------------------------
+
+
+def screen_calls(screen, kind):
+    return [c for c in screen.calls if c.startswith(kind)]
+
+
+def test_system_down_uploads_alert_and_flips(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("node-b", "down")
+
+    async def go(runner):
+        await runner.tick()
+        assert runner.plan.flipping
+        await runner.flip()
+        assert screen.shown == "/image/alert.jpg"
+        await runner.flip()
+        assert screen.shown == "/image/status.jpg"
+        await runner.aclose()
+
+    with screen.serve() as url:
+        runner = Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)
+        asyncio.run(go(runner))
+    assert "/image/alert.jpg" in screen.files
+    assert runner.plan.card.title == "node-b down"
+    assert runner.last_status.down_systems == ("node-b",)
+
+
+def test_flips_do_not_upload(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("vm-1", "down")
+
+    async def go(runner):
+        await runner.tick()
+        uploads = len(screen_calls(screen, "POST"))
+        for _ in range(6):
+            await runner.flip()
+        assert len(screen_calls(screen, "POST")) == uploads
+        await runner.aclose()
+
+    with screen.serve() as url:
+        asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))
+
+
+def test_overview_refresh_while_alert_showing_does_not_switch(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("node-b", "down")
+
+    async def go(runner):
+        await runner.tick()
+        await runner.flip()  # alert card on screen
+        clock.advance()
+        assert await runner.tick() is True  # new minute: overview re-uploaded ...
+        assert screen.shown == "/image/alert.jpg"  # ... but the card stays until the next flip
+        await runner.aclose()
+
+    with screen.serve() as url:
+        asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))
+
+
+def test_recovery_returns_to_overview(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("node-b", "down")
+
+    async def go(runner):
+        await runner.tick()
+        await runner.flip()
+        hub.set_status("node-b", "up")
+        await runner.tick()  # node-b is back: the overview changed, so it is re-uploaded
+        assert not runner.plan.flipping
+        assert screen.shown == "/image/status.jpg"
+        assert runner.plan.card is None
+        await runner.aclose()
+
+    with screen.serve() as url:
+        asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))
+
+
+def test_paused_system_never_alerts(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("node-b", "paused")
+    with screen.serve() as url:
+        runner = Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)
+        run_ticks(runner, clock, 1)
+    assert runner.plan.card is None
+    assert "/image/alert.jpg" not in screen.files
+
+
+def test_unreachable_card_after_two_failures_then_red(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+
+    async def go(runner):
+        await runner.tick()  # good read at 08:30
+        hub.down = True
+        clock.advance()
+        assert await runner.tick() is False  # one failure: keep the overview
+        clock.advance()
+        assert await runner.tick() is True  # second: amber card
+        amber = screen.files["/image/status.jpg"]
+        clock.advance(5)
+        assert await runner.tick() is True  # past the 5-min grace: red card
+        assert screen.files["/image/status.jpg"] != amber
+        assert runner.health.failures == 3
+        hub.down = False
+        clock.advance()
+        assert await runner.tick() is True  # back to the overview
+        assert runner.health.failures == 0
+        await runner.aclose()
+
+    with screen.serve() as url:
+        asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))
+
+
+def test_data_changed_card_shown_at_once(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.systems["items"][1]["info"].pop("mp")
+    with screen.serve() as url:
+        runner = Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)
+        assert run_ticks(runner, clock, 1) == [True]
+    assert runner.health.data_changed
+    assert screen.shown == "/image/status.jpg"
+
+
+def test_unreachable_stops_flipping(tmp_path):
+    hub, screen, clock = FakeHub(), FakeScreen(), Clock()
+    hub.set_status("node-b", "down")
+
+    async def go(runner):
+        await runner.tick()
+        await runner.flip()
+        hub.down = True
+        for _ in range(2):
+            clock.advance()
+            await runner.tick()
+        assert not runner.plan.flipping
+        assert screen.shown == "/image/status.jpg"
+        await runner.aclose()
+
+    with screen.serve() as url:
+        asyncio.run(go(Runner(setup(tmp_path, url), now=clock, beszel_transport=hub.transport)))

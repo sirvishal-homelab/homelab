@@ -141,3 +141,67 @@ def overview(status, updated: str) -> Image.Image:
     if not status.rows:
         d.text((120, 160), "No focus systems set", font=font("Medium", 13), fill=DIM, anchor="mm")
     return im
+
+
+# --- alert and warning cards (S-3) ------------------------------------------------------------
+
+RED_BG, RED_TEXT, RED_SOFT = (60, 14, 14), (255, 180, 170), (220, 160, 155)
+AMBER_BG, AMBER_TEXT, AMBER_SOFT = (58, 44, 8), (255, 214, 120), (215, 185, 120)
+
+
+def _card(heading: str, title: str, lines: list[str], *, red: bool) -> Image.Image:
+    bg, accent, text, soft = (
+        (RED_BG, BAD, RED_TEXT, RED_SOFT) if red else (AMBER_BG, WARN, AMBER_TEXT, AMBER_SOFT)
+    )
+    im = Image.new("RGB", SIZE, bg)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle((10, 10, 230, 230), 16, outline=accent, width=3)
+    d.text((120, 40), heading, font=font("Bold", 16), fill=text, anchor="mm")
+    size = 30
+    while d.textlength(title, font=font("Bold", size)) > 196 and size > 14:
+        size -= 1
+    if d.textlength(title, font=font("Bold", size)) > 196:
+        title = _fit(d, title, "Bold", size, 196)
+    d.text((120, 100), title, font=font("Bold", size), fill=FG, anchor="mm")
+    for i, line in enumerate(lines):
+        if not line:
+            continue
+        weight, fsize, colour = ("Medium", 16, text) if i == 0 else ("Medium", 13, soft)
+        y = 140 if i == 0 else 175 + (i - 1) * 25
+        d.text(
+            (120, y),
+            _fit(d, line, weight, fsize, 196),
+            font=font(weight, fsize),
+            fill=colour,
+            anchor="mm",
+        )
+    return im
+
+
+def _ago(minutes: int) -> str:
+    if minutes < 60:
+        return f"{minutes} min"
+    return f"{minutes // 60} h {minutes % 60:02d} min"
+
+
+def alert(title: str, detail: str, since: str, minutes: int, also: str) -> Image.Image:
+    """Red card for a confirmed problem; alternates with the overview."""
+    return _card("ATTENTION", title, [f"since {since} ({_ago(minutes)})", detail, also], red=True)
+
+
+def unreachable(last_good: str | None, minutes: int, *, red: bool) -> Image.Image:
+    """No data from Beszel: amber at first, red after the grace period (docs/05 section 4)."""
+    when = f"last good read {last_good}" if last_good else "no good read since start"
+    return _card(
+        "NO DATA", "Beszel unreachable", [f"for {_ago(minutes)}", when, "check the hub"], red=red
+    )
+
+
+def data_changed(detail: str) -> Image.Image:
+    """Beszel answered in a shape this app does not know (F-16): never show wrong numbers."""
+    return _card(
+        "CHECK APP",
+        "Beszel data changed",
+        ["after a Beszel update?", detail, "see /healthz"],
+        red=False,
+    )

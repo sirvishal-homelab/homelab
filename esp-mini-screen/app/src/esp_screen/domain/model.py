@@ -76,5 +76,6 @@ class Status:
     rows: tuple[Row, ...]
     containers: Tile
     others: Tile
-    down_containers: tuple[str, ...] = field(default=())  # "system/name", for S-3 alerts
+    down_containers: tuple[str, ...] = field(default=())  # "system/name"
+    down_systems: tuple[str, ...] = field(default=())  # labels; focus first, paused never
     updated_at: datetime | None = None
