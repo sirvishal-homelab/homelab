@@ -6,6 +6,7 @@ Pure: no database, no network, no clock. Callers pass `now` (UTC) in.
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 
@@ -108,6 +109,18 @@ def word(info: FlightInfo | None) -> str:
     if s == "Delayed" or info.late_minutes >= LATE_MINUTES:
         return "Delayed"
     return "On time" if info.sched_dep else ""
+
+
+def label(info: FlightInfo | None, fmt_time: Callable[[str], str]) -> str:
+    """What is drawn in the brackets: the word, plus the new time when delayed ("Delayed 2p").
+
+    `fmt_time` turns "HH:MM" into the calendar's style (12- or 24-hour). The time is the departure
+    airport's own clock, like the event's time (owner, 2026-11-15; docs/21 section 4).
+    """
+    w = word(info)
+    if w == "Delayed" and info is not None and info.revised_dep_local:
+        return f"{w} {fmt_time(info.revised_dep_local)}"
+    return w
 
 
 def pick(codes: list[str], infos: dict[str, FlightInfo]) -> tuple[str, FlightInfo | None]:

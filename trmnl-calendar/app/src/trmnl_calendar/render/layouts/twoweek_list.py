@@ -222,8 +222,10 @@ def plan(ctx: PlanContext) -> tuple[Scene, FitReport]:
                 lines, cut = _wrap_with_badges(label, cw - 18, badge_w, 3)
                 head, end = T.split_tail(label, o.flight)
                 if cut and end:  # shorten the title, keep the flight status (docs/21 s4)
-                    lines, _ = _wrap_with_badges(head, cw - 18, badge_w, 2)
-                    lines.append(end)
+                    lines, cut = _wrap_with_badges(head, cw - 18, badge_w, 2)
+                    tail, tail_cut = T.ellipsize(end, 11, False, cw - 18)
+                    lines.append(tail)
+                    cut = cut or tail_cut
                 need = LINE_H * len(lines)
                 last_item = o is items[-1]
                 if (yy + need > bottom - LINE_H and not last_item) or yy + need > bottom:

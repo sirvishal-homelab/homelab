@@ -10,6 +10,7 @@ from trmnl_calendar import flight_service as svc
 from trmnl_calendar.domain.flights import FlightInfo
 from trmnl_calendar.flight_source import FlightSourceError
 from trmnl_calendar.storage import backup, db, migrate
+from trmnl_calendar.storage.repositories import calendar as cal
 from trmnl_calendar.storage.repositories import events as events_repo
 from trmnl_calendar.storage.repositories import flights as repo
 from trmnl_calendar.storage.repositories import views as views_repo
@@ -42,9 +43,9 @@ class FakeSource:
         return replace(a, code=code, dep_date=day) if a else FlightInfo(code, day, found=False)
 
 
-def flight(status="Expected", revised=None):
+def flight(status="Expected", revised=None, revised_local=""):
     return FlightInfo(
-        "AC663", DAY, True, status, DEP, revised, ARR, None, "11:25", "", "YHZ", "YUL"
+        "AC663", DAY, True, status, DEP, revised, ARR, None, "11:25", revised_local, "YHZ", "YUL"
     )
 
 
@@ -195,3 +196,15 @@ def test_the_screen_image_changes_when_the_status_arrives(conn):
     assert after.hash != before
     texts = [getattr(i, "text", "") for i in after.scene.items]
     assert any("(Delayed)" in t for t in texts)
+
+
+def test_delayed_shows_the_new_time_in_the_calendar_style_and_a_new_time_is_pushed(conn):
+    add(conn)
+    late = flight("Delayed", DEP + timedelta(hours=2), "13:25")
+    r, src = refresher({"AC663": late})
+    r.refresh(conn, EVENING_BEFORE)
+    assert [o.title for o in svc.annotate(conn, _occ(conn))] == ["AC663 (Delayed 1:25p)"]
+    cal.update_calendar(conn, {"time_format": "24"})
+    assert [o.title for o in svc.annotate(conn, _occ(conn))] == ["AC663 (Delayed 13:25)"]
+    src.answers["AC663"] = flight("Delayed", DEP + timedelta(hours=3), "14:25")
+    assert r.refresh(conn, DEP - timedelta(hours=1)) is True  # same word, later time: push

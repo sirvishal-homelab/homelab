@@ -16,6 +16,7 @@ from trmnl_calendar.domain import flights as F
 from trmnl_calendar.domain.models import Event, Occurrence
 from trmnl_calendar.domain.recurrence import occurrences
 from trmnl_calendar.flight_source import FlightSource, FlightSourceError
+from trmnl_calendar.render.layouts.base import fmt_time
 from trmnl_calendar.storage.repositories import calendar as cal
 from trmnl_calendar.storage.repositories import events as events_repo
 from trmnl_calendar.storage.repositories import flights as repo
@@ -32,16 +33,22 @@ def annotate(conn: sqlite3.Connection, occ: list[Occurrence]) -> list[Occurrence
     known = repo.infos_for(conn, keys)
     if not known:
         return occ
+    show = _formatter(conn)
     out = []
     for o in occ:
         codes = F.codes_for_day(o)
         if codes:
             _, info = F.pick(codes, {c: known[(c, o.date)] for c in codes if (c, o.date) in known})
-            w = F.word(info)
+            w = F.label(info, show)
             if w:
                 o = replace(o, title=f"{o.title} ({w})", flight=w)
         out.append(o)
     return out
+
+
+def _formatter(conn: sqlite3.Connection):
+    style = cal.get_calendar(conn).time_format
+    return lambda hhmm: fmt_time(hhmm, style)
 
 
 def event_flights(event: Event) -> list[tuple[str, date]]:
@@ -80,7 +87,8 @@ class FlightRefresher:
         self, conn: sqlite3.Connection, code: str, day: date, now: datetime
     ) -> tuple[str, str]:
         """Ask once, store the answer. Returns (old word, new word); raises nothing."""
-        old = F.word(repo.info(repo.get(conn, code, day)))
+        show = _formatter(conn)
+        old = F.label(repo.info(repo.get(conn, code, day)), show)
         if repo.calls_this_month(conn, now) >= self.limit:
             self.capped = True
             return old, old
@@ -92,7 +100,7 @@ class FlightRefresher:
             repo.save_error(conn, code, day, str(exc), now, now + F.RETRY_AFTER_ERROR)
             return old, old
         repo.save(conn, info, now, F.next_due(info, now))
-        return old, F.word(info)
+        return old, F.label(info, show)  # a later new time is a change too
 
     def due_pairs(self, conn: sqlite3.Connection, now: datetime) -> list[tuple[str, date]]:
         """Flights on the calendar from yesterday to tomorrow that should be asked about now."""

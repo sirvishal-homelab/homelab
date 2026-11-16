@@ -56,3 +56,17 @@ def test_split_and_ellipsize_keep():
     long = "A very long title indeed AC663 (Delayed)"
     text, cut = T.ellipsize_keep(long, "Delayed", 12, True, 90)
     assert cut and text.endswith("… (Delayed)")
+
+
+@pytest.mark.parametrize("layout", [week_lanes, twoweek_list])
+def test_delay_time_fits_without_a_false_shortened_warning(layout):
+    e = Event(id=1, title="AC663", section_id=1, start_date=MON, start_time="11:25")
+    occ = [
+        replace(o, title=f"{o.title} (Delayed 1:25p)", flight="Delayed 1:25p")
+        for o in occurrences([e], None, *layout.window(MON, "sun"), "sun")
+    ]
+    ctx = base.PlanContext(today=MON, sections=SECS, occurrences=tuple(occ))
+    scene, fit = layout.plan(ctx)
+    texts = [i.text for i in scene.items if isinstance(i, Text)]
+    assert "(Delayed 1:25p)" in texts
+    assert not [f for f in fit.findings if f.code == "titles_truncated"]
