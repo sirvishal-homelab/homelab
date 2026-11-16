@@ -1,5 +1,5 @@
 # ADR-0015: Flight status on events
-Status: **Accepted 2026-11-15** (owner; built the same day; live API not yet verified, R-15)
+Status: **Accepted 2026-11-15** (owner; built and verified against the live API the same day)
 Date: 2026-11-15
 
 ## Context
