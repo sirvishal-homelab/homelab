@@ -72,14 +72,16 @@ the revised departure (the usual airline threshold).
 | Provider status | Shown |
 |-----------------|-------|
 | Expected, CheckIn, Boarding, GateClosed, Unknown with times; less than 15 minutes late | **On time** |
-| Delayed, or any of the above 15 minutes or more late | **Delayed** |
+| Delayed, or any of the above 15 minutes or more late | **Delayed 2p** (with the new departure time when known) |
 | Departed, EnRoute, Approaching | **Departed** |
 | Arrived | **Landed** |
 | Canceled, CanceledUncertain | **Cancelled** |
 | Diverted | **Diverted** |
 | No answer yet, not found, outside the window | nothing |
 
-The status is written as a suffix in brackets, like notes: `AC123 (Delayed)`. When the line would be
+The status is written as a suffix in brackets, like notes: `12p AC123 (Delayed 2p)`. The event's own
+time stays as entered; the new time is the departure airport's clock in the calendar's 12- or 24-hour
+style, and a later new time is a change that is pushed like a new word. When the line would be
 shortened to fit, the **title** is shortened and the status is kept, because the status is the point.
 On a trip's bar, the status of the first day shown is used. The web pages (home list, month page, Screen
 preview) and `GET /api/v1/occurrences` (field `flight`) show the same suffix. The event page has a
@@ -88,6 +90,13 @@ known, the last failure if any, and when it was last checked; and a **Check now*
 (`POST /events/{id}/flights/check`) that asks once now, whatever the schedule, within the monthly cap.
 When the feature is off the panel says which `.env` settings turn it on. Times there are the airport's
 local times, which matches floating local time (ADR-0010).
+
+**Filling a missing time** (owner, 2026-11-15, FL-6). When a lookup finds a flight and the event has
+**no start time**, the event's start time is set to the planned departure (`sched_dep_local`, the
+airport's clock), saved like an edit (its revision goes up, so it shows on the event page and can be
+changed back). Only one-off events, only the event's first flight on its first day, and **never a time
+someone typed**. A delay never moves it; the new time shows in the brackets. This is the one place the
+feature writes to an event.
 
 ## 5. Data
 
@@ -127,7 +136,8 @@ code and the date are sent.
 
 | # | Question | Decision |
 |---|----------|----------|
-| FL-1 | Words only, or "Delayed 14:50" with the new time? | Words only (owner, 2026-11-15). The new time is on the event page. |
+| FL-6 | Set the start time from the flight? | Only when the event has none (owner, 2026-11-15); a typed time is never replaced. |
+| FL-1 | Words only, or "Delayed 14:50" with the new time? | First words only; changed the same day (owner, 2026-11-15) to **the new time after Delayed**, keeping the event's own time. |
 | FL-2 | Spot codes automatically, or only in one category such as "Travel"? | Automatically; a false match costs one call. |
 | FL-3 | Status in brackets like notes, `(On time)`? | Yes, for consistency. |
 | FL-4 | Provider | AeroDataBox; FlightAware AeroAPI if its data proves better (section 9 of ADR-0015). |

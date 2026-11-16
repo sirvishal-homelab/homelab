@@ -136,3 +136,15 @@ def test_not_found_is_never_asked_again_and_stale_flights_give_up():
 def test_a_known_flight_without_times_is_tried_a_few_times_a_day():
     now = DEP - timedelta(days=1)
     assert F.next_due(info("Unknown", sched=None), now) == now + timedelta(hours=6)
+
+
+def test_label_adds_the_new_time_to_delayed_only():
+    def fmt(hhmm):
+        return {"14:00": "2p", "11:25": "11:25a"}[hhmm]
+
+    late = info("Delayed", revised=DEP + timedelta(hours=2), revised_dep_local="14:00")
+    assert F.label(late, fmt) == "Delayed 2p"
+    assert F.label(info("Delayed"), fmt) == "Delayed"  # no new time known yet
+    assert F.label(info("Expected", revised_dep_local="11:25"), fmt) == "On time"
+    assert F.label(info("Departed", revised_dep_local="14:00"), fmt) == "Departed"
+    assert F.label(None, fmt) == ""
