@@ -65,3 +65,4 @@ Status column added 2026-10-27: every question is now answered; the answer is ap
 | R-13 | New: the public repo exposes home-network detail in `13` and `spikes/` (`12`) |
 | R-14 | New 2026-10-29: the online holiday lookup was written without calling the live service, and its v3 ends 2027-01-31. Open until one real lookup (for example Canada, with Nova Scotia) is checked, then move to v4 (ADR-0011) |
 | R-15 | New 2026-11-15: flight status (ADR-0015) is designed without a live call to AeroDataBox, and its free allowance is small. Open until one real flight is checked end to end and a month's call count is seen against the cap |
+| R-15 | Retired 2026-11-15: the first live Check now (AC663, 2026-11-16) parsed route, time, gate and status correctly. Still watch a month's call count against the cap |

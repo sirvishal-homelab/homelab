@@ -1,6 +1,7 @@
 # 21. Flight status on events (design note)
 
-Status: **built 2026-11-15** (owner accepted FL-1 to FL-5); the live API is not yet verified (R-15). Decision record: ADR-0015.
+Status: **built and verified 2026-11-15** (owner accepted FL-1 to FL-5). First live Check now: AC663 on
+2026-11-16 read as YHZ → YUL, scheduled 11:25, gate 20, On time (R-15 retired). Decision record: ADR-0015.
 
 ## 1. What this is for
 
