@@ -90,6 +90,13 @@ known, the last failure if any, and when it was last checked; and a **Check now*
 When the feature is off the panel says which `.env` settings turn it on. Times there are the airport's
 local times, which matches floating local time (ADR-0010).
 
+**Filling a missing time** (owner, 2026-11-15, FL-6). When a lookup finds a flight and the event has
+**no start time**, the event's start time is set to the planned departure (`sched_dep_local`, the
+airport's clock), saved like an edit (its revision goes up, so it shows on the event page and can be
+changed back). Only one-off events, only the event's first flight on its first day, and **never a time
+someone typed**. A delay never moves it; the new time shows in the brackets. This is the one place the
+feature writes to an event.
+
 ## 5. Data
 
 Migration 0009, one table. Derived data: not part of `GET /export`, and **left out of backups** (the
@@ -128,6 +135,7 @@ code and the date are sent.
 
 | # | Question | Decision |
 |---|----------|----------|
+| FL-6 | Set the start time from the flight? | Only when the event has none (owner, 2026-11-15); a typed time is never replaced. |
 | FL-1 | Words only, or "Delayed 14:50" with the new time? | First words only; changed the same day (owner, 2026-11-15) to **the new time after Delayed**, keeping the event's own time. |
 | FL-2 | Spot codes automatically, or only in one category such as "Travel"? | Automatically; a false match costs one call. |
 | FL-3 | Status in brackets like notes, `(On time)`? | Yes, for consistency. |

@@ -11,7 +11,8 @@ wants the event to look as it does now, with the status added. Alerts are not wa
 - An event whose title or location holds an upper-case airline code and flight number (`AC123`,
   `B6 789`) gets a status suffix on the occurrence for that flight's date: **On time**, **Delayed**,
   **Departed**, **Landed**, **Cancelled** or **Diverted** (`21`, section 4); a delay also shows the new
-  departure time ("Delayed 2p", owner, 2026-11-15). Nothing else changes.
+  departure time ("Delayed 2p", owner, 2026-11-15). A flight event saved without a start time gets
+  the planned departure as its start time on the first lookup; a typed time is never replaced. Nothing else changes.
 - Status is fetched from **AeroDataBox** by `flight_source.py` only, on a schedule that follows each
   flight (once the day before, every 30 minutes from 4 hours before departure, hourly in the air, never
   after arrival), with a monthly call cap. Results are stored in `flight_status` (migration 0009), so
