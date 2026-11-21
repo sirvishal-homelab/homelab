@@ -2,7 +2,7 @@
 # Multi-stage, non-root, bundled fonts, HEALTHCHECK. Python 3.12 (ADR-0009).
 # TODO(slice 0 follow-up): pin both base images by digest once CI has built once (docs/12 "Reproducible").
 
-FROM python:3.12-slim AS build
+FROM python:3.15-slim AS build
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PROJECT_ENVIRONMENT=/opt/venv
 RUN pip install --no-cache-dir uv
 WORKDIR /src
@@ -11,7 +11,7 @@ COPY src ./src
 # --locked when a lock file is committed; otherwise resolve at build time (see docs/19)
 RUN if [ -f uv.lock ]; then uv sync --no-dev --no-editable --locked; else uv sync --no-dev --no-editable; fi
 
-FROM python:3.12-slim
+FROM python:3.15-slim
 ENV PATH="/opt/venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/data WEB_CONCURRENCY=1
 RUN useradd --system --uid 10001 --home-dir /nonexistent --shell /usr/sbin/nologin app \
