@@ -31,7 +31,8 @@ class Settings:
     flight_status: bool = False  # flight status on events (ADR-0015); needs flight_api_key
     flight_api_key: str = field(default="", repr=False)  # a secret: never shown or logged
     flight_api_url: str = "https://aerodatabox.p.rapidapi.com"
-    flight_monthly_limit: int = 100
+    flight_monthly_limit: int | None = None  # seeds the calendar setting once (ADR-0005)
+    flight_home_airport: str = ""  # seeds the calendar setting once (ADR-0005)
 
     @property
     def flight_enabled(self) -> bool:
@@ -50,6 +51,13 @@ class Settings:
     @property
     def backup_dir(self) -> Path:
         return self.data_dir / "backups"
+
+
+def _seed_limit(text: str) -> int | None:
+    try:
+        return min(1000, max(1, int(text))) if text.strip() else None
+    except ValueError:
+        return None
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -79,5 +87,6 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         flight_api_key=e.get("FLIGHT_API_KEY", "").strip(),
         flight_api_url=e.get("FLIGHT_API_URL", "").strip().rstrip("/")
         or "https://aerodatabox.p.rapidapi.com",
-        flight_monthly_limit=min(1000, max(1, int(e.get("FLIGHT_MONTHLY_LIMIT", "100") or 100))),
+        flight_monthly_limit=_seed_limit(e.get("FLIGHT_MONTHLY_LIMIT", "")),
+        flight_home_airport=e.get("FLIGHT_HOME_AIRPORT", "").strip().upper(),
     )

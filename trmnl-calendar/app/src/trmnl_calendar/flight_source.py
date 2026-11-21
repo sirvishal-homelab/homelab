@@ -86,11 +86,11 @@ def _pair(side: dict, key: str) -> tuple[datetime | None, str]:
     return utc_t or _time(local), _local_text(local)
 
 
-def _airport(side: dict) -> str:
+def _airport(side: dict, keys: tuple[str, ...] = ("iata", "icao", "shortName", "name")) -> str:
     ap = side.get("airport")
     if not isinstance(ap, dict):
         return ""
-    for k in ("iata", "icao", "shortName", "name"):
+    for k in keys:
         v = ap.get(k)
         if isinstance(v, str) and v.strip():
             return v.strip()
@@ -101,32 +101,45 @@ def _text(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
-def parse(code: str, day: date, payload: object) -> FlightInfo:
-    """The leg that departs on `day` (local), else the first leg."""
+def parse(code: str, day: date, payload: object, home: str = "") -> FlightInfo:
+    """Choose the leg for `day` (local dates, from a dateLocalRole=Both reply).
+
+    A leg landing at `home` that day first (the event sits on the arrival day), then a leg
+    departing that day, then one arriving that day, then the first leg.
+    """
     if not isinstance(payload, list):
         raise FlightSourceError("The flight service sent a reply this app does not understand.")
     legs = [leg for leg in payload if isinstance(leg, dict)]
     if not legs:
         return FlightInfo(code, day, found=False)
 
-    def dep_side(leg: dict) -> dict:
-        d = leg.get("departure")
+    def side(leg: dict, name: str) -> dict:
+        d = leg.get(name)
         return d if isinstance(d, dict) else {}
 
-    def local_day(leg: dict) -> str:
-        node = dep_side(leg).get("scheduledTime")
-        local = (
-            node.get("local") if isinstance(node, dict) else dep_side(leg).get("scheduledTimeLocal")
-        )
+    def local_day(leg: dict, name: str) -> str:
+        s = side(leg, name)
+        node = s.get("scheduledTime")
+        local = node.get("local") if isinstance(node, dict) else s.get("scheduledTimeLocal")
         return _text(local)[:10]
 
-    leg = next((x for x in legs if local_day(x) == day.isoformat()), legs[0])
-    dep = dep_side(leg)
-    arr = leg.get("arrival") if isinstance(leg.get("arrival"), dict) else {}
+    def lands_home(leg: dict) -> bool:
+        a = side(leg, "arrival")
+        codes = {_airport(a, ("iata",)).upper(), _airport(a, ("icao",)).upper()} - {""}
+        return bool(home) and home.upper() in codes
+
+    want = day.isoformat()
+    leg = (
+        next((x for x in legs if lands_home(x) and local_day(x, "arrival") == want), None)
+        or next((x for x in legs if local_day(x, "departure") == want), None)
+        or next((x for x in legs if local_day(x, "arrival") == want), None)
+        or legs[0]
+    )
+    dep, arr = side(leg, "departure"), side(leg, "arrival")
     sched_dep, sched_dep_local = _pair(dep, "scheduledTime")
     revised_dep, revised_dep_local = _pair(dep, "revisedTime")
-    sched_arr, _ = _pair(arr, "scheduledTime")
-    revised_arr, _ = _pair(arr, "revisedTime")
+    sched_arr, sched_arr_local = _pair(arr, "scheduledTime")
+    revised_arr, revised_arr_local = _pair(arr, "revisedTime")
     return FlightInfo(
         code=code,
         dep_date=day,
@@ -141,6 +154,10 @@ def parse(code: str, day: date, payload: object) -> FlightInfo:
         dep_airport=_airport(dep),
         arr_airport=_airport(arr),
         dep_gate=_text(dep.get("gate")),
+        sched_arr_local=sched_arr_local,
+        revised_arr_local=revised_arr_local,
+        dep_icao=_airport(dep, ("icao",)),
+        arr_icao=_airport(arr, ("icao",)),
     )
 
 
@@ -164,11 +181,11 @@ class FlightSource:
     def __repr__(self) -> str:  # never show the key
         return f"FlightSource({self.base!r})"
 
-    def lookup(self, code: str, day: date) -> FlightInfo:
+    def lookup(self, code: str, day: date, home: str = "") -> FlightInfo:
         if not self._key:
             raise FlightSourceError("No flight API key is set (FLIGHT_API_KEY in the .env file).")
         path = f"flights/number/{urllib.parse.quote(code)}/{day.isoformat()}"
-        query = "withAircraftImage=false&withLocation=false&withFlightPlan=false"
+        query = "withAircraftImage=false&withLocation=false&withFlightPlan=false&dateLocalRole=Both"
         headers = {
             "X-RapidAPI-Key": self._key,
             "X-RapidAPI-Host": self._host,
@@ -194,4 +211,4 @@ class FlightSource:
             data = json.loads(body)
         except ValueError:
             raise FlightSourceError("The flight service sent a reply that is not JSON.") from None
-        return parse(code, day, data)
+        return parse(code, day, data, home)

@@ -35,6 +35,21 @@
       {% if errors.time_format %}<div class="err">{{ errors.time_format }}</div>{% endif %}
     </div>
   </div>
+
+  <h2 id="flights">Flights</h2>
+  <div class="row">
+    <div>
+      <label for="home_airport">Home airport</label>
+      <input id="home_airport" name="home_airport" type="text" maxlength="4" value="{{ values.home_airport }}" placeholder="YHZ" autocapitalize="characters" autocomplete="off">
+      {% if errors.home_airport %}<div class="err">{{ errors.home_airport }}</div>{% endif %}
+    </div>
+    <div>
+      <label for="flight_monthly_limit">Lookups a month</label>
+      <input id="flight_monthly_limit" name="flight_monthly_limit" type="number" min="1" max="1000" value="{{ values.flight_monthly_limit }}" required>
+      {% if errors.flight_monthly_limit %}<div class="err">{{ errors.flight_monthly_limit }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="meta">A flight landing at the home airport shows its arrival time and arrival status; others show departure. Each lookup costs 2 units; the free AeroDataBox plan has 400 a month, so stay at 190 or less.</div>
   <div class="actions"><button class="primary" type="submit">Save settings</button></div>
 </form>
 

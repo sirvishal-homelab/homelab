@@ -46,6 +46,10 @@ class FlightInfo:
     dep_airport: str = ""
     arr_airport: str = ""
     dep_gate: str = ""
+    sched_arr_local: str = ""
+    revised_arr_local: str = ""
+    dep_icao: str = ""
+    arr_icao: str = ""
 
     @property
     def departs(self) -> datetime | None:
@@ -60,6 +64,19 @@ class FlightInfo:
         if self.sched_dep and self.revised_dep:
             return int((self.revised_dep - self.sched_dep).total_seconds() // 60)
         return 0
+
+    @property
+    def arrival_late_minutes(self) -> int:
+        if self.sched_arr and self.revised_arr:
+            return int((self.revised_arr - self.sched_arr).total_seconds() // 60)
+        return 0
+
+
+def lands_at(info: FlightInfo | None, home: str) -> bool:
+    """True when the flight's destination is the calendar's home airport (IATA or ICAO code)."""
+    if info is None or not info.found or not home:
+        return False
+    return home.upper() in {info.arr_airport.upper(), info.arr_icao.upper()} - {""}
 
 
 def find_codes(text: str) -> list[str]:
@@ -93,10 +110,16 @@ def codes_for_day(o: Occurrence) -> list[str]:
     return []
 
 
-def word(info: FlightInfo | None) -> str:
-    """The status word drawn after the title, or "" for nothing (docs/21 section 4)."""
+def word(info: FlightInfo | None, home: str = "") -> str:
+    """The status word drawn after the title, or "" for nothing (docs/21 section 4).
+
+    A flight landing at `home` is judged on its arrival: late by 15 minutes or more is Delayed,
+    also while it is in the air (owner, 2026-11-20).
+    """
     if info is None or not info.found:
         return ""
+    if lands_at(info, home):
+        return _arrival_word(info)
     s = info.status
     if s in CANCELLED:
         return "Cancelled"
@@ -111,16 +134,40 @@ def word(info: FlightInfo | None) -> str:
     return "On time" if info.sched_dep else ""
 
 
-def label(info: FlightInfo | None, fmt_time: Callable[[str], str]) -> str:
+def _arrival_word(info: FlightInfo) -> str:
+    s = info.status
+    if s in CANCELLED:
+        return "Cancelled"
+    if s == "Diverted":
+        return "Diverted"
+    if s == "Arrived":
+        return "Landed"
+    late = info.arrival_late_minutes >= LATE_MINUTES
+    if s in IN_AIR:
+        return "Delayed" if late else "Departed"
+    if late or (s == "Delayed" and not info.revised_arr):
+        return "Delayed"
+    return "On time" if (info.sched_arr or info.sched_dep) else ""
+
+
+def shown_time(info: FlightInfo | None, home: str = "") -> str:
+    """The planned time that belongs on the event: arrival when landing at home, else departure."""
+    if info is None or not info.found:
+        return ""
+    return info.sched_arr_local if lands_at(info, home) else info.sched_dep_local
+
+
+def label(info: FlightInfo | None, fmt_time: Callable[[str], str], home: str = "") -> str:
     """What is drawn in the brackets: the word, plus the new time when delayed ("Delayed 2p").
 
-    `fmt_time` turns "HH:MM" into the calendar's style (12- or 24-hour). The time is the departure
-    airport's own clock, like the event's time (owner, 2026-11-15; docs/21 section 4).
+    `fmt_time` turns "HH:MM" into the calendar's style (12- or 24-hour). The new time is on the
+    airport's own clock: the arrival for a flight landing at `home`, else the departure.
     """
-    w = word(info)
-    if w == "Delayed" and info is not None and info.revised_dep_local:
-        return f"{w} {fmt_time(info.revised_dep_local)}"
-    return w
+    w = word(info, home)
+    if w != "Delayed" or info is None:
+        return w
+    new = info.revised_arr_local if lands_at(info, home) else info.revised_dep_local
+    return f"{w} {fmt_time(new)}" if new else w
 
 
 def pick(codes: list[str], infos: dict[str, FlightInfo]) -> tuple[str, FlightInfo | None]:

@@ -97,6 +97,8 @@ class CalendarInfo:
     timezone: str
     week_start: str = "sun"  # "sun" | "mon"
     time_format: str = "12"  # "12" | "24"
+    home_airport: str = ""  # IATA or ICAO code; flights landing here follow arrival (docs/21)
+    flight_monthly_limit: int = 100  # flight lookups a month (ADR-0015)
 
 
 @dataclass(frozen=True)

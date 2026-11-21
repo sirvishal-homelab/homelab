@@ -8,6 +8,7 @@ import pytest
 
 from trmnl_calendar import flight_service as svc
 from trmnl_calendar.domain.flights import FlightInfo
+from trmnl_calendar.errors import ValidationFailed
 from trmnl_calendar.flight_source import FlightSourceError
 from trmnl_calendar.storage import backup, db, migrate
 from trmnl_calendar.storage.repositories import calendar as cal
@@ -35,7 +36,7 @@ class FakeSource:
         self.answers = answers or {}
         self.calls = []
 
-    def lookup(self, code, day):
+    def lookup(self, code, day, home=""):
         self.calls.append((code, day))
         a = self.answers.get(code)
         if isinstance(a, Exception):
@@ -62,9 +63,9 @@ def add(conn, title="AC663", start=DAY, **kw):
     )
 
 
-def refresher(answers=None, limit=100):
+def refresher(answers=None):
     src = FakeSource(answers)
-    return svc.FlightRefresher(src, limit), src
+    return svc.FlightRefresher(src), src
 
 
 def test_migration_adds_the_tables(conn):
@@ -145,7 +146,8 @@ def test_a_failure_keeps_the_last_answer_and_retries_later(conn):
 def test_monthly_cap_stops_lookups_and_counts_calls(conn):
     add(conn)
     add(conn, title="AC404")
-    r, src = refresher({"AC663": flight(), "AC404": flight()}, limit=1)
+    cal.update_calendar(conn, {"flight_monthly_limit": 1})
+    r, src = refresher({"AC663": flight(), "AC404": flight()})
     r.refresh(conn, EVENING_BEFORE)
     assert len(src.calls) == 1 and r.capped
     assert repo.calls_this_month(conn, EVENING_BEFORE) == 1
@@ -156,7 +158,7 @@ def test_check_now_ignores_the_schedule_but_not_the_cap(conn):
     r, src = refresher({"AC663": flight(), "AC404": flight()})
     results = r.check_now(conn, ev, EVENING_BEFORE - timedelta(days=5))
     assert [(x.code, x.word) for x in results] == [("AC663", "On time"), ("AC404", "On time")]
-    r.limit = 2
+    cal.update_calendar(conn, {"flight_monthly_limit": 2})
     r.check_now(conn, ev, EVENING_BEFORE - timedelta(days=5))
     assert len(src.calls) == 2
 
@@ -254,3 +256,70 @@ def test_a_connection_takes_the_first_flights_time(conn):
     r, _ = refresher({"AC663": flight(), "AC404": second})
     r.check_now(conn, ev, EVENING_BEFORE)
     assert events_repo.get_event(conn, ev.id).start_time == "11:25"
+
+
+# ---- home airport (owner, 2026-11-20)
+
+
+def home_flight(revised_arr=None, revised_arr_local=""):
+    return FlightInfo(
+        "AC664",
+        DAY,
+        True,
+        "Expected",
+        DEP,
+        None,
+        ARR,
+        revised_arr,
+        sched_dep_local="11:25",
+        sched_arr_local="13:09",
+        revised_arr_local=revised_arr_local,
+        dep_airport="YUL",
+        arr_airport="YHZ",
+        dep_icao="CYUL",
+        arr_icao="CYHZ",
+    )
+
+
+def test_a_flight_landing_at_home_gets_the_arrival_time_and_arrival_status(conn):
+    cal.update_calendar(conn, {"home_airport": "yhz"})
+    ev = add_untimed(conn, title="AC664")
+    late = home_flight(ARR + timedelta(minutes=40), "13:49")
+    r, src = refresher({"AC664": late})
+    r.refresh(conn, EVENING_BEFORE)
+    assert src.calls == [("AC664", DAY)]
+    assert events_repo.get_event(conn, ev.id).start_time == "13:09"  # planned arrival
+    assert [o.title for o in svc.annotate(conn, _occ(conn))] == ["AC664 (Delayed 1:49p)"]
+    shown = svc.stored(conn, "AC664", DAY)
+    assert shown.lands_home and shown.word == "Delayed"
+
+
+def test_without_a_home_airport_the_same_flight_follows_departure(conn):
+    ev = add_untimed(conn, title="AC664")
+    refresher({"AC664": home_flight()})[0].refresh(conn, EVENING_BEFORE)
+    assert events_repo.get_event(conn, ev.id).start_time == "11:25"
+    assert svc.stored(conn, "AC664", DAY).lands_home is False
+
+
+def test_settings_validate_and_store_home_airport_and_limit(conn):
+    c = cal.update_calendar(conn, {"home_airport": " cyhz ", "flight_monthly_limit": "150"})
+    assert (c.home_airport, c.flight_monthly_limit) == ("CYHZ", 150)
+    for bad in ({"home_airport": "Y1Z"}, {"home_airport": "HALIFAX"}):
+        with pytest.raises(ValidationFailed):
+            cal.update_calendar(conn, bad)
+    for bad in ("0", "1001", "lots"):
+        with pytest.raises(ValidationFailed):
+            cal.update_calendar(conn, {"flight_monthly_limit": bad})
+    assert cal.update_calendar(conn, {"home_airport": ""}).home_airport == ""
+
+
+def test_environment_only_seeds_settings_never_saved(conn):
+    assert cal.get_calendar(conn).flight_monthly_limit == 100  # the default
+    assert cal.seed_options(conn, {"home_airport": "YHZ", "flight_monthly_limit": 150}) == [
+        "home_airport",
+        "flight_monthly_limit",
+    ]
+    cal.update_calendar(conn, {"flight_monthly_limit": "80"})
+    assert cal.seed_options(conn, {"home_airport": "YUL", "flight_monthly_limit": 190}) == []
+    c = cal.get_calendar(conn)
+    assert (c.home_airport, c.flight_monthly_limit) == ("YHZ", 80)

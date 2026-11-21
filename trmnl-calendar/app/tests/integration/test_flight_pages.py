@@ -21,7 +21,7 @@ class FakeSource:
     def __init__(self):
         self.calls = []
 
-    def lookup(self, code, day):
+    def lookup(self, code, day, home=""):
         self.calls.append((code, day))
         return FlightInfo(
             code, day, True, "Delayed", DEP, None, None, None, "11:25", "", "YHZ", "YUL", "23"
@@ -108,3 +108,46 @@ def test_home_and_api_show_the_word_and_the_credit(on):
 def test_check_now_on_an_unknown_event_is_404(on):
     client, _ = on
     assert client.post("/events/999/flights/check").status_code == 404
+
+
+def test_settings_page_saves_home_airport_and_lookup_limit(on):
+    client, _ = on
+    page = client.get("/settings").text
+    assert 'name="home_airport"' in page and 'name="flight_monthly_limit"' in page
+    form = {
+        "name": "Home",
+        "timezone": "America/Halifax",
+        "week_start": "sun",
+        "time_format": "12",
+        "home_airport": "yhz",
+        "flight_monthly_limit": "150",
+    }
+    assert client.post("/settings", data=form).status_code == 200
+    got = client.get("/api/v1/calendar").json()
+    assert (got["home_airport"], got["flight_monthly_limit"]) == ("YHZ", 150)
+    bad = client.post("/settings", data={**form, "home_airport": "HALIFAX"})
+    assert bad.status_code == 422 and "airport code" in bad.text
+
+
+def test_environment_seeds_the_settings_once(tmp_path):
+    env = {
+        "DATA_DIR": str(tmp_path),
+        "PUSH_STARTUP_DELAY_SECONDS": "3600",
+        "FLIGHT_HOME_AIRPORT": "yhz",
+        "FLIGHT_MONTHLY_LIMIT": "150",
+    }
+    with TestClient(create_app(load_settings(env), clock=lambda: NOW)) as c:
+        got = c.get("/api/v1/calendar").json()
+        assert (got["home_airport"], got["flight_monthly_limit"]) == ("YHZ", 150)
+        c.patch("/api/v1/calendar", json={"flight_monthly_limit": 90})
+    with TestClient(create_app(load_settings(env), clock=lambda: NOW)) as c:
+        assert c.get("/api/v1/calendar").json()["flight_monthly_limit"] == 90  # saved value wins
+
+
+def test_event_page_shows_arrival_for_a_flight_landing_home(on):
+    client, app = on
+    client.patch("/api/v1/calendar", json={"home_airport": "YUL"})  # FakeSource lands at YUL
+    ev = add_flight(app.state.settings.db_path)
+    client.post(f"/events/{ev.id}/flights/check")
+    page = client.get(f"/events/{ev.id}/edit").text
+    assert "lands at home" in page

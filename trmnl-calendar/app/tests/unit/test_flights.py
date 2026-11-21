@@ -148,3 +148,60 @@ def test_label_adds_the_new_time_to_delayed_only():
     assert F.label(info("Expected", revised_dep_local="11:25"), fmt) == "On time"
     assert F.label(info("Departed", revised_dep_local="14:00"), fmt) == "Departed"
     assert F.label(None, fmt) == ""
+
+
+# ---- flights landing at the home airport follow their arrival (owner, 2026-11-20)
+
+HOME_ARR = datetime(2026, 11, 21, 0, 40, tzinfo=UTC)  # 20:40 in Halifax
+
+
+def home_info(status="Expected", revised_arr=None, revised_arr_local="", **kw):
+    return F.FlightInfo(
+        "AC664",
+        DAY,
+        True,
+        status,
+        DEP,
+        None,
+        HOME_ARR,
+        revised_arr,
+        sched_dep_local="17:30",
+        sched_arr_local="20:40",
+        revised_arr_local=revised_arr_local,
+        dep_airport="YUL",
+        arr_airport="YHZ",
+        dep_icao="CYUL",
+        arr_icao="CYHZ",
+        **kw,
+    )
+
+
+def test_lands_at_matches_iata_or_icao_case_insensitively():
+    assert F.lands_at(home_info(), "YHZ")
+    assert F.lands_at(home_info(), "cyhz")
+    assert not F.lands_at(home_info(), "YUL")
+    assert not F.lands_at(home_info(), "")
+    assert not F.lands_at(None, "YHZ")
+
+
+def test_home_arrival_is_judged_on_the_arrival():
+    late = HOME_ARR + timedelta(minutes=35)
+    assert F.word(home_info(), "YHZ") == "On time"
+    assert F.word(home_info(revised_arr=HOME_ARR + timedelta(minutes=14)), "YHZ") == "On time"
+    assert F.word(home_info(revised_arr=late), "YHZ") == "Delayed"
+    assert F.word(home_info("EnRoute"), "YHZ") == "Departed"
+    assert F.word(home_info("EnRoute", revised_arr=late), "YHZ") == "Delayed"
+    assert F.word(home_info("Arrived"), "YHZ") == "Landed"
+    assert F.word(home_info("Canceled"), "YHZ") == "Cancelled"
+    assert F.word(home_info("Delayed"), "YHZ") == "Delayed"
+
+
+def test_home_arrival_label_and_time_use_the_arrival():
+    def fmt(hhmm):
+        return {"21:15": "9:15p"}[hhmm]
+
+    late = home_info(revised_arr=HOME_ARR + timedelta(minutes=35), revised_arr_local="21:15")
+    assert F.label(late, fmt, "YHZ") == "Delayed 9:15p"
+    assert F.shown_time(home_info(), "YHZ") == "20:40"
+    assert F.shown_time(home_info(), "") == "17:30"  # no home airport: departure as before
+    assert F.shown_time(home_info(), "YUL") == "17:30"
