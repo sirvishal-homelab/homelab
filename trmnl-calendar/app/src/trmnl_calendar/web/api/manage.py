@@ -45,6 +45,8 @@ def _calendar(c: CalendarInfo) -> dict:
         "timezone": c.timezone,
         "week_start": c.week_start,
         "time_format": c.time_format,
+        "home_airport": c.home_airport or None,
+        "flight_monthly_limit": c.flight_monthly_limit,
     }
 
 

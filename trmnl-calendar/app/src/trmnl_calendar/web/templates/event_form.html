@@ -169,9 +169,16 @@
     {% if f.word %}<strong>{{ f.word }}</strong>{% elif f.info and not f.info.found %}no such flight that day{% elif f.checked_at %}no status yet{% else %}not looked up yet{% endif %}
     {% if f.info and f.info.found %}
       <br>{{ f.info.dep_airport or "?" }} → {{ f.info.arr_airport or "?" }}
+      {% if f.lands_home %}
+      · lands at home
+      {% if f.info.sched_arr_local %}· arrival {{ f.info.sched_arr_local }}{% endif %}
+      {% if f.info.revised_arr_local and f.info.revised_arr_local != f.info.sched_arr_local %}· now {{ f.info.revised_arr_local }}{% endif %}
+      {% if f.info.sched_dep_local %}· departs {{ f.info.sched_dep_local }}{% endif %}
+      {% else %}
       {% if f.info.sched_dep_local %}· scheduled {{ f.info.sched_dep_local }}{% endif %}
       {% if f.info.revised_dep_local and f.info.revised_dep_local != f.info.sched_dep_local %}· now {{ f.info.revised_dep_local }}{% endif %}
       {% if f.info.dep_gate %}· gate {{ f.info.dep_gate }}{% endif %}
+      {% endif %}
       <span>(airport times)</span>
     {% endif %}
     {% if f.error %}<br><span class="err">Last check failed: {{ f.error }}</span>{% endif %}

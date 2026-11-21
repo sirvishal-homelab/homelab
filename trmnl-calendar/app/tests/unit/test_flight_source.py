@@ -116,3 +116,52 @@ def test_no_key_and_plain_http_are_refused_and_repr_hides_the_key():
     with pytest.raises(ValueError):
         S.FlightSource("k", "http://aerodatabox.p.rapidapi.com")
     assert "secret" not in repr(src()[0])
+
+
+# ---- arrival fields and the leg landing at home (owner, 2026-11-20)
+
+
+def leg(dep_day, dep_time, arr_day, arr_time, status="Expected", dest=("YHZ", "CYHZ")):
+    return {
+        "status": status,
+        "departure": {
+            "airport": {"iata": "YVR", "icao": "CYVR"},
+            "scheduledTime": {
+                "utc": f"{dep_day} {dep_time}Z",
+                "local": f"{dep_day} {dep_time}-08:00",
+            },
+        },
+        "arrival": {
+            "airport": {"iata": dest[0], "icao": dest[1]},
+            "scheduledTime": {
+                "utc": f"{arr_day} {arr_time}Z",
+                "local": f"{arr_day} {arr_time}-04:00",
+            },
+            "revisedTime": {
+                "utc": f"{arr_day} {arr_time}Z",
+                "local": f"{arr_day} {arr_time}-04:00",
+            },
+        },
+    }
+
+
+def test_arrival_local_times_and_icao_codes_are_read():
+    i = S.parse("AC663", DAY, [LEG])
+    assert (i.sched_arr_local, i.dep_icao, i.arr_icao) == ("12:09", "CYHZ", "CYUL")
+
+
+def test_both_dates_are_asked_for():
+    s, fake = src(body=[LEG])
+    s.lookup("AC663", DAY)
+    assert "dateLocalRole=Both" in fake.calls[0][0]
+
+
+def test_an_overnight_flight_home_picks_the_leg_landing_that_day():
+    tonight = leg("2026-11-16", "23:30", "2026-11-17", "07:10")  # leaves on the 16th
+    landed = leg("2026-11-15", "23:30", "2026-11-16", "07:10")  # lands home on the 16th
+    assert S.parse("AC100", DAY, [tonight, landed], home="YHZ").sched_arr_local == "07:10"
+    assert S.parse("AC100", DAY, [tonight, landed], home="YHZ").sched_dep_local == "23:30"
+    picked = S.parse("AC100", DAY, [tonight, landed], home="YHZ")
+    assert picked.sched_dep.day == 15
+    # without a home airport the leg departing that day wins, as before
+    assert S.parse("AC100", DAY, [tonight, landed]).sched_dep.day == 16

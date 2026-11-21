@@ -119,7 +119,8 @@ If a push fails the reason is shown on the same page and the screen keeps its ol
    refused, check the key and the subscription.
 
 From then on flights on the calendar are looked up from the day before, more often in the last four hours,
-and the word appears after the title on the screen. `FLIGHT_MONTHLY_LIMIT` (default 100) caps lookups; the
+and the word appears after the title on the screen. On the **Settings** page, set **Home airport** (for
+example YHZ) so flights coming home show their arrival; **Lookups a month** (default 100) caps lookups; the
 free plan allows about 190. Flight data is kept 7 days and is not in backups.
 
 ## Backups and the restore drill

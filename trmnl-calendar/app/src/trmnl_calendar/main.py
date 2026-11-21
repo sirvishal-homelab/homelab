@@ -21,6 +21,7 @@ from trmnl_calendar.publish.scheduler import Scheduler
 from trmnl_calendar.render.fontcheck import verify_fonts
 from trmnl_calendar.render.pipeline import RenderCache
 from trmnl_calendar.storage import backup, db, migrate
+from trmnl_calendar.storage.repositories import calendar as cal_repo
 from trmnl_calendar.web import (
     errors,
     pages,
@@ -52,6 +53,16 @@ NO_PUSH_PATHS = {
     "/screen/push",
     "/screen/check",
 }
+
+
+def _option_seeds(settings: Settings) -> dict:
+    """Environment values that only fill calendar settings never saved before (ADR-0005)."""
+    seeds: dict = {}
+    if settings.flight_monthly_limit is not None:
+        seeds["flight_monthly_limit"] = settings.flight_monthly_limit
+    if settings.flight_home_airport:
+        seeds["home_airport"] = settings.flight_home_airport
+    return seeds
 
 
 def create_app(settings: Settings | None = None, clock=render_service.now_utc) -> FastAPI:
@@ -95,14 +106,16 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
         conn = db.connect(settings.db_path)
         applied = migrate.migrate(conn, settings.db_path, settings.backup_dir)
         log.info("migrations applied: %s", applied or "none")
+        seeded = cal_repo.seed_options(conn, _option_seeds(settings))
+        if seeded:
+            log.info("settings seeded from the environment: %s", ", ".join(seeded))
         conn.close()  # request handlers open their own short-lived connection (thread safety)
         backup_if_due()  # synchronous, so a backup exists before the first request
         task = asyncio.create_task(backup_loop())
         flights_task = None
         if app.state.flights is not None:
             flights_task = asyncio.create_task(flight_loop())
-            limit = settings.flight_monthly_limit
-            log.info("flight status is on (limit %d lookups a month)", limit)
+            log.info("flight status is on")
         scheduler = app.state.scheduler
         if scheduler is not None:
             scheduler.start()
@@ -126,10 +139,7 @@ def create_app(settings: Settings | None = None, clock=render_service.now_utc) -
     app.state.render_cache = RenderCache()
     app.state.holiday_source = HolidaySource(settings.holiday_api_url)
     app.state.flights = (
-        FlightRefresher(
-            FlightSource(settings.flight_api_key, settings.flight_api_url),
-            settings.flight_monthly_limit,
-        )
+        FlightRefresher(FlightSource(settings.flight_api_key, settings.flight_api_url))
         if settings.flight_enabled
         else None
     )

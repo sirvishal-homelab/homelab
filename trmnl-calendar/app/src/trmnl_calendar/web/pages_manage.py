@@ -298,7 +298,7 @@ async def settings_save(request: Request):
 
     def work() -> Response:
         with _open(request) as conn:
-            patch = {k: _one(form, k) for k in ("name", "timezone", "week_start", "time_format")}
+            patch = {k: _one(form, k) for k in cal.FIELDS if k in form}
             try:
                 cal.update_calendar(conn, patch)
             except ValidationFailed as exc:

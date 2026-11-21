@@ -57,7 +57,7 @@ Flight data costs money per call, so lookups follow the flight, not the screen's
 
 About 12 calls per flight. The scheduler loop (ADR-0007, one worker) asks the flight module for due
 lookups before each render; each stored flight has a `next_due_at`. A monthly cap
-(`FLIGHT_MONTHLY_LIMIT`, default 100 calls) stops all lookups when reached; the last known status stays
+(**Lookups a month** on the Settings page, default 100 calls) stops all lookups when reached; the last known status stays
 on screen and the Screen page says the cap was hit.
 
 The image is still a function of (data, settings, now) (NFR-7): the status comes from the database, not
@@ -98,6 +98,19 @@ changed back). Only one-off events, only the event's first flight on its first d
 someone typed**. A delay never moves it; the new time shows in the brackets. This is the one place the
 feature writes to an event.
 
+**Flights landing at home** (owner, 2026-11-20, FL-7). The Settings page has a **Home airport** (IATA
+`YHZ` or ICAO `CYHZ`). A flight whose destination is that airport follows its **arrival** instead of its
+departure:
+- a missing start time is filled with the **planned arrival** (FL-6 still applies: a typed time stays);
+- On time / Delayed is judged on the arrival (15 minutes or more late is Delayed, also while in the air),
+  and a delay shows the new arrival time: `8:40p AC664 (Delayed 9:15p)`;
+- Departed, Landed, Cancelled and Diverted are unchanged;
+- the event goes on the day she **lands**. Lookups ask for flights departing *or* arriving that day
+  (`dateLocalRole=Both`) and prefer the leg landing at home that day, so an overnight flight works.
+
+Every other flight follows its departure, as before. The event page says "lands at home" and shows the
+arrival times for such a flight.
+
 ## 5. Data
 
 Migration 0009, one table. Derived data: not part of `GET /export`, and **left out of backups** (the
@@ -107,7 +120,9 @@ simply fetched again.
 
 `flight_status(code, dep_date, found, status, sched_dep, revised_dep, sched_arr, revised_arr,
 sched_dep_local, revised_dep_local, dep_airport, arr_airport, dep_gate, checked_at, next_due_at,
-last_error)`, primary key `(code, dep_date)`; times in UTC, `*_local` is `HH:MM` on the airport's clock.
+last_error, sched_arr_local, revised_arr_local, dep_icao, arr_icao)`, primary key `(code, dep_date)`; times
+in UTC, `*_local` is `HH:MM` on the airport's clock. Migration 0010 added the last four (2026-11-20).
+`dep_date` is the event's day, which for a flight landing at home is the arrival day.
 A failed lookup keeps the last good answer, records `last_error` and retries in 30 minutes. `code` is normalised without the space (`AC123`). A month counter for the cap
 lives in `flight_calls(month, count)`.
 
@@ -118,7 +133,7 @@ more legs with scheduled and revised times, airports, gate and a status from the
 free **Basic** plan (owner's screenshot, 2026-11-15): 400 units and 1,600 requests a month, both hard
 limits; a tier-2 call such as flight status costs **2 units** (4 if flight plans are asked for, which they
 are not). So 400 units buy **200 lookups**. The default cap of 100 lookups uses half and covers about
-8 flights a month at about 12 lookups each; raise `FLIGHT_MONTHLY_LIMIT` to at most 190 for about 15.
+8 flights a month at about 12 lookups each; raise **Lookups a month** to at most 190 for about 15.
 
 Plan terms that shape the design: **attribution is required**, so the event page, the home list and the
 month page say "Flight data: AeroDataBox" whenever a flight status is shown (the e-paper image and the
@@ -128,14 +143,19 @@ Only `flight_source.py` talks to the service (as `holiday_source.py` does for ho
 short timeout, size cap, one function that returns a small `FlightInfo` or "not found". A different
 provider is a new version of that one file.
 
-Settings (environment, ADR-0005; template in `app/.env.example`): `FLIGHT_STATUS=off` by default (it needs a key), `FLIGHT_API_KEY`
-(a secret: never logged, never in the repo), `FLIGHT_API_URL`, `FLIGHT_MONTHLY_LIMIT`. Only the flight
-code and the date are sent.
+Settings follow ADR-0005. In the environment (template in `app/.env.example`): `FLIGHT_STATUS=off` by
+default (it needs a key), `FLIGHT_API_KEY` (a secret: never logged, never in the repo), `FLIGHT_API_URL`.
+On the **Settings** page (stored in `calendars.options_json`): **Home airport** and **Lookups a month**.
+`FLIGHT_HOME_AIRPORT` and `FLIGHT_MONTHLY_LIMIT` in the environment only fill those two the first time the
+app starts; once saved on the page, the page wins (moved 2026-11-20). Only the flight code and the date
+are sent.
 
-## 7. Decisions (owner accepted all five, 2026-11-15)
+## 7. Decisions (owner, 2026-11-15 and 2026-11-20)
 
 | # | Question | Decision |
 |---|----------|----------|
+| FL-7 | Flights coming home | A **Home airport** setting; flights landing there follow arrival (owner, 2026-11-20). |
+| FL-8 | Where the flight preferences live | Home airport and lookups a month on the Settings page, per ADR-0005 (owner, 2026-11-20). |
 | FL-6 | Set the start time from the flight? | Only when the event has none (owner, 2026-11-15); a typed time is never replaced. |
 | FL-1 | Words only, or "Delayed 14:50" with the new time? | First words only; changed the same day (owner, 2026-11-15) to **the new time after Delayed**, keeping the event's own time. |
 | FL-2 | Spot codes automatically, or only in one category such as "Travel"? | Automatically; a false match costs one call. |

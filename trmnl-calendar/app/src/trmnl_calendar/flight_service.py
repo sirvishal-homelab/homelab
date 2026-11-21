@@ -34,21 +34,21 @@ def annotate(conn: sqlite3.Connection, occ: list[Occurrence]) -> list[Occurrence
     known = repo.infos_for(conn, keys)
     if not known:
         return occ
-    show = _formatter(conn)
+    c = cal.get_calendar(conn)
+    show = _formatter(c.time_format)
     out = []
     for o in occ:
         codes = F.codes_for_day(o)
         if codes:
-            _, info = F.pick(codes, {c: known[(c, o.date)] for c in codes if (c, o.date) in known})
-            w = F.label(info, show)
+            _, info = F.pick(codes, {k: known[(k, o.date)] for k in codes if (k, o.date) in known})
+            w = F.label(info, show, c.home_airport)
             if w:
                 o = replace(o, title=f"{o.title} ({w})", flight=w)
         out.append(o)
     return out
 
 
-def _formatter(conn: sqlite3.Connection):
-    style = cal.get_calendar(conn).time_format
+def _formatter(style: str):
     return lambda hhmm: fmt_time(hhmm, style)
 
 
@@ -73,12 +73,14 @@ class CheckResult:
     info: F.FlightInfo | None
     error: str = ""
     checked_at: datetime | None = None
+    lands_home: bool = False  # follow the arrival on the event page
 
 
 class FlightRefresher:
-    def __init__(self, source: FlightSource, monthly_limit: int):
+    """Looks flights up. The monthly limit and home airport are calendar settings (ADR-0005)."""
+
+    def __init__(self, source: FlightSource):
         self.source = source
-        self.limit = monthly_limit
         self.capped = False
 
     def _today(self, conn: sqlite3.Connection, now: datetime) -> date:
@@ -86,21 +88,22 @@ class FlightRefresher:
 
     def _lookup(self, conn: sqlite3.Connection, code: str, day: date, now: datetime) -> bool:
         """Ask once, store the answer, fill a missing start time. True if the screen changes."""
-        show = _formatter(conn)
-        old = F.label(repo.info(repo.get(conn, code, day)), show)
-        if repo.calls_this_month(conn, now) >= self.limit:
+        c = cal.get_calendar(conn)
+        show, home = _formatter(c.time_format), c.home_airport
+        old = F.label(repo.info(repo.get(conn, code, day)), show, home)
+        if repo.calls_this_month(conn, now) >= c.flight_monthly_limit:
             self.capped = True
             return False
         repo.count_call(conn, now)
         try:
-            info = self.source.lookup(code, day)
+            info = self.source.lookup(code, day, home)
         except FlightSourceError as exc:
             log.warning("flight lookup %s %s failed: %s", code, day, exc)
             repo.save_error(conn, code, day, str(exc), now, now + F.RETRY_AFTER_ERROR)
             return False
         repo.save(conn, info, now, F.next_due(info, now))
-        filled = fill_missing_time(conn, code, day, info)
-        return filled or old != F.label(info, show)  # a later new time is a change too
+        filled = fill_missing_time(conn, code, day, info, home)
+        return filled or old != F.label(info, show, home)  # a later new time is a change too
 
     def due_pairs(self, conn: sqlite3.Connection, now: datetime) -> list[tuple[str, date]]:
         """Flights on the calendar from yesterday to tomorrow that should be asked about now."""
@@ -124,9 +127,10 @@ class FlightRefresher:
         return pairs
 
     def refresh(self, conn: sqlite3.Connection, now: datetime) -> bool:
-        """One pass: purge old answers, ask about due flights. True if a shown word changed."""
+        """One pass: purge old answers, ask about due flights. True if the screen changes."""
         repo.purge(conn, now)
-        self.capped = repo.calls_this_month(conn, now) >= self.limit
+        limit = cal.get_calendar(conn).flight_monthly_limit
+        self.capped = repo.calls_this_month(conn, now) >= limit
         changed = False
         for code, day in self.due_pairs(conn, now):
             changed |= self._lookup(conn, code, day, now)
@@ -143,13 +147,17 @@ class FlightRefresher:
         return out
 
 
-def fill_missing_time(conn: sqlite3.Connection, code: str, day: date, info: F.FlightInfo) -> bool:
-    """Give a flight event with no start time the planned departure (owner, 2026-11-15; docs/21).
+def fill_missing_time(
+    conn: sqlite3.Connection, code: str, day: date, info: F.FlightInfo, home: str = ""
+) -> bool:
+    """Give a flight event with no start time its planned time (owner, 2026-11-15; docs/21).
 
-    Only an event's first flight on its first day, only one-off events, and never a time someone
-    typed. Saved like an edit, so it shows on the event page and can be changed back.
+    The planned arrival for a flight landing at the home airport (owner, 2026-11-20), else the
+    planned departure. Only an event's first flight on its first day, only one-off events, and
+    never a time someone typed. Saved like an edit, so it shows on the event page.
     """
-    if not info.found or not info.sched_dep_local:
+    planned = F.shown_time(info, home)
+    if not planned:
         return False
     filled = False
     for ev in events_repo.list_events(conn, day, day):
@@ -158,10 +166,10 @@ def fill_missing_time(conn: sqlite3.Connection, code: str, day: date, info: F.Fl
         if event_flights(ev)[:1] != [(code, day)]:
             continue
         try:
-            events_repo.update_event(conn, ev.id, {"start_time": info.sched_dep_local}, ev.rev)
+            events_repo.update_event(conn, ev.id, {"start_time": planned}, ev.rev)
         except (EditConflict, ValidationFailed):
             continue  # an edit in progress, or a time the event cannot take: leave it
-        log.info("event %d: start time set to %s from flight %s", ev.id, info.sched_dep_local, code)
+        log.info("event %d: start time set to %s from flight %s", ev.id, planned, code)
         filled = True
     return filled
 
@@ -171,11 +179,13 @@ def stored(conn: sqlite3.Connection, code: str, day: date) -> CheckResult:
     info = repo.info(row)
     if row is not None and row["last_error"] and not row["status"]:
         info = None  # only a failure is stored: nothing known about the flight yet
+    home = cal.get_calendar(conn).home_airport
     return CheckResult(
         code=code,
         day=day,
-        word=F.word(info),
+        word=F.word(info, home),
         info=info,
         error=row["last_error"] if row is not None else "",
         checked_at=repo.checked_at(row) if row is not None else None,
+        lands_home=F.lands_at(info, home),
     )

@@ -36,3 +36,14 @@ call, so the first real flight is the verification (`08`, R-15).
   in. The pattern already matches how she writes flights.
 - **Looking up on every render**: simplest, but about 96 calls a day per flight and it would break
   NFR-7. Rejected.
+
+## Addendum 2026-11-20: home airport, and settings in the database
+The owner's wife has flights out and flights home. A **Home airport** setting makes a flight landing there
+follow its arrival: arrival time filled into an event without one, On time / Delayed judged on the arrival,
+and the new arrival time after Delayed (`21`, FL-7). Lookups ask for both departure and arrival dates so the
+event can sit on the day she lands. Migration 0010 stores arrival local times and ICAO codes.
+
+The home airport and the monthly lookup limit are household preferences, not secrets or addresses, so per
+ADR-0005 they live in `calendars.options_json` and are edited on the Settings page. `FLIGHT_HOME_AIRPORT` and
+`FLIGHT_MONTHLY_LIMIT` only seed them once; a saved value wins (FL-8). The key and the switch stay in the
+environment.

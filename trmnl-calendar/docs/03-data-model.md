@@ -142,7 +142,9 @@ single constant calendar id. Timestamps are omitted from the diagram; see conven
 
 ### calendars
 `name`, `timezone` (IANA, default from `TZ` on first run: America/Halifax), `options_json`:
-`week_start` (`sun` or `mon`, default `sun`) and `time_format` (`12` or `24`, default `12`).
+`week_start` (`sun` or `mon`, default `sun`), `time_format` (`12` or `24`, default `12`), `home_airport`
+(IATA or ICAO code, default empty) and `flight_monthly_limit` (1 to 1000, default 100; ADR-0015). The last two
+can be seeded once from `FLIGHT_HOME_AIRPORT` / `FLIGHT_MONTHLY_LIMIT` (ADR-0005).
 
 ### sections (shown to users as "categories"; ADR-0004)
 | Column | Rule |
@@ -300,3 +302,6 @@ last_error)`, primary key
 `(code, dep_date)`; `code` without the space (`AC123`). The last answer from the flight provider for a flight
 code spotted in an event, and when to ask again. `flight_calls(month, count)` counts calls for the monthly
 cap. Derived data: not part of `GET /export`, left out of backups (the provider allows 7 days of caching), rows deleted 7 days after `checked_at`. See `21`.
+
+Migration 0010 (2026-11-20) adds `sched_arr_local`, `revised_arr_local`, `dep_icao` and `arr_icao` to
+`flight_status`, for flights landing at the home airport (`21`, FL-7).

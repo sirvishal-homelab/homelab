@@ -81,7 +81,7 @@ the rule in words.
 | `GET/POST /people` | List; create `{name, label}` (max 10). |
 | `PATCH /people/{id}` | Rename, relabel, `active: false` to retire. |
 | `DELETE /people/{id}` | Only if no event uses the person (409 otherwise; retire instead). |
-| `GET/PATCH /calendar` | Name, timezone, `week_start`, `time_format`. |
+| `GET/PATCH /calendar` | Name, timezone, `week_start`, `time_format`, `home_airport` (or null), `flight_monthly_limit` (`21`). |
 | `GET /me`, `PUT /me` | Read or set "who am I" (`{person_id}`); stored in a cookie. |
 | `POST /settings/theme` | Page form, not part of the JSON API: sets the `theme` cookie (`auto`, `light` or `dark`) for this device and redirects to Settings. |
 

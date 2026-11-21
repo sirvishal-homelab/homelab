@@ -35,6 +35,10 @@ def _info(r: sqlite3.Row) -> FlightInfo:
         dep_airport=r["dep_airport"],
         arr_airport=r["arr_airport"],
         dep_gate=r["dep_gate"],
+        sched_arr_local=r["sched_arr_local"],
+        revised_arr_local=r["revised_arr_local"],
+        dep_icao=r["dep_icao"],
+        arr_icao=r["arr_icao"],
     )
 
 
@@ -72,8 +76,9 @@ def save(
     conn.execute(
         """INSERT INTO flight_status (code, dep_date, found, status, sched_dep, revised_dep,
                sched_arr, revised_arr, sched_dep_local, revised_dep_local, dep_airport,
-               arr_airport, dep_gate, checked_at, next_due_at, last_error)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, '')
+               arr_airport, dep_gate, sched_arr_local, revised_arr_local, dep_icao, arr_icao,
+               checked_at, next_due_at, last_error)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, '')
            ON CONFLICT (code, dep_date) DO UPDATE SET
                found = excluded.found, status = excluded.status,
                sched_dep = excluded.sched_dep, revised_dep = excluded.revised_dep,
@@ -81,7 +86,9 @@ def save(
                sched_dep_local = excluded.sched_dep_local,
                revised_dep_local = excluded.revised_dep_local,
                dep_airport = excluded.dep_airport, arr_airport = excluded.arr_airport,
-               dep_gate = excluded.dep_gate, checked_at = excluded.checked_at,
+               dep_gate = excluded.dep_gate, sched_arr_local = excluded.sched_arr_local,
+               revised_arr_local = excluded.revised_arr_local, dep_icao = excluded.dep_icao,
+               arr_icao = excluded.arr_icao, checked_at = excluded.checked_at,
                next_due_at = excluded.next_due_at, last_error = ''""",
         (
             info.code,
@@ -97,6 +104,10 @@ def save(
             info.dep_airport,
             info.arr_airport,
             info.dep_gate,
+            info.sched_arr_local,
+            info.revised_arr_local,
+            info.dep_icao,
+            info.arr_icao,
             _t(checked_at),
             _t(next_due),
         ),
