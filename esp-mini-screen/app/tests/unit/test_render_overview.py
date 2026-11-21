@@ -86,3 +86,27 @@ def test_long_alert_title_fits():
     frames.alert(
         "a-container-with-a-really-long-name stopped", "container on host", "08:00", 125, ""
     )
+
+
+def _dot_colours(row):
+    """Colours in the strip just after the name, where the update dot goes."""
+    im = frames.overview(Status(rows=(row,), containers=Tile(1, 1), others=Tile(1, 1)), "08:30")
+    return {im.getpixel((x, 114)) for x in range(40, 170)}
+
+
+def test_update_dot_after_name():
+    plain = _dot_colours(Row("node-a", RowState.UP, 1, 1))
+    for lvl, colour in ((Level.WARN, frames.WARN), (Level.BAD, frames.BAD)):
+        cols = _dot_colours(Row("node-a", RowState.UP, 1, 1, updates=lvl))
+        assert any(near(c, colour, 20) for c in cols)
+        assert not any(near(c, colour, 20) for c in plain)
+
+
+def test_update_dot_fits_after_longest_name():
+    row = Row("a-very-long-system-name-indeed", RowState.UP, 1, 1, updates=Level.BAD)
+    for n in (1, 4):
+        st = Status(rows=(row,) * n, containers=Tile(1, 1), others=Tile(1, 1))
+        im = frames.overview(st, "08:30")
+        y = 102 if n == 1 else 64
+        red = [x for x in range(10, 240) if near(im.getpixel((x, y + 12)), frames.BAD, 20)]
+        assert red and max(red) < 230  # inside the row card

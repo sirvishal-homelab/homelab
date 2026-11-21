@@ -42,6 +42,7 @@ version the app is tested against and keep the Beszel client in one small module
 | F-12 | **Settings page** (phone-friendly, LAN only): lists every system Beszel reports; pick **1 to 4 focus systems**, their order, and an optional short display name (e.g. `truenas` → `NAS`). New systems appear unticked. | 1 |
 | F-13 | Settings page also edits: amber/red thresholds, poll interval, which containers may stop without alerting (F-6), and the screen address. | 1 |
 | F-14 | Settings page shows a **live preview** of the current 240x240 image and a "Push now" button. | 1 |
+| F-18 | **Pending-updates dot** after a focus system's name (owner request 2026-11-21): red if any security update is pending, amber for other pending OS package updates, nothing when up to date or not reported. From Beszel's `info.pu` (ADR-0004). Only on rows that are up; never an alert. On by default; one switch on the settings page. | 1 |
 | F-15 | Non-focus systems are not drawn as rows but are counted in the Other systems tile and still raise alerts, unless "ignore alerts" is ticked for them. **A paused system is never down**: it is monitored-off on purpose, so it is left out of counts and alerts (owner decision 2026-11-15). | 1 |
 
 Red conditions (**confirmed by owner 2026-11-14, revised 2026-11-15**): a system down (paused never counts);

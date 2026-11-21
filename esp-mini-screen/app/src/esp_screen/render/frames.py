@@ -74,12 +74,11 @@ def _bar(d: ImageDraw.ImageDraw, x: int, y: int, w: int, pct: float, colour) -> 
 def _row(d: ImageDraw.ImageDraw, y: int, row, name_size: int) -> None:
     d.rounded_rectangle((10, y, 230, y + 39), 8, fill=CARD)
     d.ellipse((17, y + 7, 27, y + 17), fill=DOT[row.state.value])
-    d.text(
-        (33, y + 3),
-        _fit(d, row.label, "SemiBold", name_size, 120),
-        font=font("SemiBold", name_size),
-        fill=FG,
-    )
+    name = _fit(d, row.label, "SemiBold", name_size, 120)
+    d.text((33, y + 3), name, font=font("SemiBold", name_size), fill=FG)
+    if row.updates is not None:  # pending updates: small dot right after the name
+        x = 33 + int(d.textlength(name, font=font("SemiBold", name_size))) + 6
+        d.ellipse((x, y + 9, x + 7, y + 16), fill=LEVEL_COLOUR[row.updates.value])
     if row.state.value != "up":
         text, colour = ROW_TEXT[row.state.value]
         d.text((222, y + 5), text, font=font("Bold", 13), fill=colour, anchor="ra")

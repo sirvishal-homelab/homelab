@@ -1,7 +1,8 @@
 """Settings form: parse and validate (pure; no web framework, so it is tested everywhere).
 
 Field names: `pos_<id>` (""/1-4), `name_<id>`, `ignore_<id>` per system; `allow` (repeated,
-"<system_id>:<container>") for containers allowed to stop; plus the tuning fields below.
+"<system_id>:<container>") for containers allowed to stop; `show_updates` (checkbox); plus the
+tuning fields below.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ _CONTAINER = re.compile(r"^([A-Za-z0-9_-]+):([A-Za-z0-9][A-Za-z0-9_.-]*)$")
 class ParsedSettings:
     numbers: dict[str, int] = field(default_factory=dict)
     device_url: str = ""
+    show_updates: bool = True
     systems: dict[str, tuple[int | None, str | None, bool]] = field(default_factory=dict)
     allowed: set[tuple[str, str]] = field(default_factory=set)
     errors: list[str] = field(default_factory=list)
@@ -68,6 +70,7 @@ def parse(form: dict[str, list[str]], known_systems: set[str]) -> ParsedSettings
         if parts.scheme != "http" or not parts.hostname or parts.path not in ("", "/"):
             out.errors.append("Screen address: use http://<address> (the screen has no https)")
     out.device_url = url
+    out.show_updates = _one(form, "show_updates") in ("1", "on", "true")
 
     positions: dict[int, str] = {}
     for sid in sorted(known_systems):

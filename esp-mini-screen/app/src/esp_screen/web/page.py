@@ -78,4 +78,5 @@ def render(
         numbers=NUMBERS,
         values={k: repo.get_setting(conn, k, d) for k, d in DEFAULTS.items()},
         device_url=repo.get_setting(conn, "device_url", ""),
+        show_updates=bool(repo.get_setting(conn, "show_updates", True)),
     )

@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from esp_screen.beszel.client import BeszelClient, BeszelDataError, BeszelError
+from esp_screen.beszel.client import BeszelClient, BeszelDataError, BeszelError, to_system
 from esp_screen.domain.model import SystemState
 from tests.fakes.beszel import PASSWORD, USER, FakeHub
 
@@ -122,3 +122,28 @@ def test_bad_update_times_are_data_errors():
     hub.containers["items"][0]["updated"] = "soon"
     with pytest.raises(BeszelDataError, match="'updated' has type str"):
         snap(hub)
+
+
+def test_pending_updates_from_recorded_hub():
+    by_name = {x.name: x for x in snap(FakeHub()).systems}
+    assert by_name["node-a"].updates == (14, 1)
+    assert by_name["node-b"].updates == (0, 0)
+    assert by_name["nas"].updates is None  # this agent does not report updates
+
+
+@pytest.mark.parametrize(
+    "pu, expected",
+    [
+        ([3, 0], (3, 0)),
+        ([5], (5, 0)),  # apk / pacman: total only
+        (None, None),
+        ("x", None),
+        ([1, -1], None),
+        ([1.5, 0], None),
+        ([True, 0], None),
+        ([1, 2, 3], None),
+    ],
+)
+def test_odd_update_counts_hide_the_dot_not_the_screen(pu, expected):
+    rec = {"id": "s1", "name": "n", "status": "up", "info": {"cpu": 1, "mp": 2, "pu": pu}}
+    assert to_system(rec).updates == expected

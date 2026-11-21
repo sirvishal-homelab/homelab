@@ -80,3 +80,8 @@ def test_display_name_trimmed_to_twenty():
 def test_allowed_containers():
     p = parse(form(allow=["sys1:watchtower", "bad value", "sys2:app.web-1"]), SYSTEMS)
     assert p.allowed == {("sys1", "watchtower"), ("sys2", "app.web-1")}
+
+
+def test_update_dot_checkbox():
+    assert parse(form(), SYSTEMS).show_updates is False  # unticked boxes are not sent
+    assert parse(form(show_updates="1"), SYSTEMS).show_updates is True

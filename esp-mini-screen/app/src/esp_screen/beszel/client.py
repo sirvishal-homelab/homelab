@@ -67,6 +67,20 @@ def running_containers(systems: list[dict], containers: list[dict]) -> list[Cont
     return list(dict.fromkeys(out))  # a recreated container can leave an old twin behind
 
 
+def _updates(info: dict) -> tuple[int, int] | None:
+    """`info.pu` is [total, security], or [total] for package managers without security data.
+
+    Optional and cosmetic: absent or odd values mean "not reported", never "Beszel data
+    changed", so a change here can only hide the dot, not the whole screen.
+    """
+    pu = info.get("pu")
+    if not isinstance(pu, list) or not 1 <= len(pu) <= 2:
+        return None
+    if not all(isinstance(n, int) and not isinstance(n, bool) and n >= 0 for n in pu):
+        return None
+    return (pu[0], pu[1] if len(pu) == 2 else 0)
+
+
 def to_system(rec: dict) -> System:
     where = f"systems/{rec.get('id', '?')}"
     status = _need(rec, "status", str, where)
@@ -82,6 +96,7 @@ def to_system(rec: dict) -> System:
         state=state,
         cpu_pct=float(_need(info, "cpu", number, where + ".info")) if info else 0.0,
         mem_pct=float(_need(info, "mp", number, where + ".info")) if info else 0.0,
+        updates=_updates(info),
     )
 
 

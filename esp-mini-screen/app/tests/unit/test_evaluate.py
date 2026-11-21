@@ -22,8 +22,15 @@ from esp_screen.domain.model import (
 T0 = datetime(2026, 11, 15, 12, 0, tzinfo=UTC)
 
 
-def sys(name, state="up", cpu=1.0, mem=10.0):
-    return System(id=f"id-{name}", name=name, state=SystemState(state), cpu_pct=cpu, mem_pct=mem)
+def sys(name, state="up", cpu=1.0, mem=10.0, updates=None):
+    return System(
+        id=f"id-{name}",
+        name=name,
+        state=SystemState(state),
+        cpu_pct=cpu,
+        mem_pct=mem,
+        updates=updates,
+    )
 
 
 def snapshot(systems, containers=()):
@@ -127,3 +134,24 @@ def test_container_tile_grace_and_allowed_to_stop():
 def test_display_labels():
     st = evaluate(snapshot([sys("srv")]), ["srv"], {}, labels={"id-srv": "NAS"})
     assert st.rows[0].label == "NAS"
+
+
+@pytest.mark.parametrize(
+    "updates, expected",
+    [((3, 1), Level.BAD), ((3, 0), Level.WARN), ((0, 0), None), (None, None)],
+)
+def test_update_dot_level(updates, expected):
+    st = evaluate(snapshot([sys("a", updates=updates)]), ["a"], {})
+    assert st.rows[0].updates is expected
+
+
+def test_update_dot_only_on_up_rows_and_can_be_turned_off():
+    snap = snapshot([sys("a", updates=(2, 1)), sys("b", "down", updates=(2, 1))])
+    st = evaluate(snap, ["a", "b"], {})
+    assert [r.updates for r in st.rows] == [Level.BAD, None]
+    assert evaluate(snap, ["a"], {}, show_updates=False).rows[0].updates is None
+
+
+def test_pending_updates_never_raise_an_alert():
+    st = evaluate(snapshot([sys("a", updates=(9, 9)), sys("b", updates=(9, 9))]), ["a"], {})
+    assert st.down_systems == () and st.others.level is Level.OK

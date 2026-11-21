@@ -47,12 +47,27 @@ def find_focus(systems: Sequence[System], wanted: Sequence[str]) -> list[System 
     return out
 
 
-def row_for(item: System | str, t: Thresholds, label: str | None = None) -> Row:
+def updates_level(updates: tuple[int, int] | None) -> Level | None:
+    """Red if any security update is pending, amber for other updates, None when up to date
+    or not reported. Never an alert: a dot on the focus row only."""
+    if updates is None:
+        return None
+    total, security = updates
+    if security > 0:
+        return Level.BAD
+    if total > 0:
+        return Level.WARN
+    return None
+
+
+def row_for(
+    item: System | str, t: Thresholds, label: str | None = None, *, show_updates: bool = True
+) -> Row:
     if isinstance(item, str):
         return Row(label or item, RowState.MISSING)
     state = RowState(item.state.value)
     if state is not RowState.UP:
-        return Row(label or item.name, state)
+        return Row(label or item.name, state)  # a down or paused system's counts are stale
     return Row(
         label or item.name,
         RowState.UP,
@@ -60,6 +75,7 @@ def row_for(item: System | str, t: Thresholds, label: str | None = None) -> Row:
         item.mem_pct,
         level(item.cpu_pct, t),
         level(item.mem_pct, t),
+        updates_level(item.updates) if show_updates else None,
     )
 
 
@@ -102,13 +118,19 @@ def evaluate(
     thresholds: Thresholds = DEFAULT_THRESHOLDS,
     labels: Mapping[str, str] | None = None,
     ignore_alerts: frozenset[str] = frozenset(),
+    show_updates: bool = True,
 ) -> Status:
     """`memory` is the result of `remember()` for this snapshot. `ignore_alerts`: system ids."""
     labels = labels or {}
     focus_items = find_focus(snap.systems, focus)
     focus_ids = {i.id for i in focus_items if isinstance(i, System)}
     rows = tuple(
-        row_for(i, thresholds, labels.get(i.id if isinstance(i, System) else i))
+        row_for(
+            i,
+            thresholds,
+            labels.get(i.id if isinstance(i, System) else i),
+            show_updates=show_updates,
+        )
         for i in focus_items
     )
 

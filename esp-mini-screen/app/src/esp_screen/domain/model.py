@@ -21,6 +21,9 @@ class System:
     state: SystemState
     cpu_pct: float
     mem_pct: float
+    # Pending OS package updates (total, security) from the agent's hourly check (Beszel 0.21+,
+    # `info.pu`). None: not reported (Docker agent, inside a container, or an older agent).
+    updates: tuple[int, int] | None = None
 
 
 @dataclass(frozen=True)
@@ -58,6 +61,7 @@ class Row:
     mem_pct: float = 0.0
     cpu_level: Level = Level.OK
     mem_level: Level = Level.OK
+    updates: Level | None = None  # dot after the name: WARN updates, BAD security; None: none
 
 
 @dataclass(frozen=True)

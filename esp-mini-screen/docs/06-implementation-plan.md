@@ -79,6 +79,14 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Focus systems move from env to the database (migration 0002 if needed).
 - **Done when:** owner picks focus systems from a phone and the screen follows within a minute.
 
+### S-4b Update dots: **built 2026-11-21** (0.5.0; F-18, ADR-0004)
+
+- Read `info.pu` per system; red dot after the focus name for security updates, amber for others.
+- Only on rows that are up; never an alert card. Switch "Update dot after focus names" on the
+  settings page (Tuning), on by default.
+- **Done when:** the real screen shows red dots on the two Proxmox hosts (both `[1, 1]` on
+  2026-11-21) and the dot clears within an hour of running the updates.
+
 ### S-5 Operate
 
 - Run every command in `07` on the real server and correct it; restore drill done once.
