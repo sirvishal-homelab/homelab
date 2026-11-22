@@ -1,6 +1,6 @@
 # 07 - Install and upgrade runbook (server, Docker)
 
-Status: **Partly verified 2026-11-15:** install and upgrades 0.1.0 → 0.4.0 ran on the server as
+Status: **Partly verified 2026-11-15:** install and upgrades 0.1.0 → 0.5.0 ran on the server as
 written. Backup, restore drill and rollback corrected 2026-11-15 (volume name, WAL files,
 image-tag rollback); to be run in S-5. Describes the agreed path: build on
 the server from a clone, manual pull and update (same as TRMNL Calendar `docs/19`). Slice S-1
@@ -81,7 +81,10 @@ docker compose logs --tail=50 esp-screen  # migrations applied, "start-up frame 
 **After S-4b (0.5.0):** no `.env` change. A small dot appears after a focus system's name when
 Beszel reports pending OS updates for it: red for security updates, amber for others. To check:
 update one of those systems (`apt update && apt full-upgrade`); the agent re-checks hourly, so the
-dot clears within an hour. Turn the dots off on the settings page (Tuning) if you don't want them.
+dot clears within an hour. To clear it at once, restart the agent on that system
+(`systemctl restart beszel-agent`): it re-runs the check on start (verified 2026-11-21). The dot
+does not say "reboot needed", so after a kernel update reboot as usual. Turn the dots off on the
+settings page (Tuning) if you don't want them.
 
 **After S-4 (0.4.0):** open `http://<server-ip>:8081/` on your phone. Your current focus systems
 are taken over from `FOCUS_SYSTEMS` automatically; from now on change them on the page (row 1-4,

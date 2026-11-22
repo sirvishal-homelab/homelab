@@ -27,7 +27,7 @@ names replaced with generic ones (owner decision). Fixtures: `app/tests/fixtures
 | `info.sv` | Systemd services `[total, failed]` (not on every system) | `[39, 1]` |
 | `info.la` | Load average 1/5/15 | `[0.04, 0.02, 0.02]` |
 | `info.dt` | Highest temperature (°C), not used | `31` |
-| `info.pu` | Pending OS package updates `[total, security]` (`[total]` for apk/pacman). Agent checks hourly (`PACKAGE_UPDATES_INTERVAL`). Missing on agents in Docker or inside containers. Used for the update dot (F-18, B-6) | `[14, 1]` |
+| `info.pu` | Pending OS package updates `[total, security]` (`[total]` for apk/pacman). Agent checks hourly (`PACKAGE_UPDATES_INTERVAL`) and on agent start. Missing on agents in Docker or inside containers. Used for the update dot (F-18, B-6) | `[14, 1]` |
 | `info.bb`, `ct`, `t` | Bandwidth, cores/threads and other values, not used | |
 
 A paused system keeps zeroed `info` and an old `updated`.

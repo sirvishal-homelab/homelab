@@ -18,7 +18,7 @@ flowchart LR
 | 1 Verify device | `03-device-api.md` (upload and set verified on V9.0.50) | Done 2026-11-14 |
 | 2 Requirements | `04-requirements.md` | Agreed 2026-11-14 |
 | 3 Design and plan | `05`, `06`, `07`, ADR-0001 to 0003 | Signed off 2026-11-15 |
-| 4 Build | Slices below | Not started |
+| 4 Build | Slices below | S-0 to S-4b done (0.5.0 installed); S-5 next |
 
 ## Gate checklist (all must be ticked before any code in `app/`)
 
@@ -79,13 +79,15 @@ Each slice ends with a check on the real screen or the real hub. Each is one pul
 - Focus systems move from env to the database (migration 0002 if needed).
 - **Done when:** owner picks focus systems from a phone and the screen follows within a minute.
 
-### S-4b Update dots: **built 2026-11-21** (0.5.0; F-18, ADR-0004)
+### S-4b Update dots: **done 2026-11-21** (0.5.0 installed; red dots shown on both Proxmox hosts, one cleared after updating and restarting its agent)
 
 - Read `info.pu` per system; red dot after the focus name for security updates, amber for others.
 - Only on rows that are up; never an alert card. Switch "Update dot after focus names" on the
   settings page (Tuning), on by default.
 - **Done when:** the real screen shows red dots on the two Proxmox hosts (both `[1, 1]` on
   2026-11-21) and the dot clears within an hour of running the updates.
+- Verified 2026-11-21: `systemctl restart beszel-agent` after updating re-runs the check, so the
+  dot clears within a minute instead of waiting for the hourly check.
 
 ### S-5 Operate
 
