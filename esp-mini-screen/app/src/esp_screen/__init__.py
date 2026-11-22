@@ -1,3 +1,3 @@
 """ESP Mini Screen: a Beszel-fed homelab status image for a GeekMagic SmallTV-Ultra."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

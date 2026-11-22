@@ -72,3 +72,11 @@ def test_local_time_24_hour():
     assert page.local_time("2026-11-15T16:21:34Z", "America/Halifax", now) == "12:21"
     assert page.local_time("2026-11-14T16:21:34Z", "America/Halifax", now) == "2026-11-14 12:21"
     assert page.local_time(None, "America/Halifax", now) == "-"
+
+
+def test_update_dot_setting_defaults_on(migrated):
+    assert 'name="show_updates" value="1" checked' in html(migrated, fake_runner())
+    with contextlib.closing(db.connect(migrated.db_path)) as c:
+        repo.set_setting(c, "show_updates", False)
+    out = html(migrated, fake_runner())
+    assert 'name="show_updates" value="1" >' in out

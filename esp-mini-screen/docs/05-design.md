@@ -102,6 +102,7 @@ See `assets/mock-*.jpg` (generator: `assets/make_mockups.py.txt`).
 - **Overview:** header (HOMELAB, "updated at" `HH:MM`, 24-hour), two tiles (Containers, Other systems), up to three focus rows with CPU and MEM bars and percentages.
 - **Overview, 4 focus systems:** compact layout: smaller header, both counters in one strip, four rows (`assets/mock-overview-4.jpg`). Smaller text (names 13 px, labels 10-11 px on a 1.54" panel) reads well at desk distance, less so from across the room. Unused focus slots are
   left empty. Long names are cut to fit (display names are set on the Settings page).
+- **Update dot (F-18, 0.5.0):** a 7 px dot right after a focus system's name: red = security updates pending, amber = other updates pending, none = up to date, not reported, or the system is not up. Settings key `show_updates` (default on).
 - **Alert:** dark red card, title (e.g. `pve2 down`), one detail line, "since hh:mm (n min)".
 - **Unreachable:** amber card, "Beszel unreachable", last good time.
 - Fonts: bundled Inter (OFL) so rendering is identical in CI and on the server.
@@ -140,7 +141,7 @@ upgrade; after that the page owns them and the variable is ignored. Times on the
 
 | Table | Columns |
 |-------|---------|
-| `settings` | key, value (JSON). Keys: `device_url`, `warn_pct`, `crit_pct`, `poll_s`, `alert_flip_s`, `unreachable_grace_min`, `container_missing_polls` |
+| `settings` | key, value (JSON). Keys: `device_url`, `warn_pct`, `crit_pct`, `poll_s`, `alert_flip_s`, `unreachable_grace_min`, `container_missing_polls`, `show_updates` (0.5.0; absent = on, no migration) |
 | `systems` | beszel_id (PK), beszel_name, display_name, focus_order (null = not focus), ignore_alerts, first_seen, last_seen |
 | `known_containers` | system_id, name, allowed_to_stop, last_running, missing_polls (PK system_id + name) |
 | `push_state` | id = 1, last_hash, last_push_at, last_result, last_error |

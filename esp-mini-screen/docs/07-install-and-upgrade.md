@@ -78,6 +78,11 @@ curl -s http://localhost:8081/healthz     # "status":"ok"; "screen": {"last_resu
 docker compose logs --tail=50 esp-screen  # migrations applied, "start-up frame shown on the screen"
 ```
 
+**After S-4b (0.5.0):** no `.env` change. A small dot appears after a focus system's name when
+Beszel reports pending OS updates for it: red for security updates, amber for others. To check:
+update one of those systems (`apt update && apt full-upgrade`); the agent re-checks hourly, so the
+dot clears within an hour. Turn the dots off on the settings page (Tuning) if you don't want them.
+
 **After S-4 (0.4.0):** open `http://<server-ip>:8081/` on your phone. Your current focus systems
 are taken over from `FOCUS_SYSTEMS` automatically; from now on change them on the page (row 1-4,
 display name, ignore alerts), plus containers that may stop, timing and thresholds. Save applies

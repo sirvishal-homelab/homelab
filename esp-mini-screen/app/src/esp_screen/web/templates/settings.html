@@ -107,6 +107,8 @@
       {% endfor %}
       <label for="device_url">Screen address</label>
       <input type="text" id="device_url" name="device_url" value="{{ device_url }}" placeholder="http://192.0.2.10" style="max-width:220px">
+      <label for="show_updates">Update dot after focus names <span class="note">(amber: updates, red: security)</span></label>
+      <input type="checkbox" id="show_updates" name="show_updates" value="1" {% if show_updates %}checked{% endif %}>
     </section>
 
     <div class="row-actions"><button type="submit">Save</button></div>

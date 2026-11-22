@@ -163,6 +163,7 @@ class Runner:
                 allowed_to_stop=allowed,
                 labels=repo.labels(conn),
                 ignore_alerts=repo.ignored_systems(conn),
+                show_updates=bool(repo.get_setting(conn, "show_updates", True)),
                 missing_limit=int(repo.get_setting(conn, "container_missing_polls", 2)),
                 thresholds=Thresholds(
                     float(repo.get_setting(conn, "warn_pct", 75)),

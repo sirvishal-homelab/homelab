@@ -72,6 +72,7 @@ def build_router(settings: Settings, app_state) -> APIRouter:
             for key, value in parsed.numbers.items():
                 repo.set_setting(c, key, value)
             repo.set_setting(c, "device_url", parsed.device_url)
+            repo.set_setting(c, "show_updates", parsed.show_updates)
             repo.save_system_prefs(c, parsed.systems)
             repo.save_allowed_to_stop(c, parsed.allowed)
             repo.set_setting(c, "focus_seeded", True)  # the page now owns the focus systems
