@@ -22,8 +22,10 @@ cosmetic field must not be able to take over the whole screen.
 ## Consequences (good and bad)
 - Good: no new credentials, endpoints or agents; matches what the owner sees in Beszel.
 - Good: hourly refresh is fine for a glance; the frame only changes when the dot does.
+  Restarting the agent re-runs the check at once (verified 2026-11-21).
 - Bad: systems whose agent runs in Docker show no dot at all (indistinguishable from "up to date"
   on the screen). Installing the agent as a system service fixes that if wanted.
+- Bad: no "reboot needed" signal; a node can show no dot yet still be running an old kernel.
 - Bad: a renamed or reshaped `pu` field after a Beszel update hides the dots silently. The
   contract tests against the recorded fixture catch it when the fixtures are refreshed.
 
